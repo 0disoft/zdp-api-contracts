@@ -1,0 +1,16 @@
+error_envelope:
+  schema_version: 1
+  required_fields:
+    - code
+    - message
+    - request_id
+    - trace_id
+  optional_fields:
+    - details
+    - retry_after_seconds
+    - documentation_url
+  forbidden_fields:
+    - stack_trace
+    - provider_secret
+    - raw_provider_error
+    - customer_private_payload

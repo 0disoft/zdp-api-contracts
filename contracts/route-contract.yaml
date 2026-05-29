@@ -1,0 +1,16 @@
+route_contract:
+  status: skeleton
+  required_per_route:
+    - resource
+    - action
+    - method
+    - path
+    - auth_required
+    - permission_check
+    - audit_event
+    - idempotency
+    - error_codes
+  forbidden_shapes:
+    - screen_component_payload
+    - provider_specific_id_as_primary_id
+    - raw_storage_url

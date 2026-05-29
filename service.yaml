@@ -1,0 +1,256 @@
+contract:
+  schema_version: 2
+  contract_version: 1
+  last_reviewed_at: null
+  review_owner: null
+  review_interval_days: 60
+  approved_by: []
+  adr_refs: []
+  exception_refs: []
+
+service:
+  id: api-contracts
+  display_name: null
+  owner: 0disoft
+  repo: zdp-api-contracts
+  aliases: []
+  status: experiment
+  tier: tier2
+  risk_level: medium
+  public_docs_url: null
+  runbook_url: RUNBOOK.md
+
+lifecycle:
+  stage: foundation
+  promotion_target_tier: tier2
+  sunset_review_at: null
+  degradation_policy: freeze downstream generators when contract source is invalid
+
+domain:
+  type: platform
+  user_facing: false
+  public_api: false
+  money_movement: false
+  regulated: false
+
+runtime:
+  edge: null
+  core: repository-contracts
+  framework: openapi-asyncapi-contracts
+  database: null
+  cache: null
+  object_storage: null
+  home_region: null
+  public_domains: []
+  candidate_public_domains: []
+  canonical_domain: null
+  domain_status: none
+
+cost:
+  cost_center: api-contracts
+  owner: 0disoft
+  monthly_budget_limit_usd: 0
+  warn_at_percent: 80
+  block_at_percent: 100
+  unit_metrics:
+    - contract-files
+    - generated-sdk-inputs
+  per_action_budget: []
+  provider_cost_dimensions: []
+  gross_margin_floor_percent: null
+  automatic_actions:
+    - block generated SDK refresh when contract validation fails
+
+data:
+  owner_domain: architecture
+  classes: []
+  datastores: []
+  pii_level: none
+  residency: null
+  retention_days: null
+  payment_data: false
+  money_movement: false
+  message_content: false
+  ai_user_data: false
+  crypto_key_material: false
+  append_only_required: false
+  encryption_key_owner: null
+  backup_retention_days: null
+  legal_hold_supported: false
+  redaction_policy: do not include real customer data, tokens, or webhook secrets in examples
+  export_supported: true
+  deletion:
+    required: false
+    sla_days: null
+    targets: []
+    propagation_events: []
+    backup_policy: null
+    tombstone_days: null
+    legal_hold_policy: null
+    manual_review_required: false
+    evidence_required: false
+
+access:
+  auth_required: true
+  tenant_boundary: none
+  object_level_auth_required: true
+  permission_model: rbac
+  privileged_operations:
+    - breaking-contract-change
+    - public-api-promotion
+    - webhook-schema-change
+  rebac_model_ref: null
+  break_glass_policy: null
+  service_accounts: []
+  admin_roles:
+    - contract-maintainer
+
+audit:
+  required: true
+  events:
+    - api_contract.changed
+    - api_contract.breaking_change_reviewed
+    - api_contract.generator_input_changed
+  sink: zdp-platform-observability
+  retention_days: 365
+  immutable: false
+  redaction_policy: do not log sensitive example payload bodies
+  reason_required_for_admin_access: true
+  evidence_export_supported: true
+
+idempotency:
+  required: false
+  scope: null
+  key_source: null
+  dedupe_window_seconds: null
+  store: null
+  conflict_policy: null
+  replay_safe: false
+  retry_policy: null
+
+observability:
+  product_metrics: []
+  operational_metrics:
+    - contract-validation-success
+    - contract-validation-failure
+    - breaking-change-review
+  otel:
+    service_name: api-contracts
+    environment: local
+    required_attributes:
+      - service_id
+      - cost_center
+    propagation_headers:
+      - traceparent
+      - x-request-id
+    sampling_policy: record contract validation and generation events
+    provider_span_required: false
+    cost_attributes:
+      - cost_center
+    redacted_attributes:
+      - token
+      - secret
+      - customer_payload
+
+dependencies:
+  services:
+    - architecture-linter
+    - platform-observability
+  datastores: []
+  queues: []
+  workers: []
+  internal_apis: []
+  fallback_paths:
+    - freeze downstream generation and use last reviewed contract
+
+providers: []
+
+ai:
+  enabled: false
+  sensitive_data: false
+  long_streaming: false
+  tools:
+    required: false
+    allowlist: []
+  provider_policy:
+    no_prompt_training_required: false
+    zero_data_retention_required: false
+    retention_exception_ref: null
+  provider_capabilities:
+    stream_cancellation_required: false
+    tool_calling_required: false
+    prompt_caching_allowed: false
+    response_caching_allowed: false
+  budgets:
+    max_input_tokens: null
+    max_output_tokens: null
+    max_usd_per_request: null
+    max_tool_calls_per_request: null
+
+api:
+  exposure: none
+  versioning: semver for contract packages before public API launch
+  auth_scheme: null
+  rate_limit_policy: null
+  openapi_required: false
+  sdks:
+    ts: true
+    dart: true
+    rust: true
+  deprecation_policy: required before public or partner API exposure
+  compatibility_policy: no breaking contract change without review note and changelog entry
+
+events:
+  cloudevents_required: false
+  produced: []
+  consumed: []
+  replay_supported: false
+  dead_letter_policy: null
+
+release:
+  environments:
+    - local
+  rollback_required: true
+  migration_policy: contract changes must preserve previous generated input until replacement is reviewed
+  change_approval: manual approval required for breaking contract changes
+  freeze_windows: []
+  canary_policy: null
+  feature_flag_required: false
+
+reliability:
+  rpo: contract evidence recoverable from git history
+  rto: 4h for contract reconstruction
+  slo_availability: contract repository available during planned work
+  slo_latency_p95_ms: 1000
+  night_page: false
+  backup_required: true
+  restore_drill_required: false
+  status_page_required: false
+  queue_replay_policy: null
+
+policy_gates:
+  required_linter_rules:
+    - ZDP-REPO-BASELINE-001
+    - ZDP-REPO-MARKDOWN-002
+
+human_review_required:
+  - breaking contract changes
+  - public api promotion
+  - sdk generation input changes
+
+exit:
+  success_criteria:
+    - route, error, webhook, and SDK generation contract skeletons are reviewable
+    - contract repository validates without implementing backend handlers
+  kill_criteria:
+    - product handler shapes become the contract source
+    - generated SDK output becomes the contract source
+  sunset_plan: null
+  owner: 0disoft
+  review_at: null
+  user_notice_days: null
+  data_export_window_days: null
+  dependency_removal_checklist: []
+
+notes:
+  - This MVP owns contract skeletons only; it does not expose a live API.

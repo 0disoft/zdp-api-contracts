@@ -1,0 +1,28 @@
+# BOUNDARY.md
+
+## 소유 경계
+
+`zdp-api-contracts`는 API 계약의 원천을 소유한다.
+
+소유한다:
+
+- route contract
+- OpenAPI와 webhook schema 입력
+- event schema handoff
+- standard error envelope
+- SDK generation input
+- authorization, audit, idempotency, metering hook declaration
+
+소유하지 않는다:
+
+- backend handler 구현
+- SDK runtime 구현
+- 제품별 화면 payload
+- provider-specific API client
+- 실제 public endpoint 운영
+
+## 분리 트리거
+
+- public API와 internal API가 서로 다른 release cadence를 요구한다.
+- SDK generator 입력과 human-facing docs가 독립 검증을 요구한다.
+- webhook schema가 provider별 운영 장애 대응을 독립적으로 요구한다.

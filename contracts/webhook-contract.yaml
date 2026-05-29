@@ -1,0 +1,14 @@
+webhook_contract:
+  status: skeleton
+  required_controls:
+    - event_id
+    - event_type
+    - schema_version
+    - signature_verification
+    - idempotency_key
+    - replay_policy
+    - dead_letter_policy
+  forbidden_controls:
+    - unversioned_payload
+    - provider_secret_in_schema
+    - ledger_mutation_without_money_contract
