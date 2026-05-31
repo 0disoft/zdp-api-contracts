@@ -233,6 +233,7 @@ policy_gates:
   required_linter_rules:
     - ZDP-REPO-BASELINE-001
     - ZDP-REPO-MARKDOWN-002
+    - ZDP-API-CONTRACTS-001
 
 human_review_required:
   - breaking contract changes
