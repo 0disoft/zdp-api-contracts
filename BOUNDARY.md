@@ -11,6 +11,7 @@
 - event schema handoff
 - standard error envelope
 - SDK generation input
+- export dry-run plan for OpenAPI, SDK, webhook schema, and docs
 - authorization, audit, idempotency, metering hook declaration
 
 소유하지 않는다:
@@ -23,9 +24,11 @@
 - refresh token storage
 - final authorization decision
 - 실제 public endpoint 운영
+- generated OpenAPI, generated SDK, or published docs artifacts
 
 ## 분리 트리거
 
 - public API와 internal API가 서로 다른 release cadence를 요구한다.
 - SDK generator 입력과 human-facing docs가 독립 검증을 요구한다.
 - webhook schema가 provider별 운영 장애 대응을 독립적으로 요구한다.
+- export plan이 실제 artifact 생성, publish, 또는 live endpoint 검증을 시작해야 한다.

@@ -9,6 +9,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - 표준 error envelope 기준
 - 권한, 감사, 멱등성, 비용 계량 hook 선언 기준
 - SDK 생성 입력의 소유 경계
+- OpenAPI/SDK/docs/webhook schema export dry-run plan
 
 ## 현재 제외
 
@@ -35,9 +36,13 @@ API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelo
 
 SDK generation input은 generated SDK source 자체가 아니다. 이 입력이 있으면 `zdp-client-sdks`가 route idempotency, audit event, permission hook, error trace field, webhook replay/dead-letter 규칙을 같은 방식으로 읽을 수 있다. 즉 SDK가 "이 API는 그냥 호출하면 되겠지"라고 추측하는 일을 줄이고, 언어별 SDK가 서로 다른 안전장치를 갖는 문제를 초반에 막는다.
 
+`export:plan`은 OpenAPI, SDK generation input, webhook schema, docs contract 산출 계획을 dry-run으로 만든다. 파일을 쓰거나 schema를 publish하지 않는다. plan JSON의 `writesArtifacts`와 `publishesSchemas`는 항상 false여야 한다. 대신 생성기가 나중에 읽어야 할 source contract, required metadata, forbidden value를 한 번에 보여준다. 이게 있으면 `permission_check`나 `idempotency`가 route contract에는 있는데 SDK input에는 없는 상태, `trace_id`가 error envelope에는 있는데 문서/SDK 계획에는 빠진 상태를 일찍 잡을 수 있다. `trace_id`는 SDK 오류와 서버 로그를 같은 선으로 잇게 해주고, `idempotency`는 재시도나 webhook 중복 수신이 같은 일을 두 번 만들지 않게 해준다.
+
 ```bash
 bun run check
 bun run contracts:check
+bun run export:plan
+bun scripts/plan-api-exports.ts --json
 ```
 
 아키텍처 검증은 `zdp-architecture-linter`에서 이 저장소를 대상으로 실행한다.

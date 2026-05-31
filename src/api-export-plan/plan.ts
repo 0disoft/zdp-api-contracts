@@ -1,0 +1,208 @@
+import { validateApiContracts } from '../api-contracts/validator';
+import type {
+  ApiContractDiagnostic,
+  ApiContracts,
+  ApiExportPlan,
+  ApiExportPlanOutput,
+  ApiExportPlanResult
+} from '../api-contracts/types';
+
+const ROUTE_CONTRACT_FILE = 'contracts/route-contract.yaml';
+const ERROR_ENVELOPE_FILE = 'contracts/error-envelope.yaml';
+const WEBHOOK_CONTRACT_FILE = 'contracts/webhook-contract.yaml';
+const SDK_GENERATION_INPUT_FILE = 'contracts/sdk-generation-input.yaml';
+
+const OPENAPI_EXTRA_ROUTE_METADATA = [
+  'operation_id',
+  'request_schema_ref',
+  'response_schema_ref'
+] as const;
+
+const TRACE_FIELDS = ['request_id', 'trace_id'] as const;
+const SDK_EXPORT_ERROR_DETAIL_FIELDS = ['details'] as const;
+
+export function buildApiExportPlan(
+  contracts: ApiContracts
+): ApiExportPlanResult {
+  const contractCheck = validateApiContracts(contracts);
+
+  if (!contractCheck.ok) {
+    return {
+      ok: false,
+      plan: null,
+      diagnostics: contractCheck.diagnostics
+    };
+  }
+
+  const diagnostics = validateExportPlanInputs(contracts);
+
+  if (diagnostics.length > 0) {
+    return {
+      ok: false,
+      plan: null,
+      diagnostics
+    };
+  }
+
+  const outputs: readonly ApiExportPlanOutput[] = [
+    {
+      kind: 'openapi',
+      sourceContracts: [ROUTE_CONTRACT_FILE, ERROR_ENVELOPE_FILE],
+      requiredMetadata: uniqueSorted([
+        ...contracts.route.requiredPerRoute,
+        ...OPENAPI_EXTRA_ROUTE_METADATA,
+        ...contracts.errorEnvelope.requiredFields
+      ]),
+      forbiddenValues: uniqueSorted([
+        ...contracts.route.forbiddenShapes,
+        ...contracts.errorEnvelope.forbiddenFields
+      ])
+    },
+    {
+      kind: 'sdk_generation_input',
+      sourceContracts: [...contracts.sdkGenerationInput.sourceContracts],
+      requiredMetadata: uniqueSorted([
+        ...contracts.sdkGenerationInput.requiredRouteMetadata,
+        ...contracts.sdkGenerationInput.requiredErrorMetadata,
+        ...contracts.sdkGenerationInput.requiredWebhookMetadata
+      ]),
+      forbiddenValues: [...contracts.sdkGenerationInput.forbiddenValues]
+    },
+    {
+      kind: 'webhook_schema',
+      sourceContracts: [WEBHOOK_CONTRACT_FILE],
+      requiredMetadata: [...contracts.webhook.requiredControls],
+      forbiddenValues: [...contracts.webhook.forbiddenControls]
+    },
+    {
+      kind: 'docs_contract',
+      sourceContracts: [
+        ROUTE_CONTRACT_FILE,
+        ERROR_ENVELOPE_FILE,
+        WEBHOOK_CONTRACT_FILE,
+        SDK_GENERATION_INPUT_FILE
+      ],
+      requiredMetadata: uniqueSorted([
+        'auth_required',
+        'permission_check',
+        'audit_event',
+        'idempotency',
+        ...TRACE_FIELDS
+      ]),
+      forbiddenValues: uniqueSorted([
+        ...contracts.route.forbiddenShapes,
+        ...contracts.errorEnvelope.forbiddenFields,
+        ...contracts.webhook.forbiddenControls,
+        ...contracts.sdkGenerationInput.forbiddenValues
+      ])
+    }
+  ];
+
+  const plan: ApiExportPlan = {
+    status: 'plan-only',
+    writesArtifacts: false,
+    publishesSchemas: false,
+    outputs,
+    sdkTargets: [...contracts.sdkGenerationInput.generationTargets],
+    traceFields: [...TRACE_FIELDS]
+  };
+
+  return {
+    ok: true,
+    plan,
+    diagnostics: []
+  };
+}
+
+function validateExportPlanInputs(
+  contracts: ApiContracts
+): readonly ApiContractDiagnostic[] {
+  return [
+    ...validateRequiredEntries({
+      actual: contracts.sdkGenerationInput.requiredRouteMetadata,
+      required: contracts.route.requiredPerRoute,
+      code: 'API_EXPORT_PLAN_ROUTE_METADATA_DRIFT',
+      file: SDK_GENERATION_INPUT_FILE,
+      path: 'sdk_generation_input.required_route_metadata',
+      label: 'SDK route metadata'
+    }),
+    ...validateRequiredEntries({
+      actual: contracts.sdkGenerationInput.requiredRouteMetadata,
+      required: OPENAPI_EXTRA_ROUTE_METADATA,
+      code: 'API_EXPORT_PLAN_OPENAPI_METADATA_MISSING',
+      file: SDK_GENERATION_INPUT_FILE,
+      path: 'sdk_generation_input.required_route_metadata',
+      label: 'OpenAPI route metadata'
+    }),
+    ...validateRequiredEntries({
+      actual: contracts.sdkGenerationInput.requiredErrorMetadata,
+      required: [
+        ...contracts.errorEnvelope.requiredFields,
+        ...contracts.errorEnvelope.optionalFields.filter((field) =>
+          !SDK_EXPORT_ERROR_DETAIL_FIELDS.includes(
+            field as (typeof SDK_EXPORT_ERROR_DETAIL_FIELDS)[number]
+          )
+        )
+      ],
+      code: 'API_EXPORT_PLAN_ERROR_METADATA_DRIFT',
+      file: SDK_GENERATION_INPUT_FILE,
+      path: 'sdk_generation_input.required_error_metadata',
+      label: 'SDK error metadata'
+    }),
+    ...validateRequiredEntries({
+      actual: contracts.sdkGenerationInput.requiredWebhookMetadata,
+      required: contracts.webhook.requiredControls,
+      code: 'API_EXPORT_PLAN_WEBHOOK_METADATA_DRIFT',
+      file: SDK_GENERATION_INPUT_FILE,
+      path: 'sdk_generation_input.required_webhook_metadata',
+      label: 'SDK webhook metadata'
+    }),
+    ...validateRequiredEntries({
+      actual: contracts.sdkGenerationInput.sourceContracts,
+      required: [ROUTE_CONTRACT_FILE, ERROR_ENVELOPE_FILE, WEBHOOK_CONTRACT_FILE],
+      code: 'API_EXPORT_PLAN_SOURCE_CONTRACT_MISSING',
+      file: SDK_GENERATION_INPUT_FILE,
+      path: 'sdk_generation_input.source_contracts',
+      label: 'SDK source contracts'
+    }),
+    ...validateRequiredEntries({
+      actual: contracts.sdkGenerationInput.forbiddenValues,
+      required: [
+        'raw_customer_payload',
+        'raw_provider_error',
+        'provider_secret',
+        'authorization_header',
+        'cookie_header',
+        'screen_component_payload'
+      ],
+      code: 'API_EXPORT_PLAN_FORBIDDEN_VALUE_MISSING',
+      file: SDK_GENERATION_INPUT_FILE,
+      path: 'sdk_generation_input.forbidden_values',
+      label: 'SDK forbidden values'
+    })
+  ];
+}
+
+function validateRequiredEntries(input: {
+  readonly actual: readonly string[];
+  readonly required: readonly string[];
+  readonly code: string;
+  readonly file: string;
+  readonly path: string;
+  readonly label: string;
+}): readonly ApiContractDiagnostic[] {
+  return input.required
+    .filter((entry) => !input.actual.includes(entry))
+    .map((entry) => ({
+      code: input.code,
+      file: input.file,
+      path: input.path,
+      message: `${input.label} must include \`${entry}\`.`
+    }));
+}
+
+function uniqueSorted(values: readonly string[]): readonly string[] {
+  return Array.from(new Set(values)).sort((left, right) =>
+    left.localeCompare(right)
+  );
+}

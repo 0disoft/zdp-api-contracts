@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.3.0
+
+### Added
+
+- OpenAPI/SDK/docs/webhook schema export dry-run plan을 추가했다.
+- `export:plan`이 route, error envelope, webhook, SDK generation input 사이의 metadata drift를 검사한다.
+
 ## 0.2.0
 
 ### Added

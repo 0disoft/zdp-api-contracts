@@ -56,6 +56,7 @@ cost:
     - contract-files
     - generated-sdk-inputs
     - api-contract-checks
+    - api-export-plan-checks
   per_action_budget: []
   provider_cost_dimensions: []
   gross_margin_floor_percent: null
@@ -112,6 +113,7 @@ audit:
     - api_contract.changed
     - api_contract.breaking_change_reviewed
     - api_contract.generator_input_changed
+    - api_contract.export_plan_checked
   sink: zdp-platform-observability
   retention_days: 365
   immutable: false
@@ -245,6 +247,7 @@ exit:
     - route, error, webhook, and SDK generation contract skeletons are reviewable
     - route, error, webhook, and SDK generation input contract skeletons are machine-validated
     - SDK generation input keeps language targets, route metadata, error metadata, webhook metadata, forbidden ownership, and forbidden values explicit before generator work starts
+    - OpenAPI, SDK, docs, and webhook schema export plan is reproducible without writing generated artifacts
     - contract repository validates without implementing backend handlers
   kill_criteria:
     - product handler shapes become the contract source
@@ -260,3 +263,4 @@ notes:
   - This MVP owns contract skeletons only; it does not expose a live API.
   - The local checker reads committed contract YAML only; it does not generate SDKs or run backend handlers.
   - SDK generation input is a handoff contract for downstream SDK repositories, not generated SDK source.
+  - Export plan is dry-run only and prevents permission, audit, idempotency, request_id, trace_id, and webhook metadata from splitting across generated surfaces.

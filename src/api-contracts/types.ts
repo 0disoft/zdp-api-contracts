@@ -46,3 +46,25 @@ export interface ApiContractValidationResult {
   readonly ok: boolean;
   readonly diagnostics: readonly ApiContractDiagnostic[];
 }
+
+export interface ApiExportPlanOutput {
+  readonly kind: 'openapi' | 'sdk_generation_input' | 'webhook_schema' | 'docs_contract';
+  readonly sourceContracts: readonly string[];
+  readonly requiredMetadata: readonly string[];
+  readonly forbiddenValues: readonly string[];
+}
+
+export interface ApiExportPlan {
+  readonly status: 'plan-only';
+  readonly writesArtifacts: false;
+  readonly publishesSchemas: false;
+  readonly outputs: readonly ApiExportPlanOutput[];
+  readonly sdkTargets: readonly string[];
+  readonly traceFields: readonly string[];
+}
+
+export interface ApiExportPlanResult {
+  readonly ok: boolean;
+  readonly plan: ApiExportPlan | null;
+  readonly diagnostics: readonly ApiContractDiagnostic[];
+}

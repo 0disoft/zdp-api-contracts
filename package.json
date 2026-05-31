@@ -1,12 +1,13 @@
 {
   "name": "zdp-api-contracts",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit && bun test && bun run contracts:check",
     "test": "bun test",
-    "contracts:check": "bun scripts/check-api-contracts.ts"
+    "contracts:check": "bun scripts/check-api-contracts.ts",
+    "export:plan": "bun scripts/plan-api-exports.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
