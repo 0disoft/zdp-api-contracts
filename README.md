@@ -24,6 +24,19 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 
 ## 검증
 
+API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelope.yaml`, `contracts/webhook-contract.yaml`을 읽는다. 이 검증기는 실제 API 서버나 SDK 생성기를 실행하지 않고, 계약 skeleton이 다음 경계를 잃지 않았는지만 확인한다.
+
+- route contract: resource/action/method/path, 권한 검사, 감사 이벤트, 멱등성, error code 기준
+- error envelope: `request_id`, `trace_id` 추적 필드와 stack trace/provider secret/customer private payload 금지 기준
+- webhook contract: signature verification, idempotency key, replay policy, dead-letter policy 기준
+
+이렇게 해두면 제품 handler나 화면 payload가 API 계약 원천인 척 들어오는 일을 초반에 막을 수 있다. 또한 에러 응답에 provider secret이나 customer private payload가 섞이는 사고, 웹훅이 중복 처리 방지 없이 열리는 사고를 checker 단계에서 먼저 잡는다.
+
+```bash
+bun run check
+bun run contracts:check
+```
+
 아키텍처 검증은 `zdp-architecture-linter`에서 이 저장소를 대상으로 실행한다.
 
 ```bash

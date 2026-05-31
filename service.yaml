@@ -55,6 +55,7 @@ cost:
   unit_metrics:
     - contract-files
     - generated-sdk-inputs
+    - api-contract-checks
   per_action_budget: []
   provider_cost_dimensions: []
   gross_margin_floor_percent: null
@@ -241,6 +242,7 @@ human_review_required:
 exit:
   success_criteria:
     - route, error, webhook, and SDK generation contract skeletons are reviewable
+    - route, error, and webhook contract skeletons are machine-validated
     - contract repository validates without implementing backend handlers
   kill_criteria:
     - product handler shapes become the contract source
@@ -254,3 +256,4 @@ exit:
 
 notes:
   - This MVP owns contract skeletons only; it does not expose a live API.
+  - The local checker reads committed contract YAML only; it does not generate SDKs or run backend handlers.
