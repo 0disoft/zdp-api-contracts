@@ -17,8 +17,11 @@
 
 - backend handler 구현
 - SDK runtime 구현
+- generated SDK source
 - 제품별 화면 payload
 - provider-specific API client
+- refresh token storage
+- final authorization decision
 - 실제 public endpoint 운영
 
 ## 분리 트리거

@@ -243,7 +243,8 @@ human_review_required:
 exit:
   success_criteria:
     - route, error, webhook, and SDK generation contract skeletons are reviewable
-    - route, error, and webhook contract skeletons are machine-validated
+    - route, error, webhook, and SDK generation input contract skeletons are machine-validated
+    - SDK generation input keeps language targets, route metadata, error metadata, webhook metadata, forbidden ownership, and forbidden values explicit before generator work starts
     - contract repository validates without implementing backend handlers
   kill_criteria:
     - product handler shapes become the contract source
@@ -258,3 +259,4 @@ exit:
 notes:
   - This MVP owns contract skeletons only; it does not expose a live API.
   - The local checker reads committed contract YAML only; it does not generate SDKs or run backend handlers.
+  - SDK generation input is a handoff contract for downstream SDK repositories, not generated SDK source.

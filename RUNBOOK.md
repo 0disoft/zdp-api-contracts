@@ -9,8 +9,11 @@ This repository owns API contract sources only. It must not become the live API 
 - Validate this repository with `zdp-architecture-linter`.
 - Review `contracts/` changes together with `service.yaml`.
 - Keep breaking contract changes paired with `CHANGELOG.md` and migration notes.
+- Treat `contracts/sdk-generation-input.yaml` as the SDK handoff contract, not as generated SDK output.
 
 The checker is intentionally local and provider-neutral. It reads committed YAML and does not start a backend server, publish OpenAPI, generate SDKs, or call external providers.
+
+If SDK generation input validation fails, downstream SDK refresh must stop. The useful effect is simple: SDKs keep receiving route metadata, error trace fields, webhook replay policy, and forbidden sensitive values from one source instead of each SDK inventing its own interpretation.
 
 ## Failure Response
 

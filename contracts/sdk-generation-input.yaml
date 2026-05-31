@@ -1,0 +1,52 @@
+sdk_generation_input:
+  status: skeleton
+  source_contracts:
+    - contracts/route-contract.yaml
+    - contracts/error-envelope.yaml
+    - contracts/webhook-contract.yaml
+  generation_targets:
+    - typescript
+    - dart
+    - rust
+  required_route_metadata:
+    - operation_id
+    - resource
+    - action
+    - method
+    - path
+    - request_schema_ref
+    - response_schema_ref
+    - auth_required
+    - permission_check
+    - audit_event
+    - idempotency
+    - error_codes
+  required_error_metadata:
+    - code
+    - message
+    - request_id
+    - trace_id
+    - retry_after_seconds
+    - documentation_url
+  required_webhook_metadata:
+    - event_id
+    - event_type
+    - schema_version
+    - signature_verification
+    - idempotency_key
+    - replay_policy
+    - dead_letter_policy
+  forbidden_ownership:
+    - generated_sdk_source
+    - sdk_runtime_implementation
+    - product_business_logic
+    - refresh_token_storage
+    - final_authorization_decision
+    - provider_credential_storage
+  forbidden_values:
+    - raw_customer_payload
+    - raw_provider_error
+    - provider_secret
+    - authorization_header
+    - cookie_header
+    - screen_component_payload

@@ -2,6 +2,7 @@ export interface ApiContracts {
   readonly route: RouteContract;
   readonly errorEnvelope: ErrorEnvelopeContract;
   readonly webhook: WebhookContract;
+  readonly sdkGenerationInput: SdkGenerationInputContract;
 }
 
 export interface RouteContract {
@@ -21,6 +22,17 @@ export interface WebhookContract {
   readonly status: string;
   readonly requiredControls: readonly string[];
   readonly forbiddenControls: readonly string[];
+}
+
+export interface SdkGenerationInputContract {
+  readonly status: string;
+  readonly sourceContracts: readonly string[];
+  readonly generationTargets: readonly string[];
+  readonly requiredRouteMetadata: readonly string[];
+  readonly requiredErrorMetadata: readonly string[];
+  readonly requiredWebhookMetadata: readonly string[];
+  readonly forbiddenOwnership: readonly string[];
+  readonly forbiddenValues: readonly string[];
 }
 
 export interface ApiContractDiagnostic {
