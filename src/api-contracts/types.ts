@@ -3,11 +3,14 @@ export interface ApiContracts {
   readonly errorEnvelope: ErrorEnvelopeContract;
   readonly webhook: WebhookContract;
   readonly sdkGenerationInput: SdkGenerationInputContract;
+  readonly apiCatalog: ApiCatalogContract;
 }
 
 export interface RouteContract {
   readonly status: string;
   readonly requiredPerRoute: readonly string[];
+  readonly allowedMethods: readonly string[];
+  readonly allowedSuccessStatuses: readonly number[];
   readonly forbiddenShapes: readonly string[];
 }
 
@@ -28,11 +31,36 @@ export interface SdkGenerationInputContract {
   readonly status: string;
   readonly sourceContracts: readonly string[];
   readonly generationTargets: readonly string[];
+  readonly allowedGenerationTargets: readonly string[];
   readonly requiredRouteMetadata: readonly string[];
   readonly requiredErrorMetadata: readonly string[];
   readonly requiredWebhookMetadata: readonly string[];
   readonly forbiddenOwnership: readonly string[];
   readonly forbiddenValues: readonly string[];
+}
+
+export interface ApiCatalogContract {
+  readonly status: string;
+  readonly routeDefinitionRequiredFields: readonly string[];
+  readonly forbiddenValues: readonly string[];
+  readonly routes: readonly ApiRouteDefinition[];
+}
+
+export interface ApiRouteDefinition {
+  readonly operationId: string;
+  readonly serviceId: string;
+  readonly resource: string;
+  readonly action: string;
+  readonly method: string;
+  readonly path: string;
+  readonly successStatuses: readonly number[];
+  readonly requestSchemaRef: string;
+  readonly responseSchemaRef: string;
+  readonly authRequired: boolean;
+  readonly permissionCheck: string;
+  readonly auditEvent: string;
+  readonly idempotency: string;
+  readonly errorCodes: readonly string[];
 }
 
 export interface ApiContractDiagnostic {

@@ -9,12 +9,17 @@ const REQUIRED_ROUTE_FIELDS = [
   'action',
   'method',
   'path',
+  'success_statuses',
   'auth_required',
   'permission_check',
   'audit_event',
   'idempotency',
   'error_codes'
 ] as const;
+
+const ALLOWED_ROUTE_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
+
+const ALLOWED_SUCCESS_STATUSES = [200, 201, 202, 204] as const;
 
 const FORBIDDEN_ROUTE_SHAPES = [
   'screen_component_payload',
@@ -55,14 +60,12 @@ const FORBIDDEN_WEBHOOK_CONTROLS = [
 const REQUIRED_SDK_SOURCE_CONTRACTS = [
   'contracts/route-contract.yaml',
   'contracts/error-envelope.yaml',
-  'contracts/webhook-contract.yaml'
+  'contracts/webhook-contract.yaml',
+  'contracts/sdk-generation-input.yaml',
+  'contracts/apis/catalog.yaml'
 ] as const;
 
-const REQUIRED_SDK_GENERATION_TARGETS = [
-  'typescript',
-  'dart',
-  'rust'
-] as const;
+const REQUIRED_SDK_GENERATION_TARGETS = ['typescript', 'dart', 'rust'] as const;
 
 const REQUIRED_SDK_ROUTE_METADATA = [
   'operation_id',
@@ -76,6 +79,7 @@ const REQUIRED_SDK_ROUTE_METADATA = [
   'permission_check',
   'audit_event',
   'idempotency',
+  'success_statuses',
   'error_codes'
 ] as const;
 
@@ -116,6 +120,27 @@ const FORBIDDEN_SDK_VALUES = [
   'screen_component_payload'
 ] as const;
 
+const API_CATALOG_REQUIRED_ROUTE_FIELDS = [
+  'operation_id',
+  'service_id',
+  'resource',
+  'action',
+  'method',
+  'path',
+  'success_statuses',
+  'request_schema_ref',
+  'response_schema_ref',
+  'auth_required',
+  'permission_check',
+  'audit_event',
+  'idempotency',
+  'error_codes'
+] as const;
+
+const API_CATALOG_EMPTY_STATUS = 'empty-until-service-routes-exist';
+
+const SDK_TARGET_PATTERN = /^[a-z][a-z0-9_-]*$/;
+
 export function validateApiContracts(
   contracts: ApiContracts
 ): ApiContractValidationResult {
@@ -137,6 +162,50 @@ export function validateApiContracts(
         file: 'contracts/route-contract.yaml',
         path: 'route_contract.required_per_route',
         message: `Route contract must require \`${field}\` for every route.`
+      });
+    }
+  }
+
+  for (const method of ALLOWED_ROUTE_METHODS) {
+    if (!contracts.route.allowedMethods.includes(method)) {
+      diagnostics.push({
+        code: 'API_ROUTE_ALLOWED_METHOD_MISSING',
+        file: 'contracts/route-contract.yaml',
+        path: 'route_contract.allowed_methods',
+        message: `Route contract must allow standard method \`${method}\`.`
+      });
+    }
+  }
+
+  for (const method of contracts.route.allowedMethods) {
+    if (!isAllowedRouteMethod(method)) {
+      diagnostics.push({
+        code: 'API_ROUTE_ALLOWED_METHOD_INVALID',
+        file: 'contracts/route-contract.yaml',
+        path: 'route_contract.allowed_methods',
+        message: `Route contract must not allow non-standard method \`${method}\`.`
+      });
+    }
+  }
+
+  for (const status of ALLOWED_SUCCESS_STATUSES) {
+    if (!contracts.route.allowedSuccessStatuses.includes(status)) {
+      diagnostics.push({
+        code: 'API_ROUTE_ALLOWED_SUCCESS_STATUS_MISSING',
+        file: 'contracts/route-contract.yaml',
+        path: 'route_contract.allowed_success_statuses',
+        message: `Route contract must allow success status \`${status}\`.`
+      });
+    }
+  }
+
+  for (const status of contracts.route.allowedSuccessStatuses) {
+    if (!isAllowedSuccessStatus(status)) {
+      diagnostics.push({
+        code: 'API_ROUTE_ALLOWED_SUCCESS_STATUS_INVALID',
+        file: 'contracts/route-contract.yaml',
+        path: 'route_contract.allowed_success_statuses',
+        message: `Route contract must not allow ambiguous success status \`${status}\`.`
       });
     }
   }
@@ -235,13 +304,35 @@ export function validateApiContracts(
     }
   }
 
+  for (const target of contracts.sdkGenerationInput.allowedGenerationTargets) {
+    if (!SDK_TARGET_PATTERN.test(target)) {
+      diagnostics.push({
+        code: 'API_SDK_ALLOWED_GENERATION_TARGET_INVALID',
+        file: 'contracts/sdk-generation-input.yaml',
+        path: 'sdk_generation_input.allowed_generation_targets',
+        message: `SDK generation target \`${target}\` must be a stable lowercase identifier.`
+      });
+    }
+  }
+
   for (const target of REQUIRED_SDK_GENERATION_TARGETS) {
     if (!contracts.sdkGenerationInput.generationTargets.includes(target)) {
       diagnostics.push({
         code: 'API_SDK_GENERATION_TARGET_MISSING',
         file: 'contracts/sdk-generation-input.yaml',
         path: 'sdk_generation_input.generation_targets',
-        message: `SDK generation input must preserve the \`${target}\` target.`
+        message: `SDK generation input must keep required target \`${target}\` active.`
+      });
+    }
+  }
+
+  for (const target of contracts.sdkGenerationInput.generationTargets) {
+    if (!contracts.sdkGenerationInput.allowedGenerationTargets.includes(target)) {
+      diagnostics.push({
+        code: 'API_SDK_GENERATION_TARGET_INVALID',
+        file: 'contracts/sdk-generation-input.yaml',
+        path: 'sdk_generation_input.generation_targets',
+        message: `SDK generation target \`${target}\` must be declared in allowed_generation_targets.`
       });
     }
   }
@@ -303,8 +394,114 @@ export function validateApiContracts(
     }
   }
 
+  if (
+    contracts.apiCatalog.routes.length === 0 &&
+    contracts.apiCatalog.status !== API_CATALOG_EMPTY_STATUS
+  ) {
+    diagnostics.push({
+      code: 'API_CATALOG_STATUS_INVALID',
+      file: 'contracts/apis/catalog.yaml',
+      path: 'api_catalog.status',
+      message:
+        'API catalog must stay empty-until-service-routes-exist while routes is empty.'
+    });
+  }
+
+  for (const field of API_CATALOG_REQUIRED_ROUTE_FIELDS) {
+    if (!contracts.apiCatalog.routeDefinitionRequiredFields.includes(field)) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_FIELD_MISSING',
+        file: 'contracts/apis/catalog.yaml',
+        path: 'api_catalog.route_definition_required_fields',
+        message: `API catalog route definitions must require \`${field}\`.`
+      });
+    }
+  }
+
+  for (const field of contracts.route.requiredPerRoute) {
+    if (!contracts.apiCatalog.routeDefinitionRequiredFields.includes(field)) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_CONTRACT_FIELD_MISSING',
+        file: 'contracts/apis/catalog.yaml',
+        path: 'api_catalog.route_definition_required_fields',
+        message: `API catalog route definitions must mirror route contract field \`${field}\`.`
+      });
+    }
+  }
+
+  for (const metadata of contracts.sdkGenerationInput.requiredRouteMetadata) {
+    if (!contracts.apiCatalog.routeDefinitionRequiredFields.includes(metadata)) {
+      diagnostics.push({
+        code: 'API_CATALOG_SDK_ROUTE_METADATA_MISSING',
+        file: 'contracts/apis/catalog.yaml',
+        path: 'api_catalog.route_definition_required_fields',
+        message: `API catalog route definitions must carry SDK route metadata \`${metadata}\`.`
+      });
+    }
+  }
+
+  for (const value of contracts.sdkGenerationInput.forbiddenValues) {
+    if (!contracts.apiCatalog.forbiddenValues.includes(value)) {
+      diagnostics.push({
+        code: 'API_CATALOG_FORBIDDEN_VALUE_MISSING',
+        file: 'contracts/apis/catalog.yaml',
+        path: 'api_catalog.forbidden_values',
+        message: `API catalog must forbid \`${value}\`.`
+      });
+    }
+  }
+
+  contracts.apiCatalog.routes.forEach((route, index) => {
+    const routePath = `routes[${index}]`;
+
+    if (!contracts.route.allowedMethods.includes(route.method)) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_METHOD_INVALID',
+        file: 'contracts/apis/catalog.yaml',
+        path: `${routePath}.method`,
+        message: `API route \`${route.operationId}\` uses unsupported method \`${route.method}\`.`
+      });
+    }
+
+    if (!route.path.startsWith('/')) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_PATH_INVALID',
+        file: 'contracts/apis/catalog.yaml',
+        path: `${routePath}.path`,
+        message: `API route \`${route.operationId}\` path must start with \`/\`.`
+      });
+    }
+
+    for (const status of route.successStatuses) {
+      if (!contracts.route.allowedSuccessStatuses.includes(status)) {
+        diagnostics.push({
+          code: 'API_CATALOG_ROUTE_SUCCESS_STATUS_INVALID',
+          file: 'contracts/apis/catalog.yaml',
+          path: `${routePath}.success_statuses`,
+          message: `API route \`${route.operationId}\` uses unsupported success status \`${status}\`.`
+        });
+      }
+    }
+  });
+
   return {
     ok: diagnostics.length === 0,
     diagnostics
   };
+}
+
+function isAllowedRouteMethod(
+  method: string
+): method is (typeof ALLOWED_ROUTE_METHODS)[number] {
+  return ALLOWED_ROUTE_METHODS.includes(
+    method as (typeof ALLOWED_ROUTE_METHODS)[number]
+  );
+}
+
+function isAllowedSuccessStatus(
+  status: number
+): status is (typeof ALLOWED_SUCCESS_STATUSES)[number] {
+  return ALLOWED_SUCCESS_STATUSES.includes(
+    status as (typeof ALLOWED_SUCCESS_STATUSES)[number]
+  );
 }

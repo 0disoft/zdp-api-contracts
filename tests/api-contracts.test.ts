@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+  ApiContractLoadError,
+  loadApiContracts,
+  parseApiCatalogContract,
   parseErrorEnvelopeContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
@@ -144,6 +148,78 @@ describe('api contract checker', () => {
     );
   });
 
+  it('fails when SDK generation input selects a target outside the allowed pool', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      sdkGenerationInput: {
+        ...contracts.sdkGenerationInput,
+        generationTargets: [
+          ...contracts.sdkGenerationInput.generationTargets,
+          'php'
+        ]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_SDK_GENERATION_TARGET_INVALID'
+    );
+  });
+
+  it('fails when route contracts drop success status metadata', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      route: {
+        ...contracts.route,
+        requiredPerRoute: contracts.route.requiredPerRoute.filter(
+          (field) => field !== 'success_statuses'
+        )
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_ROUTE_REQUIRED_FIELD_MISSING'
+    );
+  });
+
+  it('fails when route contracts allow unsupported HTTP methods', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      route: {
+        ...contracts.route,
+        allowedMethods: [...contracts.route.allowedMethods, 'TRACE']
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_ROUTE_ALLOWED_METHOD_INVALID'
+    );
+  });
+
+  it('fails when route contracts allow ambiguous success statuses', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      route: {
+        ...contracts.route,
+        allowedSuccessStatuses: [
+          ...contracts.route.allowedSuccessStatuses,
+          299
+        ]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_ROUTE_ALLOWED_SUCCESS_STATUS_INVALID'
+    );
+  });
+
   it('fails when SDK generation input drops route idempotency metadata', () => {
     const contracts = loadCommittedContracts();
     const result = validateApiContracts({
@@ -199,6 +275,73 @@ describe('api contract checker', () => {
       'API_SDK_FORBIDDEN_VALUE_MISSING'
     );
   });
+
+  it('fails when an API catalog route uses unsupported method or status', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: [
+          {
+            operationId: 'create_lead',
+            serviceId: 'zdp-leads',
+            resource: 'lead',
+            action: 'create',
+            method: 'TRACE',
+            path: 'leads',
+            successStatuses: [299],
+            requestSchemaRef: 'schemas/lead-create-request.yaml',
+            responseSchemaRef: 'schemas/lead-response.yaml',
+            authRequired: true,
+            permissionCheck: 'lead.create',
+            auditEvent: 'lead.created',
+            idempotency: 'required',
+            errorCodes: ['validation_failed']
+          }
+        ]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_METHOD_INVALID'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_SUCCESS_STATUS_INVALID'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_PATH_INVALID'
+    );
+  });
+
+  it('accumulates load errors across contract files', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'zdp-api-contracts-'));
+    const contractsRoot = join(root, 'contracts');
+    const apiRoot = join(contractsRoot, 'apis');
+
+    mkdirSync(apiRoot, { recursive: true });
+    writeFileSync(join(contractsRoot, 'route-contract.yaml'), 'route_contract:\n');
+    writeFileSync(
+      join(contractsRoot, 'error-envelope.yaml'),
+      'error_envelope:\n  schema_version: one\n'
+    );
+    writeFileSync(join(contractsRoot, 'webhook-contract.yaml'), 'webhook_contract:\n');
+    writeFileSync(
+      join(contractsRoot, 'sdk-generation-input.yaml'),
+      'sdk_generation_input:\n'
+    );
+    writeFileSync(join(apiRoot, 'catalog.yaml'), 'api_catalog:\n');
+
+    await expect(loadApiContracts(root)).rejects.toThrow(ApiContractLoadError);
+
+    try {
+      await loadApiContracts(root);
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiContractLoadError);
+      expect((error as ApiContractLoadError).failures.length).toBeGreaterThan(1);
+    }
+  });
 });
 
 function loadCommittedContracts(): ApiContracts {
@@ -215,6 +358,12 @@ function loadCommittedContracts(): ApiContracts {
     sdkGenerationInput: parseSdkGenerationInputContract(
       readFileSync(
         join(process.cwd(), 'contracts', 'sdk-generation-input.yaml'),
+        'utf8'
+      )
+    ),
+    apiCatalog: parseApiCatalogContract(
+      readFileSync(
+        join(process.cwd(), 'contracts', 'apis', 'catalog.yaml'),
         'utf8'
       )
     )

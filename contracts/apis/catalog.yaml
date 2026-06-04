@@ -1,0 +1,26 @@
+api_catalog:
+  status: empty-until-service-routes-exist
+  route_definition_required_fields:
+    - operation_id
+    - service_id
+    - resource
+    - action
+    - method
+    - path
+    - success_statuses
+    - request_schema_ref
+    - response_schema_ref
+    - auth_required
+    - permission_check
+    - audit_event
+    - idempotency
+    - error_codes
+  forbidden_values:
+    - raw_customer_payload
+    - raw_provider_error
+    - provider_secret
+    - authorization_header
+    - cookie_header
+    - screen_component_payload
+
+routes: []

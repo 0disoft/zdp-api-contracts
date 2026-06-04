@@ -9,7 +9,19 @@ route_contract:
     - permission_check
     - audit_event
     - idempotency
+    - success_statuses
     - error_codes
+  allowed_methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+  allowed_success_statuses:
+    - 200
+    - 201
+    - 202
+    - 204
   forbidden_shapes:
     - screen_component_payload
     - provider_specific_id_as_primary_id

@@ -4,10 +4,19 @@ sdk_generation_input:
     - contracts/route-contract.yaml
     - contracts/error-envelope.yaml
     - contracts/webhook-contract.yaml
+    - contracts/sdk-generation-input.yaml
+    - contracts/apis/catalog.yaml
   generation_targets:
     - typescript
     - dart
     - rust
+  allowed_generation_targets:
+    - typescript
+    - dart
+    - rust
+    - swift
+    - kotlin
+    - go
   required_route_metadata:
     - operation_id
     - resource
@@ -20,6 +29,7 @@ sdk_generation_input:
     - permission_check
     - audit_event
     - idempotency
+    - success_statuses
     - error_codes
   required_error_metadata:
     - code

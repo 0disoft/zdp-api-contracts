@@ -11,6 +11,7 @@ const ROUTE_CONTRACT_FILE = 'contracts/route-contract.yaml';
 const ERROR_ENVELOPE_FILE = 'contracts/error-envelope.yaml';
 const WEBHOOK_CONTRACT_FILE = 'contracts/webhook-contract.yaml';
 const SDK_GENERATION_INPUT_FILE = 'contracts/sdk-generation-input.yaml';
+const API_CATALOG_FILE = 'contracts/apis/catalog.yaml';
 
 const OPENAPI_EXTRA_ROUTE_METADATA = [
   'operation_id',
@@ -47,7 +48,11 @@ export function buildApiExportPlan(
   const outputs: readonly ApiExportPlanOutput[] = [
     {
       kind: 'openapi',
-      sourceContracts: [ROUTE_CONTRACT_FILE, ERROR_ENVELOPE_FILE],
+      sourceContracts: [
+        ROUTE_CONTRACT_FILE,
+        ERROR_ENVELOPE_FILE,
+        API_CATALOG_FILE
+      ],
       requiredMetadata: uniqueSorted([
         ...contracts.route.requiredPerRoute,
         ...OPENAPI_EXTRA_ROUTE_METADATA,
@@ -80,13 +85,15 @@ export function buildApiExportPlan(
         ROUTE_CONTRACT_FILE,
         ERROR_ENVELOPE_FILE,
         WEBHOOK_CONTRACT_FILE,
-        SDK_GENERATION_INPUT_FILE
+        SDK_GENERATION_INPUT_FILE,
+        API_CATALOG_FILE
       ],
       requiredMetadata: uniqueSorted([
         'auth_required',
         'permission_check',
         'audit_event',
         'idempotency',
+        'success_statuses',
         ...TRACE_FIELDS
       ]),
       forbiddenValues: uniqueSorted([
@@ -135,6 +142,17 @@ function validateExportPlanInputs(
       label: 'OpenAPI route metadata'
     }),
     ...validateRequiredEntries({
+      actual: contracts.apiCatalog.routeDefinitionRequiredFields,
+      required: [
+        ...contracts.route.requiredPerRoute,
+        ...contracts.sdkGenerationInput.requiredRouteMetadata
+      ],
+      code: 'API_EXPORT_PLAN_CATALOG_METADATA_DRIFT',
+      file: API_CATALOG_FILE,
+      path: 'api_catalog.route_definition_required_fields',
+      label: 'API catalog route metadata'
+    }),
+    ...validateRequiredEntries({
       actual: contracts.sdkGenerationInput.requiredErrorMetadata,
       required: [
         ...contracts.errorEnvelope.requiredFields,
@@ -159,11 +177,24 @@ function validateExportPlanInputs(
     }),
     ...validateRequiredEntries({
       actual: contracts.sdkGenerationInput.sourceContracts,
-      required: [ROUTE_CONTRACT_FILE, ERROR_ENVELOPE_FILE, WEBHOOK_CONTRACT_FILE],
+      required: [
+        ROUTE_CONTRACT_FILE,
+        ERROR_ENVELOPE_FILE,
+        WEBHOOK_CONTRACT_FILE,
+        API_CATALOG_FILE
+      ],
       code: 'API_EXPORT_PLAN_SOURCE_CONTRACT_MISSING',
       file: SDK_GENERATION_INPUT_FILE,
       path: 'sdk_generation_input.source_contracts',
       label: 'SDK source contracts'
+    }),
+    ...validateRequiredEntries({
+      actual: contracts.apiCatalog.forbiddenValues,
+      required: contracts.sdkGenerationInput.forbiddenValues,
+      code: 'API_EXPORT_PLAN_CATALOG_FORBIDDEN_VALUE_DRIFT',
+      file: API_CATALOG_FILE,
+      path: 'api_catalog.forbidden_values',
+      label: 'API catalog forbidden values'
     }),
     ...validateRequiredEntries({
       actual: contracts.sdkGenerationInput.forbiddenValues,

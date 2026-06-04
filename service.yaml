@@ -63,6 +63,37 @@ cost:
   automatic_actions:
     - block generated SDK refresh when contract validation fails
 
+monetization:
+  model: none
+  primary_unit: none
+  credit_policy:
+    enabled: false
+    wallet_scope: common_zdp_wallet
+    ledger_owner: zdp-money-ledger
+    per_feature_price_catalog_required: false
+    lot_types: []
+    deduction_priority: []
+    lot_expiry_policy: []
+    subscription_credit_bundles_allowed: false
+    auto_recharge_allowed: false
+    low_balance_threshold: null
+    recharge_limit: null
+  subscription_policy:
+    allowed: false
+    scope: none
+    all_services_unlimited_bundle_allowed: false
+  ad_policy:
+    ads_supported: false
+    credit_ad_removal_allowed: false
+    ad_removal_scope: none
+    ad_removal_period_days: null
+    auto_renew_with_credits_allowed: false
+  refund_policy:
+    provider_capability_check_required: false
+    provider_partial_refund_required: false
+    internal_partial_adjustment_supported: false
+    used_credit_refund_policy: null
+
 data:
   owner_domain: architecture
   classes: []

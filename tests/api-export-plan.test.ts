@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  parseApiCatalogContract,
   parseErrorEnvelopeContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
@@ -33,8 +34,20 @@ describe('api export plan', () => {
       result.plan?.outputs.find((output) => output.kind === 'openapi')?.requiredMetadata
     ).toContain('operation_id');
     expect(
+      result.plan?.outputs.find((output) => output.kind === 'openapi')
+        ?.requiredMetadata
+    ).toContain('success_statuses');
+    expect(
+      result.plan?.outputs.find((output) => output.kind === 'openapi')
+        ?.sourceContracts
+    ).toContain('contracts/apis/catalog.yaml');
+    expect(
       result.plan?.outputs.find((output) => output.kind === 'docs_contract')?.forbiddenValues
     ).toContain('authorization_header');
+    expect(
+      result.plan?.outputs.find((output) => output.kind === 'docs_contract')
+        ?.requiredMetadata
+    ).toContain('success_statuses');
   });
 
   it('fails when SDK input no longer mirrors route metadata', () => {
@@ -45,6 +58,13 @@ describe('api export plan', () => {
         ...contracts.route,
         requiredPerRoute: [
           ...contracts.route.requiredPerRoute,
+          'tenant_boundary'
+        ]
+      },
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routeDefinitionRequiredFields: [
+          ...contracts.apiCatalog.routeDefinitionRequiredFields,
           'tenant_boundary'
         ]
       }
@@ -75,6 +95,25 @@ describe('api export plan', () => {
       'API_EXPORT_PLAN_ERROR_METADATA_DRIFT'
     );
   });
+
+  it('fails when API catalog no longer mirrors SDK route metadata', () => {
+    const contracts = loadCommittedContracts();
+    const result = buildApiExportPlan({
+      ...contracts,
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routeDefinitionRequiredFields:
+          contracts.apiCatalog.routeDefinitionRequiredFields.filter(
+            (field) => field !== 'success_statuses'
+          )
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_FIELD_MISSING'
+    );
+  });
 });
 
 function loadCommittedContracts(): ApiContracts {
@@ -91,6 +130,12 @@ function loadCommittedContracts(): ApiContracts {
     sdkGenerationInput: parseSdkGenerationInputContract(
       readFileSync(
         join(process.cwd(), 'contracts', 'sdk-generation-input.yaml'),
+        'utf8'
+      )
+    ),
+    apiCatalog: parseApiCatalogContract(
+      readFileSync(
+        join(process.cwd(), 'contracts', 'apis', 'catalog.yaml'),
         'utf8'
       )
     )
