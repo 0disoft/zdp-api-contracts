@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.5.0
+
+### Added
+
+- `core-api` auth/session route catalog를 추가해 registration, session issue/refresh/revoke, recovery, passkey challenge/assertion, OAuth callback 계약을 live handler 구현 전에 고정했다.
+- route contract와 SDK generation input에 owner boundary, tenant boundary, request/trace id propagation, session effect, credential policy metadata를 추가했다.
+
 ## 0.4.1
 
 ### Changed

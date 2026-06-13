@@ -5,20 +5,24 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 ## 현재 범위
 
 - route contract와 OpenAPI skeleton
-- 실제 service route 정의를 받을 API catalog skeleton
+- `core-api` auth/session route catalog
+- 실제 service route 정의를 받을 API catalog
 - webhook schema와 event schema handoff 기준
 - 표준 error envelope 기준
 - 권한, 감사, 멱등성, 비용 계량 hook 선언 기준
 - SDK 생성 입력의 소유 경계
 - OpenAPI/SDK/docs/webhook schema export dry-run plan
+- auth/session route 승격에 필요한 session issue, refresh, logout/revocation, passkey challenge, OAuth callback 계약
 
 ## 현재 제외
 
 - 실제 public API endpoint
 - backend handler 구현
+- 실제 로그인 서버 구현
 - SDK 코드 생성 결과물
 - 제품별 화면 payload
 - 결제, 원장, 개인정보, AI 데이터 접근 로직
+- refresh token plaintext, provider secret, authorization header, cookie header를 request/response payload로 싣는 방식
 
 ## 계약
 
@@ -28,11 +32,13 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 
 API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelope.yaml`, `contracts/webhook-contract.yaml`, `contracts/sdk-generation-input.yaml`, `contracts/apis/catalog.yaml`을 읽는다. 이 검증기는 실제 API 서버나 SDK 생성기를 실행하지 않고, 계약 skeleton과 route catalog가 다음 경계를 잃지 않았는지만 확인한다.
 
-- route contract: resource/action/method/path, 성공 status code, 권한 검사, 감사 이벤트, 멱등성, error code 기준
+- route contract: resource/action/method/path, 성공 status code, 권한 검사, 감사 이벤트, 멱등성, owner boundary, tenant boundary, request/trace id, session effect, credential policy, error code 기준
 - error envelope: `request_id`, `trace_id` 추적 필드와 stack trace/provider secret/customer private payload 금지 기준
 - webhook contract: signature verification, idempotency key, replay policy, dead-letter policy 기준
 - API catalog: 실제 route 정의가 들어올 때 `operation_id`, `service_id`, schema ref, method, success status가 표준 계약과 맞는지 확인하는 자리
 - SDK generation input: 활성 SDK target과 허용 target pool, route/error/webhook metadata, SDK가 소유하면 안 되는 runtime/token/final authorization 경계
+
+첫 route catalog는 `core-api` auth/session 계약이다. 이 계약은 `/v1/auth/registrations`, `/v1/auth/sessions`, `/v1/auth/sessions/refresh`, `/v1/auth/sessions/current`, `/v1/auth/recovery/requests`, `/v1/auth/passkey/challenges`, `/v1/auth/passkey/assertions`, `/v1/auth/oauth/callbacks/{provider}`의 method, schema ref, session effect, audit event, idempotency, credential policy를 고정한다. 이 경로들은 live endpoint가 아니라 `zdp-web-apps`의 auth route 승격 전제 조건이다.
 
 이렇게 해두면 제품 handler나 화면 payload가 API 계약 원천인 척 들어오는 일을 초반에 막을 수 있다. 또한 에러 응답에 provider secret이나 customer private payload가 섞이는 사고, 웹훅이 중복 처리 방지 없이 열리는 사고를 checker 단계에서 먼저 잡는다.
 

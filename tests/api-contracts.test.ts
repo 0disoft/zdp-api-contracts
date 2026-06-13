@@ -22,6 +22,36 @@ describe('api contract checker', () => {
     expect(result.ok).toBe(true);
   });
 
+  it('keeps core auth session routes explicit in the API catalog', () => {
+    const contracts = loadCommittedContracts();
+
+    expect(contracts.apiCatalog.status).toBe('route-catalog-active');
+    expect(contracts.apiCatalog.routes.map((route) => route.operationId)).toEqual([
+      'core.auth.registrations.create',
+      'core.auth.sessions.create',
+      'core.auth.sessions.refresh',
+      'core.auth.sessions.revoke_current',
+      'core.auth.recovery_requests.create',
+      'core.auth.passkey_challenges.create',
+      'core.auth.passkey_assertions.verify',
+      'core.auth.oauth_callbacks.accept'
+    ]);
+    expect(
+      contracts.apiCatalog.routes.every(
+        (route) =>
+          route.serviceId === 'core-api' &&
+          route.ownerBoundary === 'identity' &&
+          route.requestIdRequired &&
+          route.traceIdRequired &&
+          route.credentialPolicy.includes('no_refresh_token_plaintext')
+      )
+    ).toBe(true);
+    expect(
+      contracts.apiCatalog.routes.filter((route) => route.sessionEffect === 'issue')
+        .length
+    ).toBe(3);
+  });
+
   it('fails when route contracts stop requiring authorization hooks', () => {
     const contracts = loadCommittedContracts();
     const result = validateApiContracts({
@@ -297,6 +327,12 @@ describe('api contract checker', () => {
             permissionCheck: 'lead.create',
             auditEvent: 'lead.created',
             idempotency: 'required',
+            ownerBoundary: 'identity',
+            tenantBoundary: 'organization',
+            requestIdRequired: false,
+            traceIdRequired: false,
+            sessionEffect: 'invalid',
+            credentialPolicy: 'allows_refresh_token_plaintext',
             errorCodes: ['validation_failed']
           }
         ]
@@ -312,6 +348,18 @@ describe('api contract checker', () => {
     );
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
       'API_CATALOG_ROUTE_PATH_INVALID'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_REQUEST_ID_NOT_REQUIRED'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_TRACE_ID_NOT_REQUIRED'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_SESSION_EFFECT_INVALID'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_CREDENTIAL_POLICY_INCOMPLETE'
     );
   });
 

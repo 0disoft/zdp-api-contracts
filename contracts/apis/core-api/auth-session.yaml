@@ -1,0 +1,128 @@
+schema_bundle:
+  service_id: core-api
+  owner_boundary: identity
+  status: contract-only
+  purpose: describe auth, session, passkey, recovery, and OAuth callback payload families before live handlers or generated OpenAPI exist
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+      - idempotency_key
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - customer_private_payload
+  schemas:
+    - id: AuthRegistrationCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - email_or_external_identity
+        - locale
+        - terms_consent_ref
+    - id: AuthRegistrationCreateResponse
+      kind: response
+      session_effect: none
+      required_fields:
+        - registration_request_id
+        - next_step
+    - id: AuthSessionCreateRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: verifier_input_only_never_echo
+      required_fields:
+        - login_identifier
+        - verifier
+    - id: AuthSessionCreateResponse
+      kind: response
+      session_effect: issue
+      required_fields:
+        - session_ref
+        - actor_ref
+        - tenant_ref
+        - expires_at
+    - id: AuthSessionRefreshRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: session_rotation_proof_only_never_echo
+      required_fields:
+        - session_ref
+        - rotation_proof
+    - id: AuthSessionRefreshResponse
+      kind: response
+      session_effect: refresh
+      required_fields:
+        - session_ref
+        - expires_at
+    - id: AuthSessionRevokeCurrentRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - session_ref
+    - id: AuthSessionRevokeCurrentResponse
+      kind: response
+      session_effect: revoke
+      required_fields:
+        - revoked
+    - id: AuthRecoveryRequestCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - login_identifier
+        - locale
+    - id: AuthRecoveryRequestCreateResponse
+      kind: response
+      session_effect: none
+      required_fields:
+        - recovery_request_id
+        - next_step
+    - id: PasskeyChallengeCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - ceremony
+        - login_identifier
+    - id: PasskeyChallengeCreateResponse
+      kind: response
+      session_effect: none
+      required_fields:
+        - challenge_ref
+        - public_key_options_ref
+        - expires_at
+    - id: PasskeyAssertionVerifyRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: browser_assertion_only_never_echo
+      required_fields:
+        - challenge_ref
+        - assertion
+    - id: PasskeyAssertionVerifyResponse
+      kind: response
+      session_effect: issue
+      required_fields:
+        - session_ref
+        - actor_ref
+        - tenant_ref
+        - expires_at
+    - id: OAuthCallbackAcceptRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: provider_callback_code_only_never_store_plaintext
+      required_fields:
+        - provider
+        - state_ref
+        - callback_code
+    - id: OAuthCallbackAcceptResponse
+      kind: response
+      session_effect: issue
+      required_fields:
+        - session_ref
+        - actor_ref
+        - tenant_ref
+        - expires_at

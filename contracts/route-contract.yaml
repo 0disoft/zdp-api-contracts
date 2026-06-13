@@ -9,6 +9,12 @@ route_contract:
     - permission_check
     - audit_event
     - idempotency
+    - owner_boundary
+    - tenant_boundary
+    - request_id_required
+    - trace_id_required
+    - session_effect
+    - credential_policy
     - success_statuses
     - error_codes
   allowed_methods:
@@ -26,3 +32,11 @@ route_contract:
     - screen_component_payload
     - provider_specific_id_as_primary_id
     - raw_storage_url
+    - authorization_header_payload
+    - cookie_header_payload
+    - refresh_token_plaintext
+  allowed_session_effects:
+    - none
+    - issue
+    - refresh
+    - revoke

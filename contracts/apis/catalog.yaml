@@ -1,5 +1,5 @@
 api_catalog:
-  status: empty-until-service-routes-exist
+  status: route-catalog-active
   route_definition_required_fields:
     - operation_id
     - service_id
@@ -14,6 +14,12 @@ api_catalog:
     - permission_check
     - audit_event
     - idempotency
+    - owner_boundary
+    - tenant_boundary
+    - request_id_required
+    - trace_id_required
+    - session_effect
+    - credential_policy
     - error_codes
   forbidden_values:
     - raw_customer_payload
@@ -23,4 +29,206 @@ api_catalog:
     - cookie_header
     - screen_component_payload
 
-routes: []
+routes:
+  - operation_id: core.auth.registrations.create
+    service_id: core-api
+    resource: auth_registration
+    action: create
+    method: POST
+    path: /v1/auth/registrations
+    success_statuses:
+      - 202
+    request_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthRegistrationCreateRequest
+    response_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthRegistrationCreateResponse
+    auth_required: false
+    permission_check: core.identity.public_auth_entrypoint
+    audit_event: core.identity.registration.requested
+    idempotency: required_idempotency_key
+    owner_boundary: identity
+    tenant_boundary: pending_identity_or_organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - identity_conflict
+      - rate_limited
+      - idempotency_conflict
+  - operation_id: core.auth.sessions.create
+    service_id: core-api
+    resource: auth_session
+    action: create
+    method: POST
+    path: /v1/auth/sessions
+    success_statuses:
+      - 201
+    request_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthSessionCreateRequest
+    response_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthSessionCreateResponse
+    auth_required: false
+    permission_check: core.identity.public_auth_entrypoint
+    audit_event: core.identity.session.issue_requested
+    idempotency: required_idempotency_key
+    owner_boundary: identity
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: issue
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - rate_limited
+      - session_policy_failed
+      - idempotency_conflict
+  - operation_id: core.auth.sessions.refresh
+    service_id: core-api
+    resource: auth_session
+    action: refresh
+    method: POST
+    path: /v1/auth/sessions/refresh
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthSessionRefreshRequest
+    response_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthSessionRefreshResponse
+    auth_required: true
+    permission_check: core.identity.session.refresh
+    audit_event: core.identity.session.refresh_requested
+    idempotency: required_idempotency_key
+    owner_boundary: identity
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: refresh
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - session_revoked
+      - rate_limited
+      - idempotency_conflict
+  - operation_id: core.auth.sessions.revoke_current
+    service_id: core-api
+    resource: auth_session
+    action: revoke_current
+    method: DELETE
+    path: /v1/auth/sessions/current
+    success_statuses:
+      - 204
+    request_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthSessionRevokeCurrentRequest
+    response_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthSessionRevokeCurrentResponse
+    auth_required: true
+    permission_check: core.identity.session.revoke_self
+    audit_event: core.identity.session.revoked
+    idempotency: required_idempotency_key
+    owner_boundary: identity
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: revoke
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - authentication_failed
+      - session_revoked
+      - idempotency_conflict
+  - operation_id: core.auth.recovery_requests.create
+    service_id: core-api
+    resource: auth_recovery_request
+    action: create
+    method: POST
+    path: /v1/auth/recovery/requests
+    success_statuses:
+      - 202
+    request_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthRecoveryRequestCreateRequest
+    response_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthRecoveryRequestCreateResponse
+    auth_required: false
+    permission_check: core.identity.public_auth_entrypoint
+    audit_event: core.identity.recovery.requested
+    idempotency: required_idempotency_key
+    owner_boundary: identity
+    tenant_boundary: pending_identity_or_organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - rate_limited
+      - idempotency_conflict
+  - operation_id: core.auth.passkey_challenges.create
+    service_id: core-api
+    resource: passkey_challenge
+    action: create
+    method: POST
+    path: /v1/auth/passkey/challenges
+    success_statuses:
+      - 201
+    request_schema_ref: contracts/apis/core-api/auth-session.yaml#PasskeyChallengeCreateRequest
+    response_schema_ref: contracts/apis/core-api/auth-session.yaml#PasskeyChallengeCreateResponse
+    auth_required: false
+    permission_check: core.identity.public_auth_entrypoint
+    audit_event: core.identity.passkey.challenge_created
+    idempotency: required_idempotency_key
+    owner_boundary: identity
+    tenant_boundary: pending_identity_or_organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - rate_limited
+      - idempotency_conflict
+  - operation_id: core.auth.passkey_assertions.verify
+    service_id: core-api
+    resource: passkey_assertion
+    action: verify
+    method: POST
+    path: /v1/auth/passkey/assertions
+    success_statuses:
+      - 201
+    request_schema_ref: contracts/apis/core-api/auth-session.yaml#PasskeyAssertionVerifyRequest
+    response_schema_ref: contracts/apis/core-api/auth-session.yaml#PasskeyAssertionVerifyResponse
+    auth_required: false
+    permission_check: core.identity.public_auth_entrypoint
+    audit_event: core.identity.passkey.assertion_verified
+    idempotency: required_idempotency_key
+    owner_boundary: identity
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: issue
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - passkey_challenge_expired
+      - rate_limited
+      - idempotency_conflict
+  - operation_id: core.auth.oauth_callbacks.accept
+    service_id: core-api
+    resource: oauth_callback
+    action: accept
+    method: POST
+    path: /v1/auth/oauth/callbacks/{provider}
+    success_statuses:
+      - 201
+    request_schema_ref: contracts/apis/core-api/auth-session.yaml#OAuthCallbackAcceptRequest
+    response_schema_ref: contracts/apis/core-api/auth-session.yaml#OAuthCallbackAcceptResponse
+    auth_required: false
+    permission_check: core.identity.public_auth_entrypoint
+    audit_event: core.identity.oauth.callback_accepted
+    idempotency: required_idempotency_key
+    owner_boundary: identity
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: issue
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - oauth_state_mismatch
+      - provider_unavailable
+      - rate_limited
+      - idempotency_conflict

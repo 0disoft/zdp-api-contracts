@@ -57,15 +57,15 @@ describe('api export plan', () => {
       route: {
         ...contracts.route,
         requiredPerRoute: [
-          ...contracts.route.requiredPerRoute,
-          'tenant_boundary'
+        ...contracts.route.requiredPerRoute,
+          'cost_metering_ref'
         ]
       },
       apiCatalog: {
         ...contracts.apiCatalog,
         routeDefinitionRequiredFields: [
           ...contracts.apiCatalog.routeDefinitionRequiredFields,
-          'tenant_boundary'
+          'cost_metering_ref'
         ]
       }
     });

@@ -12,6 +12,7 @@ export interface RouteContract {
   readonly allowedMethods: readonly string[];
   readonly allowedSuccessStatuses: readonly number[];
   readonly forbiddenShapes: readonly string[];
+  readonly allowedSessionEffects: readonly string[];
 }
 
 export interface ErrorEnvelopeContract {
@@ -60,6 +61,12 @@ export interface ApiRouteDefinition {
   readonly permissionCheck: string;
   readonly auditEvent: string;
   readonly idempotency: string;
+  readonly ownerBoundary: string;
+  readonly tenantBoundary: string;
+  readonly requestIdRequired: boolean;
+  readonly traceIdRequired: boolean;
+  readonly sessionEffect: string;
+  readonly credentialPolicy: string;
   readonly errorCodes: readonly string[];
 }
 

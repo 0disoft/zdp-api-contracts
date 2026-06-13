@@ -148,6 +148,11 @@ export function parseRouteContract(source: string): RouteContract {
       routeContract,
       'forbidden_shapes',
       'contracts/route-contract.yaml#route_contract'
+    ),
+    allowedSessionEffects: requiredStringList(
+      routeContract,
+      'allowed_session_effects',
+      'contracts/route-contract.yaml#route_contract'
     )
   };
 }
@@ -365,6 +370,12 @@ function parseApiRouteDefinition(
     permissionCheck: requiredString(route, 'permission_check', context),
     auditEvent: requiredString(route, 'audit_event', context),
     idempotency: requiredString(route, 'idempotency', context),
+    ownerBoundary: requiredString(route, 'owner_boundary', context),
+    tenantBoundary: requiredString(route, 'tenant_boundary', context),
+    requestIdRequired: requiredBoolean(route, 'request_id_required', context),
+    traceIdRequired: requiredBoolean(route, 'trace_id_required', context),
+    sessionEffect: requiredString(route, 'session_effect', context),
+    credentialPolicy: requiredString(route, 'credential_policy', context),
     errorCodes: requiredStringList(route, 'error_codes', context)
   };
 }

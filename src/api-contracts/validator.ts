@@ -14,6 +14,12 @@ const REQUIRED_ROUTE_FIELDS = [
   'permission_check',
   'audit_event',
   'idempotency',
+  'owner_boundary',
+  'tenant_boundary',
+  'request_id_required',
+  'trace_id_required',
+  'session_effect',
+  'credential_policy',
   'error_codes'
 ] as const;
 
@@ -24,7 +30,17 @@ const ALLOWED_SUCCESS_STATUSES = [200, 201, 202, 204] as const;
 const FORBIDDEN_ROUTE_SHAPES = [
   'screen_component_payload',
   'provider_specific_id_as_primary_id',
-  'raw_storage_url'
+  'raw_storage_url',
+  'authorization_header_payload',
+  'cookie_header_payload',
+  'refresh_token_plaintext'
+] as const;
+
+const ALLOWED_SESSION_EFFECTS = [
+  'none',
+  'issue',
+  'refresh',
+  'revoke'
 ] as const;
 
 const REQUIRED_ERROR_FIELDS = [
@@ -80,6 +96,12 @@ const REQUIRED_SDK_ROUTE_METADATA = [
   'audit_event',
   'idempotency',
   'success_statuses',
+  'owner_boundary',
+  'tenant_boundary',
+  'request_id_required',
+  'trace_id_required',
+  'session_effect',
+  'credential_policy',
   'error_codes'
 ] as const;
 
@@ -134,12 +156,27 @@ const API_CATALOG_REQUIRED_ROUTE_FIELDS = [
   'permission_check',
   'audit_event',
   'idempotency',
+  'owner_boundary',
+  'tenant_boundary',
+  'request_id_required',
+  'trace_id_required',
+  'session_effect',
+  'credential_policy',
   'error_codes'
 ] as const;
 
 const API_CATALOG_EMPTY_STATUS = 'empty-until-service-routes-exist';
+const API_CATALOG_ACTIVE_STATUS = 'route-catalog-active';
 
 const SDK_TARGET_PATTERN = /^[a-z][a-z0-9_-]*$/;
+const OPERATION_ID_PATTERN = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
+const SCHEMA_REF_PATTERN =
+  /^contracts\/apis\/[a-z0-9_-]+\/[a-z0-9_-]+\.yaml#[A-Z][A-Za-z0-9]+$/;
+const REQUIRED_CREDENTIAL_POLICY_PARTS = [
+  'no_refresh_token_plaintext',
+  'no_provider_secret',
+  'no_authorization_or_cookie_header_payload'
+] as const;
 
 export function validateApiContracts(
   contracts: ApiContracts
@@ -217,6 +254,17 @@ export function validateApiContracts(
         file: 'contracts/route-contract.yaml',
         path: 'route_contract.forbidden_shapes',
         message: `Route contract must forbid \`${shape}\`.`
+      });
+    }
+  }
+
+  for (const effect of ALLOWED_SESSION_EFFECTS) {
+    if (!contracts.route.allowedSessionEffects.includes(effect)) {
+      diagnostics.push({
+        code: 'API_ROUTE_ALLOWED_SESSION_EFFECT_MISSING',
+        file: 'contracts/route-contract.yaml',
+        path: 'route_contract.allowed_session_effects',
+        message: `Route contract must allow session effect \`${effect}\`.`
       });
     }
   }
@@ -407,6 +455,19 @@ export function validateApiContracts(
     });
   }
 
+  if (
+    contracts.apiCatalog.routes.length > 0 &&
+    contracts.apiCatalog.status !== API_CATALOG_ACTIVE_STATUS
+  ) {
+    diagnostics.push({
+      code: 'API_CATALOG_STATUS_INVALID',
+      file: 'contracts/apis/catalog.yaml',
+      path: 'api_catalog.status',
+      message:
+        'API catalog must use route-catalog-active status when route definitions exist.'
+    });
+  }
+
   for (const field of API_CATALOG_REQUIRED_ROUTE_FIELDS) {
     if (!contracts.apiCatalog.routeDefinitionRequiredFields.includes(field)) {
       diagnostics.push({
@@ -454,6 +515,15 @@ export function validateApiContracts(
   contracts.apiCatalog.routes.forEach((route, index) => {
     const routePath = `routes[${index}]`;
 
+    if (!OPERATION_ID_PATTERN.test(route.operationId)) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_OPERATION_ID_INVALID',
+        file: 'contracts/apis/catalog.yaml',
+        path: `${routePath}.operation_id`,
+        message: `API route operation_id \`${route.operationId}\` must be a stable lowercase identifier.`
+      });
+    }
+
     if (!contracts.route.allowedMethods.includes(route.method)) {
       diagnostics.push({
         code: 'API_CATALOG_ROUTE_METHOD_INVALID',
@@ -470,6 +540,62 @@ export function validateApiContracts(
         path: `${routePath}.path`,
         message: `API route \`${route.operationId}\` path must start with \`/\`.`
       });
+    }
+
+    if (!SCHEMA_REF_PATTERN.test(route.requestSchemaRef)) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_SCHEMA_REF_INVALID',
+        file: 'contracts/apis/catalog.yaml',
+        path: `${routePath}.request_schema_ref`,
+        message: `API route \`${route.operationId}\` request schema ref must point to contracts/apis/<service>/<schema>.yaml#PascalCaseSchema.`
+      });
+    }
+
+    if (!SCHEMA_REF_PATTERN.test(route.responseSchemaRef)) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_SCHEMA_REF_INVALID',
+        file: 'contracts/apis/catalog.yaml',
+        path: `${routePath}.response_schema_ref`,
+        message: `API route \`${route.operationId}\` response schema ref must point to contracts/apis/<service>/<schema>.yaml#PascalCaseSchema.`
+      });
+    }
+
+    if (!route.requestIdRequired) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_REQUEST_ID_NOT_REQUIRED',
+        file: 'contracts/apis/catalog.yaml',
+        path: `${routePath}.request_id_required`,
+        message: `API route \`${route.operationId}\` must require request_id propagation.`
+      });
+    }
+
+    if (!route.traceIdRequired) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_TRACE_ID_NOT_REQUIRED',
+        file: 'contracts/apis/catalog.yaml',
+        path: `${routePath}.trace_id_required`,
+        message: `API route \`${route.operationId}\` must require trace_id propagation.`
+      });
+    }
+
+    if (!contracts.route.allowedSessionEffects.includes(route.sessionEffect)) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_SESSION_EFFECT_INVALID',
+        file: 'contracts/apis/catalog.yaml',
+        path: `${routePath}.session_effect`,
+        message: `API route \`${route.operationId}\` uses unsupported session effect \`${route.sessionEffect}\`.`
+      });
+    }
+
+    for (const policyPart of REQUIRED_CREDENTIAL_POLICY_PARTS) {
+      if (!route.credentialPolicy.includes(policyPart)) {
+        diagnostics.push({
+          code: 'API_CATALOG_ROUTE_CREDENTIAL_POLICY_INCOMPLETE',
+          file: 'contracts/apis/catalog.yaml',
+          path: `${routePath}.credential_policy`,
+          message: `API route \`${route.operationId}\` credential policy must include \`${policyPart}\`.`
+        });
+      }
     }
 
     for (const status of route.successStatuses) {
