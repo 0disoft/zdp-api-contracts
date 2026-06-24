@@ -4,6 +4,8 @@ import type {
   ApiCatalogContract,
   ApiContracts,
   ApiRouteDefinition,
+  ApiSchemaDefinition,
+  ApiSchemaBundleContract,
   ErrorEnvelopeContract,
   RouteContract,
   SdkGenerationInputContract,
@@ -105,13 +107,30 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
   const loadedWebhook = requireLoadedContract(webhook);
   const loadedSdkGenerationInput = requireLoadedContract(sdkGenerationInput);
   const loadedApiCatalog = requireLoadedContract(apiCatalog);
+  const schemaBundleResults = await Promise.all(
+    schemaBundleFilesFromCatalog(loadedApiCatalog.value).map((file) =>
+      loadContract(
+        contractsRoot,
+        `schema-bundle:${file}`,
+        schemaBundleRelativeFile(file),
+        (source) => parseApiSchemaBundleContract(source, file)
+      )
+    )
+  );
+  const schemaBundleFailures = schemaBundleResults.filter(isContractLoadFailure);
+  if (schemaBundleFailures.length > 0) {
+    throw new ApiContractLoadError(schemaBundleFailures);
+  }
 
   return {
     route: loadedRoute.value,
     errorEnvelope: loadedErrorEnvelope.value,
     webhook: loadedWebhook.value,
     sdkGenerationInput: loadedSdkGenerationInput.value,
-    apiCatalog: loadedApiCatalog.value
+    apiCatalog: loadedApiCatalog.value,
+    schemaBundles: schemaBundleResults.map(
+      (result) => requireLoadedContract(result).value
+    )
   };
 }
 
@@ -310,6 +329,56 @@ export function parseApiCatalogContract(source: string): ApiCatalogContract {
   };
 }
 
+export function parseApiSchemaBundleContract(
+  source: string,
+  file = 'contracts/apis/<service>/<schema>.yaml'
+): ApiSchemaBundleContract {
+  const data = parseYamlObject(source, file);
+  const schemaBundle = requiredObject(data, 'schema_bundle', file);
+  const commonEnvelope = requiredObject(
+    schemaBundle,
+    'common_envelope',
+    `${file}#schema_bundle`
+  );
+  const schemas = requiredRecordListAllowEmpty(
+    schemaBundle,
+    'schemas',
+    `${file}#schema_bundle`
+  );
+
+  return {
+    file,
+    serviceId: requiredString(schemaBundle, 'service_id', `${file}#schema_bundle`),
+    ownerBoundary: requiredString(
+      schemaBundle,
+      'owner_boundary',
+      `${file}#schema_bundle`
+    ),
+    status: requiredString(schemaBundle, 'status', `${file}#schema_bundle`),
+    purpose: requiredString(schemaBundle, 'purpose', `${file}#schema_bundle`),
+    commonEnvelope: {
+      requiredRequestMetadata: requiredStringList(
+        commonEnvelope,
+        'required_request_metadata',
+        `${file}#schema_bundle.common_envelope`
+      ),
+      requiredResponseMetadata: requiredStringList(
+        commonEnvelope,
+        'required_response_metadata',
+        `${file}#schema_bundle.common_envelope`
+      ),
+      forbiddenPayloadValues: requiredStringList(
+        commonEnvelope,
+        'forbidden_payload_values',
+        `${file}#schema_bundle.common_envelope`
+      )
+    },
+    schemas: schemas.map((schema, index) =>
+      parseApiSchemaDefinition(schema, `${file}#schema_bundle.schemas[${index}]`)
+    )
+  };
+}
+
 async function loadContract<T>(
   contractsRoot: string,
   name: string,
@@ -333,6 +402,26 @@ async function loadContract<T>(
       message: error instanceof Error ? error.message : String(error)
     };
   }
+}
+
+function schemaBundleFilesFromCatalog(
+  catalog: ApiCatalogContract
+): readonly string[] {
+  return uniqueSorted(
+    catalog.routes.flatMap((route) => [
+      schemaBundleFileFromRef(route.requestSchemaRef),
+      schemaBundleFileFromRef(route.responseSchemaRef)
+    ])
+  );
+}
+
+function schemaBundleFileFromRef(schemaRef: string): string {
+  const hashIndex = schemaRef.indexOf('#');
+  return hashIndex === -1 ? schemaRef : schemaRef.slice(0, hashIndex);
+}
+
+function schemaBundleRelativeFile(file: string): string {
+  return file.startsWith('contracts/') ? file.slice('contracts/'.length) : file;
 }
 
 function isContractLoadFailure(
@@ -377,6 +466,29 @@ function parseApiRouteDefinition(
     sessionEffect: requiredString(route, 'session_effect', context),
     credentialPolicy: requiredString(route, 'credential_policy', context),
     errorCodes: requiredStringList(route, 'error_codes', context)
+  };
+}
+
+function parseApiSchemaDefinition(
+  schema: Record<string, unknown>,
+  context: string
+): ApiSchemaDefinition {
+  return {
+    id: requiredString(schema, 'id', context),
+    kind: requiredString(schema, 'kind', context),
+    carriesSecretMaterial: requiredBoolean(
+      schema,
+      'carries_secret_material',
+      context
+    ),
+    secretMaterialPolicy: optionalString(
+      schema,
+      'secret_material_policy',
+      context
+    ),
+    sessionEffect: optionalString(schema, 'session_effect', context),
+    requiredFields: requiredStringList(schema, 'required_fields', context),
+    secretFields: optionalStringList(schema, 'secret_fields', context)
   };
 }
 
@@ -468,6 +580,39 @@ function requiredBoolean(
   return value;
 }
 
+function optionalString(
+  data: Record<string, unknown>,
+  key: string,
+  context: string
+): string | null {
+  const value = data[key];
+  if (value === undefined || value === null) {
+    return null;
+  }
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new Error(`${context} must declare string field \`${key}\` when set.`);
+  }
+  return value;
+}
+
+function optionalStringList(
+  data: Record<string, unknown>,
+  key: string,
+  context: string
+): readonly string[] {
+  const value = data[key];
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (
+    !Array.isArray(value) ||
+    !value.every((item) => typeof item === 'string' && item.trim().length > 0)
+  ) {
+    throw new Error(`${context} must declare string list \`${key}\` when set.`);
+  }
+  return value;
+}
+
 function requiredNumber(
   data: Record<string, unknown>,
   key: string,
@@ -482,4 +627,10 @@ function requiredNumber(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function uniqueSorted(values: readonly string[]): readonly string[] {
+  return Array.from(new Set(values)).sort((left, right) =>
+    left.localeCompare(right)
+  );
 }

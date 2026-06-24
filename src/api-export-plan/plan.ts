@@ -45,13 +45,15 @@ export function buildApiExportPlan(
     };
   }
 
+  const schemaBundleFiles = contracts.schemaBundles.map((bundle) => bundle.file);
   const outputs: readonly ApiExportPlanOutput[] = [
     {
       kind: 'openapi',
       sourceContracts: [
         ROUTE_CONTRACT_FILE,
         ERROR_ENVELOPE_FILE,
-        API_CATALOG_FILE
+        API_CATALOG_FILE,
+        ...schemaBundleFiles
       ],
       requiredMetadata: uniqueSorted([
         ...contracts.route.requiredPerRoute,
@@ -86,7 +88,8 @@ export function buildApiExportPlan(
         ERROR_ENVELOPE_FILE,
         WEBHOOK_CONTRACT_FILE,
         SDK_GENERATION_INPUT_FILE,
-        API_CATALOG_FILE
+        API_CATALOG_FILE,
+        ...schemaBundleFiles
       ],
       requiredMetadata: uniqueSorted([
         'auth_required',
@@ -181,7 +184,8 @@ function validateExportPlanInputs(
         ROUTE_CONTRACT_FILE,
         ERROR_ENVELOPE_FILE,
         WEBHOOK_CONTRACT_FILE,
-        API_CATALOG_FILE
+        API_CATALOG_FILE,
+        ...contracts.schemaBundles.map((bundle) => bundle.file)
       ],
       code: 'API_EXPORT_PLAN_SOURCE_CONTRACT_MISSING',
       file: SDK_GENERATION_INPUT_FILE,
@@ -204,6 +208,8 @@ function validateExportPlanInputs(
         'provider_secret',
         'authorization_header',
         'cookie_header',
+        'refresh_token_plaintext',
+        'stack_trace',
         'screen_component_payload'
       ],
       code: 'API_EXPORT_PLAN_FORBIDDEN_VALUE_MISSING',

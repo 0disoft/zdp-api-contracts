@@ -1,5 +1,5 @@
 api_catalog:
-  status: route-catalog-active
+  status: route-catalog-contract-only
   route_definition_required_fields:
     - operation_id
     - service_id
@@ -27,6 +27,8 @@ api_catalog:
     - provider_secret
     - authorization_header
     - cookie_header
+    - refresh_token_plaintext
+    - stack_trace
     - screen_component_payload
 
 routes:
@@ -80,6 +82,7 @@ routes:
       - authentication_failed
       - rate_limited
       - session_policy_failed
+      - account_restricted
       - idempotency_conflict
   - operation_id: core.auth.sessions.refresh
     service_id: core-api
@@ -105,6 +108,9 @@ routes:
       - validation_failed
       - authentication_failed
       - session_revoked
+      - session_expired
+      - session_compromised
+      - account_restricted
       - rate_limited
       - idempotency_conflict
   - operation_id: core.auth.sessions.revoke_current
@@ -130,6 +136,8 @@ routes:
     error_codes:
       - authentication_failed
       - session_revoked
+      - session_expired
+      - session_compromised
       - idempotency_conflict
   - operation_id: core.auth.recovery_requests.create
     service_id: core-api
@@ -203,6 +211,7 @@ routes:
       - validation_failed
       - authentication_failed
       - passkey_challenge_expired
+      - account_restricted
       - rate_limited
       - idempotency_conflict
   - operation_id: core.auth.oauth_callbacks.accept
@@ -230,5 +239,6 @@ routes:
       - authentication_failed
       - oauth_state_mismatch
       - provider_unavailable
+      - account_restricted
       - rate_limited
       - idempotency_conflict

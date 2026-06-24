@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   parseApiCatalogContract,
+  parseApiSchemaBundleContract,
   parseErrorEnvelopeContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
@@ -41,6 +42,10 @@ describe('api export plan', () => {
       result.plan?.outputs.find((output) => output.kind === 'openapi')
         ?.sourceContracts
     ).toContain('contracts/apis/catalog.yaml');
+    expect(
+      result.plan?.outputs.find((output) => output.kind === 'openapi')
+        ?.sourceContracts
+    ).toContain('contracts/apis/core-api/auth-session.yaml');
     expect(
       result.plan?.outputs.find((output) => output.kind === 'docs_contract')?.forbiddenValues
     ).toContain('authorization_header');
@@ -138,6 +143,21 @@ function loadCommittedContracts(): ApiContracts {
         join(process.cwd(), 'contracts', 'apis', 'catalog.yaml'),
         'utf8'
       )
-    )
+    ),
+    schemaBundles: [
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'auth-session.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/auth-session.yaml'
+      )
+    ]
   };
 }

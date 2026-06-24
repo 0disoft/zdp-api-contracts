@@ -10,7 +10,11 @@ error_envelope:
     - retry_after_seconds
     - documentation_url
   forbidden_fields:
-    - stack_trace
-    - provider_secret
+    - raw_customer_payload
     - raw_provider_error
-    - customer_private_payload
+    - provider_secret
+    - authorization_header
+    - cookie_header
+    - refresh_token_plaintext
+    - stack_trace
+    - screen_component_payload

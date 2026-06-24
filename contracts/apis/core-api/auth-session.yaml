@@ -17,7 +17,9 @@ schema_bundle:
       - refresh_token_plaintext
       - provider_secret
       - raw_provider_error
-      - customer_private_payload
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
   schemas:
     - id: AuthRegistrationCreateRequest
       kind: request
@@ -28,6 +30,7 @@ schema_bundle:
         - terms_consent_ref
     - id: AuthRegistrationCreateResponse
       kind: response
+      carries_secret_material: false
       session_effect: none
       required_fields:
         - registration_request_id
@@ -39,8 +42,11 @@ schema_bundle:
       required_fields:
         - login_identifier
         - verifier
+      secret_fields:
+        - verifier
     - id: AuthSessionCreateResponse
       kind: response
+      carries_secret_material: false
       session_effect: issue
       required_fields:
         - session_ref
@@ -54,8 +60,11 @@ schema_bundle:
       required_fields:
         - session_ref
         - rotation_proof
+      secret_fields:
+        - rotation_proof
     - id: AuthSessionRefreshResponse
       kind: response
+      carries_secret_material: false
       session_effect: refresh
       required_fields:
         - session_ref
@@ -67,6 +76,7 @@ schema_bundle:
         - session_ref
     - id: AuthSessionRevokeCurrentResponse
       kind: response
+      carries_secret_material: false
       session_effect: revoke
       required_fields:
         - revoked
@@ -78,6 +88,7 @@ schema_bundle:
         - locale
     - id: AuthRecoveryRequestCreateResponse
       kind: response
+      carries_secret_material: false
       session_effect: none
       required_fields:
         - recovery_request_id
@@ -90,6 +101,7 @@ schema_bundle:
         - login_identifier
     - id: PasskeyChallengeCreateResponse
       kind: response
+      carries_secret_material: false
       session_effect: none
       required_fields:
         - challenge_ref
@@ -102,8 +114,11 @@ schema_bundle:
       required_fields:
         - challenge_ref
         - assertion
+      secret_fields:
+        - assertion
     - id: PasskeyAssertionVerifyResponse
       kind: response
+      carries_secret_material: false
       session_effect: issue
       required_fields:
         - session_ref
@@ -118,8 +133,11 @@ schema_bundle:
         - provider
         - state_ref
         - callback_code
+      secret_fields:
+        - callback_code
     - id: OAuthCallbackAcceptResponse
       kind: response
+      carries_secret_material: false
       session_effect: issue
       required_fields:
         - session_ref

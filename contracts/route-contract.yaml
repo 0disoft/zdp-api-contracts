@@ -29,14 +29,20 @@ route_contract:
     - 202
     - 204
   forbidden_shapes:
+    - raw_customer_payload
+    - raw_provider_error
+    - provider_secret
+    - authorization_header
+    - cookie_header
+    - refresh_token_plaintext
+    - stack_trace
     - screen_component_payload
     - provider_specific_id_as_primary_id
     - raw_storage_url
-    - authorization_header_payload
-    - cookie_header_payload
-    - refresh_token_plaintext
   allowed_session_effects:
     - none
     - issue
     - refresh
     - revoke
+    - expire
+    - compromise

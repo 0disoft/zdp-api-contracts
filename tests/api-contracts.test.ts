@@ -6,13 +6,18 @@ import {
   ApiContractLoadError,
   loadApiContracts,
   parseApiCatalogContract,
+  parseApiSchemaBundleContract,
   parseErrorEnvelopeContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
   parseWebhookContract
 } from '../src/api-contracts/parser';
 import { validateApiContracts } from '../src/api-contracts/validator';
-import type { ApiContracts } from '../src/api-contracts/types';
+import type {
+  ApiContracts,
+  ApiRouteDefinition,
+  ApiSchemaBundleContract
+} from '../src/api-contracts/types';
 
 describe('api contract checker', () => {
   it('validates the committed API contracts', () => {
@@ -25,7 +30,7 @@ describe('api contract checker', () => {
   it('keeps core auth session routes explicit in the API catalog', () => {
     const contracts = loadCommittedContracts();
 
-    expect(contracts.apiCatalog.status).toBe('route-catalog-active');
+    expect(contracts.apiCatalog.status).toBe('route-catalog-contract-only');
     expect(contracts.apiCatalog.routes.map((route) => route.operationId)).toEqual([
       'core.auth.registrations.create',
       'core.auth.sessions.create',
@@ -43,7 +48,8 @@ describe('api contract checker', () => {
           route.ownerBoundary === 'identity' &&
           route.requestIdRequired &&
           route.traceIdRequired &&
-          route.credentialPolicy.includes('no_refresh_token_plaintext')
+          route.credentialPolicy ===
+            'no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload'
       )
     ).toBe(true);
     expect(
@@ -359,7 +365,194 @@ describe('api contract checker', () => {
       'API_CATALOG_ROUTE_SESSION_EFFECT_INVALID'
     );
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
-      'API_CATALOG_ROUTE_CREDENTIAL_POLICY_INCOMPLETE'
+      'API_CATALOG_ROUTE_CREDENTIAL_POLICY_INVALID'
+    );
+  });
+
+  it('loads schema bundles referenced by the catalog', async () => {
+    const contracts = await loadApiContracts(process.cwd());
+
+    expect(contracts.schemaBundles.map((bundle) => bundle.file)).toEqual([
+      'contracts/apis/core-api/auth-session.yaml'
+    ]);
+    expect(contracts.schemaBundles[0]?.schemas.map((schema) => schema.id)).toContain(
+      'AuthSessionCreateRequest'
+    );
+  });
+
+  it('fails when a catalog route references a missing schema id', () => {
+    const contracts = loadCommittedContracts();
+    const route = routeAt(contracts, 0);
+    const result = validateApiContracts({
+      ...contracts,
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: [
+          {
+            ...route,
+            requestSchemaRef:
+              'contracts/apis/core-api/auth-session.yaml#MissingSchema'
+          }
+        ]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_SCHEMA_ID_MISSING'
+    );
+  });
+
+  it('fails when a secret request field is echoed by the response schema', () => {
+    const contracts = loadCommittedContracts();
+    const schemaBundle = schemaBundleAt(contracts, 0);
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: [
+        {
+          ...schemaBundle,
+          schemas: schemaBundle.schemas.map((schema) =>
+            schema.id === 'AuthSessionCreateResponse'
+              ? {
+                  ...schema,
+                  requiredFields: [...schema.requiredFields, 'verifier']
+                }
+              : schema
+          )
+        }
+      ]
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_SECRET_FIELD_ECHOED'
+    );
+  });
+
+  it('fails when credential policy adds unsafe suffix text', () => {
+    const contracts = loadCommittedContracts();
+    const route = routeAt(contracts, 0);
+    const result = validateApiContracts({
+      ...contracts,
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: [
+          {
+            ...route,
+            credentialPolicy:
+              'no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload_but_allow_cookie'
+          }
+        ]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_CREDENTIAL_POLICY_INVALID'
+    );
+  });
+
+  it('fails when route operation ids or method paths are duplicated', () => {
+    const contracts = loadCommittedContracts();
+    const route = routeAt(contracts, 1);
+    const duplicate = {
+      ...route,
+      requestSchemaRef:
+        'contracts/apis/core-api/auth-session.yaml#AuthSessionCreateRequest',
+      responseSchemaRef:
+        'contracts/apis/core-api/auth-session.yaml#AuthSessionCreateResponse'
+    };
+    const result = validateApiContracts({
+      ...contracts,
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: [route, duplicate]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_OPERATION_ID_DUPLICATE'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_METHOD_PATH_DUPLICATE'
+    );
+  });
+
+  it('fails when a public auth route uses a private permission check', () => {
+    const contracts = loadCommittedContracts();
+    const route = routeAt(contracts, 0);
+    const result = validateApiContracts({
+      ...contracts,
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: [
+          {
+            ...route,
+            permissionCheck: 'core.identity.registration.create'
+          }
+        ]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_PUBLIC_ROUTE_PERMISSION_CHECK_INVALID'
+    );
+  });
+
+  it('fails when route boundary or idempotency values are outside the allowed set', () => {
+    const contracts = loadCommittedContracts();
+    const route = routeAt(contracts, 0);
+    const result = validateApiContracts({
+      ...contracts,
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: [
+          {
+            ...route,
+            idempotency: 'required',
+            ownerBoundary: 'screen',
+            tenantBoundary: 'floating'
+          }
+        ]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_IDEMPOTENCY_POLICY_INVALID'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_OWNER_BOUNDARY_INVALID'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_TENANT_BOUNDARY_INVALID'
+    );
+  });
+
+  it('fails when schema bundles drop canonical forbidden values', () => {
+    const contracts = loadCommittedContracts();
+    const schemaBundle = schemaBundleAt(contracts, 0);
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: [
+        {
+          ...schemaBundle,
+          commonEnvelope: {
+            ...schemaBundle.commonEnvelope,
+            forbiddenPayloadValues:
+              schemaBundle.commonEnvelope.forbiddenPayloadValues.filter(
+                (value) => value !== 'refresh_token_plaintext'
+              )
+          }
+        }
+      ]
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_SCHEMA_BUNDLE_FORBIDDEN_VALUE_MISSING'
     );
   });
 
@@ -392,6 +585,25 @@ describe('api contract checker', () => {
   });
 });
 
+function routeAt(contracts: ApiContracts, index: number): ApiRouteDefinition {
+  const route = contracts.apiCatalog.routes[index];
+  if (!route) {
+    throw new Error(`Expected committed route at index ${index}.`);
+  }
+  return route;
+}
+
+function schemaBundleAt(
+  contracts: ApiContracts,
+  index: number
+): ApiSchemaBundleContract {
+  const schemaBundle = contracts.schemaBundles[index];
+  if (!schemaBundle) {
+    throw new Error(`Expected committed schema bundle at index ${index}.`);
+  }
+  return schemaBundle;
+}
+
 function loadCommittedContracts(): ApiContracts {
   return {
     route: parseRouteContract(
@@ -414,6 +626,21 @@ function loadCommittedContracts(): ApiContracts {
         join(process.cwd(), 'contracts', 'apis', 'catalog.yaml'),
         'utf8'
       )
-    )
+    ),
+    schemaBundles: [
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'auth-session.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/auth-session.yaml'
+      )
+    ]
   };
 }

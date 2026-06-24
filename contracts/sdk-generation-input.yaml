@@ -6,6 +6,7 @@ sdk_generation_input:
     - contracts/webhook-contract.yaml
     - contracts/sdk-generation-input.yaml
     - contracts/apis/catalog.yaml
+    - contracts/apis/core-api/auth-session.yaml
   generation_targets:
     - typescript
     - dart
@@ -65,4 +66,6 @@ sdk_generation_input:
     - provider_secret
     - authorization_header
     - cookie_header
+    - refresh_token_plaintext
+    - stack_trace
     - screen_component_payload

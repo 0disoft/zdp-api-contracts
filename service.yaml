@@ -147,7 +147,7 @@ audit:
     - api_contract.export_plan_checked
   sink: zdp-platform-observability
   retention_days: 365
-  immutable: false
+  immutable: true
   redaction_policy: do not log sensitive example payload bodies
   reason_required_for_admin_access: true
   evidence_export_supported: true
@@ -294,5 +294,6 @@ exit:
 notes:
   - This MVP owns contract skeletons only; it does not expose a live API.
   - The local checker reads committed contract YAML only; it does not generate SDKs or run backend handlers.
+  - api.sdks names planned SDK generation targets only; it does not claim generated SDK artifacts exist yet.
   - SDK generation input is a handoff contract for downstream SDK repositories, not generated SDK source.
   - Export plan is dry-run only and prevents permission, audit, idempotency, request_id, trace_id, and webhook metadata from splitting across generated surfaces.

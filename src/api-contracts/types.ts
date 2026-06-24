@@ -4,6 +4,7 @@ export interface ApiContracts {
   readonly webhook: WebhookContract;
   readonly sdkGenerationInput: SdkGenerationInputContract;
   readonly apiCatalog: ApiCatalogContract;
+  readonly schemaBundles: readonly ApiSchemaBundleContract[];
 }
 
 export interface RouteContract {
@@ -68,6 +69,32 @@ export interface ApiRouteDefinition {
   readonly sessionEffect: string;
   readonly credentialPolicy: string;
   readonly errorCodes: readonly string[];
+}
+
+export interface ApiSchemaBundleContract {
+  readonly file: string;
+  readonly serviceId: string;
+  readonly ownerBoundary: string;
+  readonly status: string;
+  readonly purpose: string;
+  readonly commonEnvelope: ApiSchemaCommonEnvelope;
+  readonly schemas: readonly ApiSchemaDefinition[];
+}
+
+export interface ApiSchemaCommonEnvelope {
+  readonly requiredRequestMetadata: readonly string[];
+  readonly requiredResponseMetadata: readonly string[];
+  readonly forbiddenPayloadValues: readonly string[];
+}
+
+export interface ApiSchemaDefinition {
+  readonly id: string;
+  readonly kind: string;
+  readonly carriesSecretMaterial: boolean;
+  readonly secretMaterialPolicy: string | null;
+  readonly sessionEffect: string | null;
+  readonly requiredFields: readonly string[];
+  readonly secretFields: readonly string[];
 }
 
 export interface ApiContractDiagnostic {
