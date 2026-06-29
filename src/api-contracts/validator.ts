@@ -211,12 +211,12 @@ const ALLOWED_TENANT_BOUNDARIES = [
   'common_zdp_wallet'
 ] as const;
 
-const REQUIRED_SCHEMA_REQUEST_METADATA = [
+const REQUIRED_SCHEMA_BASE_REQUEST_METADATA = [
   'request_id',
-  'trace_id',
-  'idempotency_key'
+  'trace_id'
 ] as const;
 
+const SCHEMA_IDEMPOTENCY_METADATA = 'idempotency_key';
 const REQUIRED_SCHEMA_RESPONSE_METADATA = ['request_id', 'trace_id'] as const;
 
 const ALLOWED_SCHEMA_STATUSES = ['contract-only'] as const;
@@ -760,6 +760,15 @@ function validateRouteDefinition(
     });
   }
 
+  if (requestSchema) {
+    validateRouteRequestIdempotencyMetadata({
+      route,
+      routePath,
+      requestSchemaBundle: requestSchema.bundle,
+      diagnostics
+    });
+  }
+
   if (!includesValue(ALLOWED_CREDENTIAL_POLICIES, route.credentialPolicy)) {
     diagnostics.push({
       code: 'API_CATALOG_ROUTE_CREDENTIAL_POLICY_INVALID',
@@ -916,6 +925,38 @@ function validateRouteSchemaRef(input: {
   return { bundle, schema };
 }
 
+function validateRouteRequestIdempotencyMetadata(input: {
+  readonly route: ApiRouteDefinition;
+  readonly routePath: string;
+  readonly requestSchemaBundle: ApiSchemaBundleContract;
+  readonly diagnostics: ApiContractDiagnostic[];
+}): void {
+  const requiresIdempotency =
+    input.route.idempotency === REQUIRED_MUTATION_IDEMPOTENCY_POLICY;
+  const schemaRequiresIdempotency =
+    input.requestSchemaBundle.commonEnvelope.requiredRequestMetadata.includes(
+      SCHEMA_IDEMPOTENCY_METADATA
+    );
+
+  if (requiresIdempotency && !schemaRequiresIdempotency) {
+    input.diagnostics.push({
+      code: 'API_CATALOG_ROUTE_IDEMPOTENCY_METADATA_MISSING',
+      file: 'contracts/apis/catalog.yaml',
+      path: `${input.routePath}.request_schema_ref`,
+      message: `API route \`${input.route.operationId}\` requires idempotency, so its request schema bundle must require \`${SCHEMA_IDEMPOTENCY_METADATA}\`.`
+    });
+  }
+
+  if (!requiresIdempotency && schemaRequiresIdempotency) {
+    input.diagnostics.push({
+      code: 'API_CATALOG_ROUTE_IDEMPOTENCY_METADATA_UNEXPECTED',
+      file: 'contracts/apis/catalog.yaml',
+      path: `${input.routePath}.request_schema_ref`,
+      message: `API route \`${input.route.operationId}\` does not require idempotency, so its request schema bundle must not require \`${SCHEMA_IDEMPOTENCY_METADATA}\`.`
+    });
+  }
+}
+
 function validateSecretMaterialDoesNotEcho(input: {
   readonly route: ApiRouteDefinition;
   readonly routePath: string;
@@ -989,7 +1030,7 @@ function validateSchemaBundle(
     });
   }
 
-  for (const metadata of REQUIRED_SCHEMA_REQUEST_METADATA) {
+  for (const metadata of REQUIRED_SCHEMA_BASE_REQUEST_METADATA) {
     if (!schemaBundle.commonEnvelope.requiredRequestMetadata.includes(metadata)) {
       diagnostics.push({
         code: 'API_SCHEMA_BUNDLE_REQUEST_METADATA_MISSING',

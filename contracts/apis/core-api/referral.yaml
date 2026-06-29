@@ -1,0 +1,39 @@
+schema_bundle:
+  service_id: core-api
+  owner_boundary: identity
+  status: contract-only
+  purpose: describe referral-code application payloads before live handlers or generated OpenAPI exist
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+      - idempotency_key
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: ReferralUseCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - referral_code
+        - campaign_ref
+        - referred_account_ref
+    - id: ReferralUseCreateResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - referral_use_ref
+        - referral_status
+        - reward_status
+        - money_reward_status_ref

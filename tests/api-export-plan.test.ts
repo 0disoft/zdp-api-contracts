@@ -157,6 +157,26 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/core-api/auth-session.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(process.cwd(), 'contracts', 'apis', 'core-api', 'referral.yaml'),
+          'utf8'
+        ),
+        'contracts/apis/core-api/referral.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'money-api',
+            'referral-reward.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/money-api/referral-reward.yaml'
       )
     ]
   };

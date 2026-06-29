@@ -1,0 +1,41 @@
+schema_bundle:
+  service_id: money-api
+  owner_boundary: money
+  status: contract-only
+  purpose: describe referral reward status payloads before live handlers or generated OpenAPI exist
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: ReferralRewardStatusGetRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - referral_use_ref
+    - id: ReferralRewardStatusGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - referral_use_ref
+        - reward_status
+        - reward_recipient
+        - eligible_settled_paid_amount_credit_unit
+        - excluded_refund_amount_credit_unit
+        - excluded_chargeback_amount_credit_unit
+        - abuse_review_status
+        - campaign_policy_version
+        - referral_reward_confirmation_ref

@@ -27,7 +27,7 @@ describe('api contract checker', () => {
     expect(result.ok).toBe(true);
   });
 
-  it('keeps core auth session routes explicit in the API catalog', () => {
+  it('keeps core auth, referral, and money referral reward routes explicit in the API catalog', () => {
     const contracts = loadCommittedContracts();
 
     expect(contracts.apiCatalog.status).toBe('route-catalog-contract-only');
@@ -39,10 +39,15 @@ describe('api contract checker', () => {
       'core.auth.recovery_requests.create',
       'core.auth.passkey_challenges.create',
       'core.auth.passkey_assertions.verify',
-      'core.auth.oauth_callbacks.accept'
+      'core.auth.oauth_callbacks.accept',
+      'core.referral.uses.create',
+      'money.referral_rewards.status.get'
     ]);
+    const authRoutes = contracts.apiCatalog.routes.filter((route) =>
+      route.operationId.startsWith('core.auth.')
+    );
     expect(
-      contracts.apiCatalog.routes.every(
+      authRoutes.every(
         (route) =>
           route.serviceId === 'core-api' &&
           route.ownerBoundary === 'identity' &&
@@ -53,9 +58,28 @@ describe('api contract checker', () => {
       )
     ).toBe(true);
     expect(
-      contracts.apiCatalog.routes.filter((route) => route.sessionEffect === 'issue')
-        .length
+      authRoutes.filter((route) => route.sessionEffect === 'issue').length
     ).toBe(3);
+    expect(
+      contracts.apiCatalog.routes.find(
+        (route) => route.operationId === 'core.referral.uses.create'
+      )
+    ).toMatchObject({
+      serviceId: 'core-api',
+      ownerBoundary: 'identity',
+      tenantBoundary: 'personal_account',
+      idempotency: 'required_idempotency_key'
+    });
+    expect(
+      contracts.apiCatalog.routes.find(
+        (route) => route.operationId === 'money.referral_rewards.status.get'
+      )
+    ).toMatchObject({
+      serviceId: 'money-api',
+      ownerBoundary: 'money',
+      tenantBoundary: 'personal_account',
+      idempotency: 'not_required'
+    });
   });
 
   it('fails when route contracts stop requiring authorization hooks', () => {
@@ -373,10 +397,18 @@ describe('api contract checker', () => {
     const contracts = await loadApiContracts(process.cwd());
 
     expect(contracts.schemaBundles.map((bundle) => bundle.file)).toEqual([
-      'contracts/apis/core-api/auth-session.yaml'
+      'contracts/apis/core-api/auth-session.yaml',
+      'contracts/apis/core-api/referral.yaml',
+      'contracts/apis/money-api/referral-reward.yaml'
     ]);
     expect(contracts.schemaBundles[0]?.schemas.map((schema) => schema.id)).toContain(
       'AuthSessionCreateRequest'
+    );
+    expect(contracts.schemaBundles[1]?.schemas.map((schema) => schema.id)).toContain(
+      'ReferralUseCreateRequest'
+    );
+    expect(contracts.schemaBundles[2]?.schemas.map((schema) => schema.id)).toContain(
+      'ReferralRewardStatusGetResponse'
     );
   });
 
@@ -531,6 +563,58 @@ describe('api contract checker', () => {
     );
   });
 
+  it('fails when an idempotent route schema drops idempotency metadata', () => {
+    const contracts = loadCommittedContracts();
+    const schemaBundle = schemaBundleAt(contracts, 0);
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: [
+        {
+          ...schemaBundle,
+          commonEnvelope: {
+            ...schemaBundle.commonEnvelope,
+            requiredRequestMetadata:
+              schemaBundle.commonEnvelope.requiredRequestMetadata.filter(
+                (metadata) => metadata !== 'idempotency_key'
+              )
+          }
+        },
+        ...contracts.schemaBundles.slice(1)
+      ]
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_IDEMPOTENCY_METADATA_MISSING'
+    );
+  });
+
+  it('fails when a non-idempotent route schema requires idempotency metadata', () => {
+    const contracts = loadCommittedContracts();
+    const schemaBundle = schemaBundleAt(contracts, 2);
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: [
+        ...contracts.schemaBundles.slice(0, 2),
+        {
+          ...schemaBundle,
+          commonEnvelope: {
+            ...schemaBundle.commonEnvelope,
+            requiredRequestMetadata: [
+              ...schemaBundle.commonEnvelope.requiredRequestMetadata,
+              'idempotency_key'
+            ]
+          }
+        }
+      ]
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CATALOG_ROUTE_IDEMPOTENCY_METADATA_UNEXPECTED'
+    );
+  });
+
   it('fails when schema bundles drop canonical forbidden values', () => {
     const contracts = loadCommittedContracts();
     const schemaBundle = schemaBundleAt(contracts, 0);
@@ -640,6 +724,26 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/core-api/auth-session.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(process.cwd(), 'contracts', 'apis', 'core-api', 'referral.yaml'),
+          'utf8'
+        ),
+        'contracts/apis/core-api/referral.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'money-api',
+            'referral-reward.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/money-api/referral-reward.yaml'
       )
     ]
   };

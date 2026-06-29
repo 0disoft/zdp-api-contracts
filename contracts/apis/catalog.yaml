@@ -242,3 +242,54 @@ routes:
       - account_restricted
       - rate_limited
       - idempotency_conflict
+  - operation_id: core.referral.uses.create
+    service_id: core-api
+    resource: referral_use
+    action: create
+    method: POST
+    path: /v1/referrals/uses
+    success_statuses:
+      - 202
+    request_schema_ref: contracts/apis/core-api/referral.yaml#ReferralUseCreateRequest
+    response_schema_ref: contracts/apis/core-api/referral.yaml#ReferralUseCreateResponse
+    auth_required: true
+    permission_check: core.accounts.referral_use.apply
+    audit_event: core.accounts.referral_use.applied
+    idempotency: required_idempotency_key
+    owner_boundary: identity
+    tenant_boundary: personal_account
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - account_restricted
+      - rate_limited
+      - idempotency_conflict
+  - operation_id: money.referral_rewards.status.get
+    service_id: money-api
+    resource: referral_reward_status
+    action: get
+    method: GET
+    path: /v1/referrals/uses/{referral_use_ref}/reward-status
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/money-api/referral-reward.yaml#ReferralRewardStatusGetRequest
+    response_schema_ref: contracts/apis/money-api/referral-reward.yaml#ReferralRewardStatusGetResponse
+    auth_required: true
+    permission_check: money.ledger.referral_reward_status.read
+    audit_event: money.ledger.referral_reward_status.read
+    idempotency: not_required
+    owner_boundary: money
+    tenant_boundary: personal_account
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - account_restricted
+      - not_found
