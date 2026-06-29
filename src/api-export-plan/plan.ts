@@ -4,7 +4,9 @@ import type {
   ApiContracts,
   ApiExportPlan,
   ApiExportPlanOutput,
-  ApiExportPlanResult
+  ApiExportPlanResult,
+  ApiRouteDefinition,
+  ApiTypedFetchOperation
 } from '../api-contracts/types';
 
 const ROUTE_CONTRACT_FILE = 'contracts/route-contract.yaml';
@@ -127,6 +129,9 @@ export function buildApiExportPlan(
       ...contracts.sdkGenerationInput.requiredClientRuntimeMetadata
     ],
     operationIds: contracts.apiCatalog.routes.map((route) => route.operationId),
+    typedFetchOperationMap: buildTypedFetchOperationMap(
+      contracts.apiCatalog.routes
+    ),
     mutatingMethodsRequiringIdempotency: [
       ...MUTATING_METHODS_REQUIRING_IDEMPOTENCY
     ],
@@ -138,6 +143,30 @@ export function buildApiExportPlan(
     plan,
     diagnostics: []
   };
+}
+
+function buildTypedFetchOperationMap(
+  routes: readonly ApiRouteDefinition[]
+): Readonly<Record<string, ApiTypedFetchOperation>> {
+  const operationMap: Record<string, ApiTypedFetchOperation> = {};
+
+  for (const route of routes) {
+    operationMap[route.operationId] = {
+      operationId: route.operationId,
+      method: route.method,
+      path: route.path,
+      successStatuses: [...route.successStatuses],
+      requestSchemaRef: route.requestSchemaRef,
+      responseSchemaRef: route.responseSchemaRef,
+      authRequired: route.authRequired,
+      idempotency: route.idempotency,
+      requestIdRequired: route.requestIdRequired,
+      traceIdRequired: route.traceIdRequired,
+      errorCodes: [...route.errorCodes]
+    };
+  }
+
+  return operationMap;
 }
 
 function validateExportPlanInputs(

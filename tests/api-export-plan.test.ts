@@ -18,7 +18,13 @@ describe('api export plan', () => {
 
     expect(result.ok).toBe(true);
     expect(result.diagnostics).toEqual([]);
-    expect(result.plan).toMatchObject({
+    const plan = result.plan;
+    expect(plan).not.toBeNull();
+    if (plan === null) {
+      throw new Error('Expected API export plan to be built.');
+    }
+
+    expect(plan).toMatchObject({
       status: 'plan-only',
       writesArtifacts: false,
       publishesSchemas: false,
@@ -36,7 +42,7 @@ describe('api export plan', () => {
       mutatingMethodsRequiringIdempotency: ['POST', 'PUT', 'PATCH', 'DELETE'],
       requiredMutationIdempotencyPolicy: 'required_idempotency_key'
     });
-    expect(result.plan?.operationIds).toEqual([
+    expect(plan.operationIds).toEqual([
       'core.auth.registrations.create',
       'core.auth.sessions.create',
       'core.auth.sessions.refresh',
@@ -48,32 +54,61 @@ describe('api export plan', () => {
       'core.referral.uses.create',
       'money.referral_rewards.status.get'
     ]);
-    expect(result.plan?.outputs.map((output) => output.kind)).toEqual([
+    expect(plan.typedFetchOperationMap).toMatchObject({
+      'core.auth.sessions.create': {
+        operationId: 'core.auth.sessions.create',
+        method: 'POST',
+        path: '/v1/auth/sessions',
+        successStatuses: [201],
+        requestSchemaRef:
+          'contracts/apis/core-api/auth-session.yaml#AuthSessionCreateRequest',
+        responseSchemaRef:
+          'contracts/apis/core-api/auth-session.yaml#AuthSessionCreateResponse',
+        authRequired: false,
+        idempotency: 'required_idempotency_key',
+        requestIdRequired: true,
+        traceIdRequired: true,
+        errorCodes: expect.arrayContaining([
+          'authentication_failed',
+          'idempotency_conflict'
+        ])
+      },
+      'money.referral_rewards.status.get': {
+        method: 'GET',
+        path: '/v1/referrals/uses/{referral_use_ref}/reward-status',
+        authRequired: true,
+        idempotency: 'not_required'
+      }
+    });
+    expect(Object.keys(plan.typedFetchOperationMap)).toEqual([
+      ...plan.operationIds
+    ]);
+    expect(plan.outputs.map((output) => output.kind)).toEqual([
       'openapi',
       'sdk_generation_input',
       'webhook_schema',
       'docs_contract'
     ]);
     expect(
-      result.plan?.outputs.find((output) => output.kind === 'openapi')?.requiredMetadata
+      plan.outputs.find((output) => output.kind === 'openapi')?.requiredMetadata
     ).toContain('operation_id');
     expect(
-      result.plan?.outputs.find((output) => output.kind === 'openapi')
+      plan.outputs.find((output) => output.kind === 'openapi')
         ?.requiredMetadata
     ).toContain('success_statuses');
     expect(
-      result.plan?.outputs.find((output) => output.kind === 'openapi')
+      plan.outputs.find((output) => output.kind === 'openapi')
         ?.sourceContracts
     ).toContain('contracts/apis/catalog.yaml');
     expect(
-      result.plan?.outputs.find((output) => output.kind === 'openapi')
+      plan.outputs.find((output) => output.kind === 'openapi')
         ?.sourceContracts
     ).toContain('contracts/apis/core-api/auth-session.yaml');
     expect(
-      result.plan?.outputs.find((output) => output.kind === 'docs_contract')?.forbiddenValues
+      plan.outputs.find((output) => output.kind === 'docs_contract')?.forbiddenValues
     ).toContain('authorization_header');
     expect(
-      result.plan?.outputs.find((output) => output.kind === 'docs_contract')
+      plan.outputs.find((output) => output.kind === 'docs_contract')
         ?.requiredMetadata
     ).toContain('success_statuses');
   });

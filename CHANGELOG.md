@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.6.0
+
+### Added
+
+- API export dry-run plan에 `typedFetchOperationMap`을 추가해 SDK가 route catalog의 method, path, success status, auth, idempotency, request/response schema ref, request/trace id, error code metadata를 직접 소비할 수 있게 했다.
+
 ## 0.5.0
 
 ### Added

@@ -324,6 +324,7 @@ exit:
     - route, error, webhook, and SDK generation input contract skeletons are machine-validated
     - SDK generation input keeps language targets, route metadata, error metadata, webhook metadata, forbidden ownership, and forbidden values explicit before generator work starts
     - OpenAPI, SDK, docs, and webhook schema export plan is reproducible without writing generated artifacts
+    - API export plan exposes typed fetch operation map metadata derived from the route catalog before generated SDK artifacts exist
     - contract repository validates without implementing backend handlers
   kill_criteria:
     - product handler shapes become the contract source
@@ -340,4 +341,4 @@ notes:
   - The local checker reads committed contract YAML only; it does not generate SDKs or run backend handlers.
   - api.sdks names planned SDK generation targets only; it does not claim generated SDK artifacts exist yet.
   - SDK generation input is a handoff contract for downstream SDK repositories, not generated SDK source.
-  - Export plan is dry-run only and prevents permission, audit, idempotency, request_id, trace_id, and webhook metadata from splitting across generated surfaces.
+  - Export plan is dry-run only and prevents permission, audit, idempotency, request_id, trace_id, typed fetch operation map, and webhook metadata from splitting across generated surfaces.

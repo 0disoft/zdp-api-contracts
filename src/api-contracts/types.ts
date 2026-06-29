@@ -126,6 +126,7 @@ export interface ApiExportPlan {
   readonly traceFields: readonly string[];
   readonly clientRuntimeMetadata: readonly string[];
   readonly operationIds: readonly string[];
+  readonly typedFetchOperationMap: Readonly<Record<string, ApiTypedFetchOperation>>;
   readonly mutatingMethodsRequiringIdempotency: readonly string[];
   readonly requiredMutationIdempotencyPolicy: string;
 }
@@ -134,4 +135,18 @@ export interface ApiExportPlanResult {
   readonly ok: boolean;
   readonly plan: ApiExportPlan | null;
   readonly diagnostics: readonly ApiContractDiagnostic[];
+}
+
+export interface ApiTypedFetchOperation {
+  readonly operationId: string;
+  readonly method: string;
+  readonly path: string;
+  readonly successStatuses: readonly number[];
+  readonly requestSchemaRef: string;
+  readonly responseSchemaRef: string;
+  readonly authRequired: boolean;
+  readonly idempotency: string;
+  readonly requestIdRequired: boolean;
+  readonly traceIdRequired: boolean;
+  readonly errorCodes: readonly string[];
 }
