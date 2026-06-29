@@ -127,6 +127,7 @@ export interface ApiExportPlan {
   readonly clientRuntimeMetadata: readonly string[];
   readonly operationIds: readonly string[];
   readonly typedFetchOperationMap: Readonly<Record<string, ApiTypedFetchOperation>>;
+  readonly schemaModelMap: Readonly<Record<string, ApiSchemaModel>>;
   readonly mutatingMethodsRequiringIdempotency: readonly string[];
   readonly requiredMutationIdempotencyPolicy: string;
 }
@@ -149,4 +150,20 @@ export interface ApiTypedFetchOperation {
   readonly requestIdRequired: boolean;
   readonly traceIdRequired: boolean;
   readonly errorCodes: readonly string[];
+}
+
+export type ApiSchemaModelKind = 'request' | 'response';
+
+export interface ApiSchemaModel {
+  readonly schemaRef: string;
+  readonly schemaId: string;
+  readonly sourceContract: string;
+  readonly serviceId: string;
+  readonly ownerBoundary: string;
+  readonly status: string;
+  readonly kind: ApiSchemaModelKind;
+  readonly carriesSecretMaterial: boolean;
+  readonly requiredFields: readonly string[];
+  readonly secretFields: readonly string[];
+  readonly sessionEffect: string | null;
 }

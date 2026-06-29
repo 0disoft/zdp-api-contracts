@@ -80,9 +80,40 @@ describe('api export plan', () => {
         idempotency: 'not_required'
       }
     });
+    expect(plan.schemaModelMap).toMatchObject({
+      'contracts/apis/core-api/auth-session.yaml#AuthSessionCreateRequest': {
+        schemaRef:
+          'contracts/apis/core-api/auth-session.yaml#AuthSessionCreateRequest',
+        schemaId: 'AuthSessionCreateRequest',
+        sourceContract: 'contracts/apis/core-api/auth-session.yaml',
+        serviceId: 'core-api',
+        ownerBoundary: 'identity',
+        status: 'contract-only',
+        kind: 'request',
+        carriesSecretMaterial: true,
+        requiredFields: ['login_identifier', 'verifier'],
+        secretFields: ['verifier'],
+        sessionEffect: null
+      },
+      'contracts/apis/money-api/referral-reward.yaml#ReferralRewardStatusGetResponse': {
+        schemaId: 'ReferralRewardStatusGetResponse',
+        serviceId: 'money-api',
+        ownerBoundary: 'money',
+        kind: 'response',
+        requiredFields: expect.arrayContaining([
+          'reward_status',
+          'campaign_policy_version'
+        ]),
+        sessionEffect: 'none'
+      }
+    });
     expect(Object.keys(plan.typedFetchOperationMap)).toEqual([
       ...plan.operationIds
     ]);
+    for (const operation of Object.values(plan.typedFetchOperationMap)) {
+      expect(plan.schemaModelMap[operation.requestSchemaRef]).toBeDefined();
+      expect(plan.schemaModelMap[operation.responseSchemaRef]).toBeDefined();
+    }
     expect(plan.outputs.map((output) => output.kind)).toEqual([
       'openapi',
       'sdk_generation_input',

@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.7.0
+
+### Added
+
+- API export dry-run plan에 `schemaModelMap`을 추가해 SDK가 API schema bundle의 required field, secret field, session effect metadata를 같은 handoff에서 소비할 수 있게 했다.
+
 ## 0.6.0
 
 ### Added

@@ -6,6 +6,10 @@ import type {
   ApiExportPlanOutput,
   ApiExportPlanResult,
   ApiRouteDefinition,
+  ApiSchemaBundleContract,
+  ApiSchemaDefinition,
+  ApiSchemaModel,
+  ApiSchemaModelKind,
   ApiTypedFetchOperation
 } from '../api-contracts/types';
 
@@ -139,6 +143,7 @@ export function buildApiExportPlan(
     typedFetchOperationMap: buildTypedFetchOperationMap(
       contracts.apiCatalog.routes
     ),
+    schemaModelMap: buildSchemaModelMap(contracts.schemaBundles),
     mutatingMethodsRequiringIdempotency: [
       ...MUTATING_METHODS_REQUIRING_IDEMPOTENCY
     ],
@@ -174,6 +179,50 @@ function buildTypedFetchOperationMap(
   }
 
   return operationMap;
+}
+
+function buildSchemaModelMap(
+  schemaBundles: readonly ApiSchemaBundleContract[]
+): Readonly<Record<string, ApiSchemaModel>> {
+  const schemaModelEntries = schemaBundles.flatMap((bundle) =>
+    bundle.schemas.map((schema) => {
+      const model = buildSchemaModel(bundle, schema);
+      return [model.schemaRef, model] as const;
+    })
+  );
+
+  return Object.fromEntries(
+    schemaModelEntries.sort(([left], [right]) => left.localeCompare(right))
+  );
+}
+
+function buildSchemaModel(
+  bundle: ApiSchemaBundleContract,
+  schema: ApiSchemaDefinition
+): ApiSchemaModel {
+  return {
+    schemaRef: `${bundle.file}#${schema.id}`,
+    schemaId: schema.id,
+    sourceContract: bundle.file,
+    serviceId: bundle.serviceId,
+    ownerBoundary: bundle.ownerBoundary,
+    status: bundle.status,
+    kind: requireSchemaModelKind(schema),
+    carriesSecretMaterial: schema.carriesSecretMaterial,
+    requiredFields: [...schema.requiredFields],
+    secretFields: [...schema.secretFields],
+    sessionEffect: schema.sessionEffect
+  };
+}
+
+function requireSchemaModelKind(schema: ApiSchemaDefinition): ApiSchemaModelKind {
+  if (schema.kind === 'request' || schema.kind === 'response') {
+    return schema.kind;
+  }
+
+  throw new Error(
+    `Validated API schema \`${schema.id}\` has unsupported kind \`${schema.kind}\`.`
+  );
 }
 
 function validateExportPlanInputs(
