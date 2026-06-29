@@ -31,6 +31,13 @@ const MUTATING_METHODS_REQUIRING_IDEMPOTENCY = [
 ] as const;
 const REQUIRED_MUTATION_IDEMPOTENCY_POLICY = 'required_idempotency_key';
 
+/**
+ * mf:anchor zdp.api-contracts.export-plan
+ * purpose: Locate the dry-run export plan for OpenAPI, docs, webhook, and SDK handoffs.
+ * search: export plan, OpenAPI, SDK generation, docs contract, webhook schema
+ * invariant: Export planning reports required metadata without publishing schemas or writing artifacts.
+ * risk: dependency, data_consistency
+ */
 export function buildApiExportPlan(
   contracts: ApiContracts
 ): ApiExportPlanResult {

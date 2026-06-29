@@ -58,6 +58,13 @@ export class ApiContractLoadError extends Error {
   }
 }
 
+/**
+ * mf:anchor zdp.api-contracts.contract-loader
+ * purpose: Locate the loader that turns YAML contract files into typed API contract objects.
+ * search: api contracts, yaml load, route catalog, schema bundles, sdk input
+ * invariant: Missing or malformed contract files fail before validator or export planning runs.
+ * risk: data_consistency
+ */
 export async function loadApiContracts(root = process.cwd()): Promise<ApiContracts> {
   const contractsRoot = join(root, 'contracts');
   const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog] =
