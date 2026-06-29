@@ -27,7 +27,7 @@ describe('api contract checker', () => {
     expect(result.ok).toBe(true);
   });
 
-  it('keeps core auth, referral, and money referral reward routes explicit in the API catalog', () => {
+  it('keeps core auth session routes explicit in the API catalog with referral and money reward routes', () => {
     const contracts = loadCommittedContracts();
 
     expect(contracts.apiCatalog.status).toBe('route-catalog-contract-only');

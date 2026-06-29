@@ -251,6 +251,50 @@ release:
   canary_policy: null
   feature_flag_required: false
 
+automation:
+  ci:
+    required: false
+    provider: null
+    workflow_names: []
+    required_status_checks: []
+    missing_reason: GitHub Actions workflow is not committed yet; API contract validation is covered by live architecture repository validation and repo-local contract checks until OpenAPI and AsyncAPI CI gates are adopted.
+    private_dependency_token_required: false
+    required_secrets: []
+  dependency_updates:
+    renovate_enabled: false
+    dependabot_enabled: false
+    conflict_policy: manual dependency review until API contract CI is enabled
+  ruleset:
+    required: false
+    required_status_checks: []
+    admin_bypass_policy: manual owner review required before public API promotion or branch protection
+  release_helper:
+    enabled: false
+    version_source_of_truth: package.json
+    changelog_policy: manual changelog until API contract release automation is adopted
+  auto_merge:
+    enabled: false
+    required_checks: []
+    owner_review_required: true
+    major_update_allowed: false
+  stale_bot:
+    enabled: false
+    exempt_labels:
+      - security
+      - privacy
+      - api
+      - auth
+    security_issue_auto_close_allowed: false
+  templates:
+    issue_forms_secret_warning: false
+    pr_template_secret_warning: false
+    forbidden_submission_classes:
+      - secrets
+      - tokens
+      - webhook secrets
+      - customer raw data
+      - provider response payloads
+
 reliability:
   rpo: contract evidence recoverable from git history
   rto: 4h for contract reconstruction

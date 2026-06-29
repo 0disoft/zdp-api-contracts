@@ -12,6 +12,10 @@ import type {
   WebhookContract
 } from './types';
 
+const REQUIRED_CORE_API_SCHEMA_BUNDLE_FILES = [
+  'contracts/apis/core-api/auth-session.yaml'
+] as const;
+
 interface ContractLoadFailure {
   readonly name: string;
   readonly file: string;
@@ -408,10 +412,13 @@ function schemaBundleFilesFromCatalog(
   catalog: ApiCatalogContract
 ): readonly string[] {
   return uniqueSorted(
-    catalog.routes.flatMap((route) => [
-      schemaBundleFileFromRef(route.requestSchemaRef),
-      schemaBundleFileFromRef(route.responseSchemaRef)
-    ])
+    [
+      ...REQUIRED_CORE_API_SCHEMA_BUNDLE_FILES,
+      ...catalog.routes.flatMap((route) => [
+        schemaBundleFileFromRef(route.requestSchemaRef),
+        schemaBundleFileFromRef(route.responseSchemaRef)
+      ])
+    ]
   );
 }
 

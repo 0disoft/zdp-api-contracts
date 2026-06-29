@@ -188,6 +188,12 @@ const ALLOWED_CREDENTIAL_POLICIES = [
   'no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload'
 ] as const;
 
+const REQUIRED_CREDENTIAL_POLICY_PARTS = [
+  'no_refresh_token_plaintext',
+  'no_provider_secret',
+  'no_authorization_or_cookie_header_payload'
+] as const;
+
 const PUBLIC_AUTH_PERMISSION_CHECK = 'core.identity.public_auth_entrypoint';
 
 const ALLOWED_OWNER_BOUNDARIES = [
@@ -770,6 +776,19 @@ function validateRouteDefinition(
   }
 
   if (!includesValue(ALLOWED_CREDENTIAL_POLICIES, route.credentialPolicy)) {
+    if (
+      REQUIRED_CREDENTIAL_POLICY_PARTS.some(
+        (part) => !route.credentialPolicy.includes(part)
+      )
+    ) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_CREDENTIAL_POLICY_INCOMPLETE',
+        file: 'contracts/apis/catalog.yaml',
+        path: `${routePath}.credential_policy`,
+        message: `API route \`${route.operationId}\` credential policy must name every required secret-exclusion part.`
+      });
+    }
+
     diagnostics.push({
       code: 'API_CATALOG_ROUTE_CREDENTIAL_POLICY_INVALID',
       file: 'contracts/apis/catalog.yaml',
