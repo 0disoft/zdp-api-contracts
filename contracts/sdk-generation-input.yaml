@@ -47,6 +47,14 @@ sdk_generation_input:
     - trace_id
     - retry_after_seconds
     - documentation_url
+  required_client_runtime_metadata:
+    - typed_fetch_operation_map
+    - standard_error_envelope_normalization
+    - request_id_propagation
+    - trace_id_propagation
+    - timeout_ms_option
+    - abort_signal_option
+    - idempotency_key_required_for_mutations
   required_webhook_metadata:
     - event_id
     - event_type

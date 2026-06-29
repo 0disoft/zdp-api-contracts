@@ -282,6 +282,11 @@ export function parseSdkGenerationInputContract(
       'required_error_metadata',
       'contracts/sdk-generation-input.yaml#sdk_generation_input'
     ),
+    requiredClientRuntimeMetadata: requiredStringList(
+      sdkGenerationInput,
+      'required_client_runtime_metadata',
+      'contracts/sdk-generation-input.yaml#sdk_generation_input'
+    ),
     requiredWebhookMetadata: requiredStringList(
       sdkGenerationInput,
       'required_webhook_metadata',

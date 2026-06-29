@@ -21,6 +21,13 @@ const OPENAPI_EXTRA_ROUTE_METADATA = [
 
 const TRACE_FIELDS = ['request_id', 'trace_id'] as const;
 const SDK_EXPORT_ERROR_DETAIL_FIELDS = ['details'] as const;
+const MUTATING_METHODS_REQUIRING_IDEMPOTENCY = [
+  'POST',
+  'PUT',
+  'PATCH',
+  'DELETE'
+] as const;
+const REQUIRED_MUTATION_IDEMPOTENCY_POLICY = 'required_idempotency_key';
 
 export function buildApiExportPlan(
   contracts: ApiContracts
@@ -71,6 +78,7 @@ export function buildApiExportPlan(
       requiredMetadata: uniqueSorted([
         ...contracts.sdkGenerationInput.requiredRouteMetadata,
         ...contracts.sdkGenerationInput.requiredErrorMetadata,
+        ...contracts.sdkGenerationInput.requiredClientRuntimeMetadata,
         ...contracts.sdkGenerationInput.requiredWebhookMetadata
       ]),
       forbiddenValues: [...contracts.sdkGenerationInput.forbiddenValues]
@@ -114,7 +122,15 @@ export function buildApiExportPlan(
     publishesSchemas: false,
     outputs,
     sdkTargets: [...contracts.sdkGenerationInput.generationTargets],
-    traceFields: [...TRACE_FIELDS]
+    traceFields: [...TRACE_FIELDS],
+    clientRuntimeMetadata: [
+      ...contracts.sdkGenerationInput.requiredClientRuntimeMetadata
+    ],
+    operationIds: contracts.apiCatalog.routes.map((route) => route.operationId),
+    mutatingMethodsRequiringIdempotency: [
+      ...MUTATING_METHODS_REQUIRING_IDEMPOTENCY
+    ],
+    requiredMutationIdempotencyPolicy: REQUIRED_MUTATION_IDEMPOTENCY_POLICY
   };
 
   return {
@@ -169,6 +185,22 @@ function validateExportPlanInputs(
       file: SDK_GENERATION_INPUT_FILE,
       path: 'sdk_generation_input.required_error_metadata',
       label: 'SDK error metadata'
+    }),
+    ...validateRequiredEntries({
+      actual: contracts.sdkGenerationInput.requiredClientRuntimeMetadata,
+      required: [
+        'typed_fetch_operation_map',
+        'standard_error_envelope_normalization',
+        'request_id_propagation',
+        'trace_id_propagation',
+        'timeout_ms_option',
+        'abort_signal_option',
+        'idempotency_key_required_for_mutations'
+      ],
+      code: 'API_EXPORT_PLAN_CLIENT_RUNTIME_METADATA_DRIFT',
+      file: SDK_GENERATION_INPUT_FILE,
+      path: 'sdk_generation_input.required_client_runtime_metadata',
+      label: 'SDK client runtime metadata'
     }),
     ...validateRequiredEntries({
       actual: contracts.sdkGenerationInput.requiredWebhookMetadata,

@@ -12,6 +12,7 @@
 - standard error envelope
 - SDK generation input
 - export dry-run plan for OpenAPI, SDK, webhook schema, and docs
+- typed fetch client handoff metadata
 - authorization, audit, idempotency, metering hook declaration
 
 소유하지 않는다:

@@ -122,6 +122,16 @@ const REQUIRED_SDK_ERROR_METADATA = [
   'documentation_url'
 ] as const;
 
+const REQUIRED_SDK_CLIENT_RUNTIME_METADATA = [
+  'typed_fetch_operation_map',
+  'standard_error_envelope_normalization',
+  'request_id_propagation',
+  'trace_id_propagation',
+  'timeout_ms_option',
+  'abort_signal_option',
+  'idempotency_key_required_for_mutations'
+] as const;
+
 const REQUIRED_SDK_WEBHOOK_METADATA = [
   'event_id',
   'event_type',
@@ -523,6 +533,23 @@ function validateSdkGenerationInputContract(
         file: 'contracts/sdk-generation-input.yaml',
         path: 'sdk_generation_input.required_error_metadata',
         message: `SDK generation input must carry error metadata \`${metadata}\`.`
+      });
+    }
+  }
+
+  for (const metadata of REQUIRED_SDK_CLIENT_RUNTIME_METADATA) {
+    if (
+      !contracts.sdkGenerationInput.requiredClientRuntimeMetadata.includes(
+        metadata
+      )
+    ) {
+      diagnostics.push({
+        code: 'API_SDK_CLIENT_RUNTIME_METADATA_MISSING',
+        file: 'contracts/sdk-generation-input.yaml',
+        path: 'sdk_generation_input.required_client_runtime_metadata',
+        message:
+          `SDK generation input must carry client runtime metadata ` +
+          `\`${metadata}\`.`
       });
     }
   }

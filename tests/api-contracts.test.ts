@@ -299,6 +299,25 @@ describe('api contract checker', () => {
     );
   });
 
+  it('fails when SDK generation input drops typed fetch runtime metadata', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      sdkGenerationInput: {
+        ...contracts.sdkGenerationInput,
+        requiredClientRuntimeMetadata:
+          contracts.sdkGenerationInput.requiredClientRuntimeMetadata.filter(
+            (metadata) => metadata !== 'timeout_ms_option'
+          )
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_SDK_CLIENT_RUNTIME_METADATA_MISSING'
+    );
+  });
+
   it('fails when SDK generation input owns generated SDK source', () => {
     const contracts = loadCommittedContracts();
     const result = validateApiContracts({

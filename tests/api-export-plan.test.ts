@@ -23,8 +23,31 @@ describe('api export plan', () => {
       writesArtifacts: false,
       publishesSchemas: false,
       sdkTargets: ['typescript', 'dart', 'rust'],
-      traceFields: ['request_id', 'trace_id']
+      traceFields: ['request_id', 'trace_id'],
+      clientRuntimeMetadata: [
+        'typed_fetch_operation_map',
+        'standard_error_envelope_normalization',
+        'request_id_propagation',
+        'trace_id_propagation',
+        'timeout_ms_option',
+        'abort_signal_option',
+        'idempotency_key_required_for_mutations'
+      ],
+      mutatingMethodsRequiringIdempotency: ['POST', 'PUT', 'PATCH', 'DELETE'],
+      requiredMutationIdempotencyPolicy: 'required_idempotency_key'
     });
+    expect(result.plan?.operationIds).toEqual([
+      'core.auth.registrations.create',
+      'core.auth.sessions.create',
+      'core.auth.sessions.refresh',
+      'core.auth.sessions.revoke_current',
+      'core.auth.recovery_requests.create',
+      'core.auth.passkey_challenges.create',
+      'core.auth.passkey_assertions.verify',
+      'core.auth.oauth_callbacks.accept',
+      'core.referral.uses.create',
+      'money.referral_rewards.status.get'
+    ]);
     expect(result.plan?.outputs.map((output) => output.kind)).toEqual([
       'openapi',
       'sdk_generation_input',
@@ -98,6 +121,25 @@ describe('api export plan', () => {
     expect(result.ok).toBe(false);
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
       'API_EXPORT_PLAN_ERROR_METADATA_DRIFT'
+    );
+  });
+
+  it('fails when SDK input drops typed fetch client runtime metadata', () => {
+    const contracts = loadCommittedContracts();
+    const result = buildApiExportPlan({
+      ...contracts,
+      sdkGenerationInput: {
+        ...contracts.sdkGenerationInput,
+        requiredClientRuntimeMetadata:
+          contracts.sdkGenerationInput.requiredClientRuntimeMetadata.filter(
+            (metadata) => metadata !== 'abort_signal_option'
+          )
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_SDK_CLIENT_RUNTIME_METADATA_MISSING'
     );
   });
 

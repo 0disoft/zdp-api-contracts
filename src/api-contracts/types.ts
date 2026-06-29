@@ -36,6 +36,7 @@ export interface SdkGenerationInputContract {
   readonly allowedGenerationTargets: readonly string[];
   readonly requiredRouteMetadata: readonly string[];
   readonly requiredErrorMetadata: readonly string[];
+  readonly requiredClientRuntimeMetadata: readonly string[];
   readonly requiredWebhookMetadata: readonly string[];
   readonly forbiddenOwnership: readonly string[];
   readonly forbiddenValues: readonly string[];
@@ -123,6 +124,10 @@ export interface ApiExportPlan {
   readonly outputs: readonly ApiExportPlanOutput[];
   readonly sdkTargets: readonly string[];
   readonly traceFields: readonly string[];
+  readonly clientRuntimeMetadata: readonly string[];
+  readonly operationIds: readonly string[];
+  readonly mutatingMethodsRequiringIdempotency: readonly string[];
+  readonly requiredMutationIdempotencyPolicy: string;
 }
 
 export interface ApiExportPlanResult {

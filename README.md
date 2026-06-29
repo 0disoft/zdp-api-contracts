@@ -13,6 +13,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - SDK 생성 입력의 소유 경계
 - OpenAPI/SDK/docs/webhook schema export dry-run plan
 - auth/session route 승격에 필요한 session issue, refresh, logout/revocation, passkey challenge, OAuth callback 계약
+- typed fetch client가 읽어야 할 error envelope, request/trace id, timeout, abort signal, mutation idempotency handoff
 
 ## 현재 제외
 
@@ -42,9 +43,9 @@ API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelo
 
 이렇게 해두면 제품 handler나 화면 payload가 API 계약 원천인 척 들어오는 일을 초반에 막을 수 있다. 또한 에러 응답에 provider secret이나 customer private payload가 섞이는 사고, 웹훅이 중복 처리 방지 없이 열리는 사고를 checker 단계에서 먼저 잡는다.
 
-SDK generation input은 generated SDK source 자체가 아니다. 활성 target은 `generation_targets`에 두고, 새 언어 후보는 먼저 `allowed_generation_targets`에 등록한다. 이 입력이 있으면 `zdp-client-sdks`가 route success status, idempotency, audit event, permission hook, error trace field, webhook replay/dead-letter 규칙을 같은 방식으로 읽을 수 있다. 즉 SDK가 "이 API는 그냥 호출하면 되겠지"라고 추측하는 일을 줄이고, 언어별 SDK가 서로 다른 안전장치를 갖는 문제를 초반에 막는다.
+SDK generation input은 generated SDK source 자체가 아니다. 활성 target은 `generation_targets`에 두고, 새 언어 후보는 먼저 `allowed_generation_targets`에 등록한다. 이 입력이 있으면 `zdp-client-sdks`가 route success status, idempotency, audit event, permission hook, error trace field, typed fetch runtime metadata, webhook replay/dead-letter 규칙을 같은 방식으로 읽을 수 있다. 즉 SDK가 "이 API는 그냥 호출하면 되겠지"라고 추측하는 일을 줄이고, 언어별 SDK가 서로 다른 안전장치를 갖는 문제를 초반에 막는다.
 
-`export:plan`은 OpenAPI, SDK generation input, webhook schema, docs contract 산출 계획을 dry-run으로 만든다. 파일을 쓰거나 schema를 publish하지 않는다. plan JSON의 `writesArtifacts`와 `publishesSchemas`는 항상 false여야 한다. 대신 생성기가 나중에 읽어야 할 source contract, required metadata, forbidden value를 한 번에 보여준다. 이게 있으면 `permission_check`, `success_statuses`, `idempotency`가 route contract에는 있는데 API catalog나 SDK input에는 없는 상태, `trace_id`가 error envelope에는 있는데 문서/SDK 계획에는 빠진 상태를 일찍 잡을 수 있다. `trace_id`는 SDK 오류와 서버 로그를 같은 선으로 잇게 해주고, `idempotency`는 재시도나 webhook 중복 수신이 같은 일을 두 번 만들지 않게 해준다.
+`export:plan`은 OpenAPI, SDK generation input, webhook schema, docs contract 산출 계획을 dry-run으로 만든다. 파일을 쓰거나 schema를 publish하지 않는다. plan JSON의 `writesArtifacts`와 `publishesSchemas`는 항상 false여야 한다. 대신 생성기가 나중에 읽어야 할 source contract, required metadata, forbidden value, route operation id, typed fetch runtime metadata, mutation idempotency policy를 한 번에 보여준다. 이게 있으면 `permission_check`, `success_statuses`, `idempotency`가 route contract에는 있는데 API catalog나 SDK input에는 없는 상태, `trace_id`가 error envelope에는 있는데 문서/SDK 계획에는 빠진 상태를 일찍 잡을 수 있다. `trace_id`는 SDK 오류와 서버 로그를 같은 선으로 잇게 해주고, `idempotency`는 재시도나 webhook 중복 수신이 같은 일을 두 번 만들지 않게 해준다.
 
 ```bash
 bun run check
