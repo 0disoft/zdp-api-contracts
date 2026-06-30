@@ -253,11 +253,12 @@ release:
 
 automation:
   ci:
-    required: false
-    provider: null
-    workflow_names: []
+    required: true
+    provider: github-actions
+    workflow_names:
+      - CI
     required_status_checks: []
-    missing_reason: GitHub Actions workflow is not committed yet; API contract validation is covered by live architecture repository validation and repo-local contract checks until OpenAPI and AsyncAPI CI gates are adopted.
+    missing_reason: null
     private_dependency_token_required: false
     required_secrets: []
   dependency_updates:
