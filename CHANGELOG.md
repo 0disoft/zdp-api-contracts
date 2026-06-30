@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.7.1
+
+### Changed
+
+- public npm package surface에 `SECURITY.md`를 포함해 API 계약 저장소의 민감값 금지와 신고 경계를 명시했다.
+
 ## 0.7.0
 
 ### Added
