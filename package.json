@@ -7,7 +7,7 @@
   "description": "ZDP API contract skeletons, route metadata, and SDK generation handoff contracts.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/0disoft/zdp-api-contracts.git"
+    "url": "git+https://github.com/0disoft/zdp-api-contracts.git"
   },
   "bugs": {
     "url": "https://github.com/0disoft/zdp-api-contracts/issues"
