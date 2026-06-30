@@ -1,8 +1,49 @@
 {
   "name": "zdp-api-contracts",
   "version": "0.7.0",
-  "private": true,
+  "private": false,
+  "license": "MIT",
   "type": "module",
+  "description": "ZDP API contract skeletons, route metadata, and SDK generation handoff contracts.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0disoft/zdp-api-contracts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/0disoft/zdp-api-contracts/issues"
+  },
+  "homepage": "https://github.com/0disoft/zdp-api-contracts#readme",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./api-contracts": {
+      "types": "./src/api-contracts/index.ts",
+      "import": "./src/api-contracts/index.ts",
+      "default": "./src/api-contracts/index.ts"
+    },
+    "./api-export-plan": {
+      "types": "./src/api-export-plan/index.ts",
+      "import": "./src/api-export-plan/index.ts",
+      "default": "./src/api-export-plan/index.ts"
+    },
+    "./contracts/*": "./contracts/*"
+  },
+  "types": "./src/index.ts",
+  "files": [
+    "src/",
+    "contracts/",
+    "README.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "BOUNDARY.md",
+    "RUNBOOK.md",
+    "service.yaml",
+    "LICENSE"
+  ],
+  "sideEffects": false,
   "scripts": {
     "check": "tsc --noEmit && bun test && bun run contracts:check",
     "check:tsgo": "tsgo --noEmit",

@@ -14,6 +14,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - OpenAPI/SDK/docs/webhook schema export dry-run plan
 - auth/session route 승격에 필요한 session issue, refresh, logout/revocation, passkey challenge, OAuth callback 계약
 - typed fetch client가 읽어야 할 error envelope, request/trace id, timeout, abort signal, mutation idempotency handoff
+- npm package metadata, MIT license, public export map, package file whitelist
 
 ## 현재 제외
 
@@ -24,10 +25,13 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - 제품별 화면 payload
 - 결제, 원장, 개인정보, AI 데이터 접근 로직
 - refresh token plaintext, provider secret, authorization header, cookie header를 request/response payload로 싣는 방식
+- 실제 npm publish 실행
 
 ## 계약
 
 루트 `service.yaml`이 이 저장소의 서비스 계약이다. `contracts/` 아래 파일은 아직 실행 가능한 OpenAPI 전체가 아니라 API 계약이 지켜야 할 최소 구조다.
+
+패키지 표면은 source package skeleton이다. root export는 `src/index.ts`이고, 하위 export는 `zdp-api-contracts/api-contracts`, `zdp-api-contracts/api-export-plan`, `zdp-api-contracts/contracts/*`만 허용한다. `files` whitelist는 `src/`, `contracts/`, 운영 문서, `LICENSE`만 포함한다. 실제 OpenAPI artifact, generated SDK, live endpoint 정보는 이 패키지에 포함하지 않는다.
 
 ## 검증
 
