@@ -1,3 +1,8 @@
+# mf:anchor zdp.api-contracts.service-contract
+# purpose: Locate the route, OpenAPI, event, webhook, error, idempotency, audit hook, and SDK input contract.
+# search: API contracts, OpenAPI, AsyncAPI, webhook schema, standard errors, SDK input
+# invariant: API contracts must remain the source for downstream backplanes, SDKs, and docs without hiding auth, payment, ledger, or audit rules in prose-only descriptions.
+# risk: authz, data_consistency, security
 contract:
   schema_version: 2
   contract_version: 1
