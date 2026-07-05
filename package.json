@@ -1,6 +1,6 @@
 {
   "name": "zdp-api-contracts",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "private": false,
   "license": "MIT",
   "type": "module",
@@ -35,7 +35,10 @@
   "files": [
     "src/",
     "contracts/",
+    "docs/",
     "README.md",
+    "CHECKLIST.md",
+    "VALIDATION.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "BOUNDARY.md",

@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.7.2
+
+### Changed
+
+- ssealed식 문서 라우터, agent checklist, validation docs를 추가하고 package files에 consumer-facing 문서 표면을 포함했다.
+
 ## 0.7.1
 
 ### Changed

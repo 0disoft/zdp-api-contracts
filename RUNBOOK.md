@@ -4,10 +4,10 @@ This repository owns API contract sources only. It must not become the live API 
 
 ## Normal Checks
 
-- Run `bun run check`.
-- Run `bun run contracts:check` when only API contract YAML changed.
-- Run `bun run export:plan` after route, error, webhook, or SDK generation input changes.
-- Validate this repository with `zdp-architecture-linter`.
+- Use the configured mustflow intent `zdp_api_contracts_check` for TypeScript contracts, Bun tests, repo-local API contract validation, and export-plan coverage.
+- Use the configured mustflow intent `zdp_architecture_validate_api_contracts_repository` for repository architecture validation.
+- Use `zdp_api_contracts_npm_pack_dry_run` before package surface review or release preparation.
+- Use `zdp_api_contracts_npm_publish_dry_run` only for approved publish-readiness dry runs; it is not a publish command.
 - Review `contracts/` changes together with `service.yaml`.
 - Keep breaking contract changes paired with `CHANGELOG.md` and migration notes.
 - Treat `contracts/sdk-generation-input.yaml` as the SDK handoff contract, not as generated SDK output.
@@ -15,6 +15,7 @@ This repository owns API contract sources only. It must not become the live API 
 - Keep route `method` and `success_statuses` inside the allowlists declared by `contracts/route-contract.yaml`.
 - Keep auth/session routes carrying `owner_boundary`, `tenant_boundary`, `request_id_required`, `trace_id_required`, `session_effect`, and `credential_policy` before web app auth routes are promoted.
 - Add a new SDK language to `allowed_generation_targets` before enabling it in `generation_targets`.
+- Do not run raw package, generator, server, OpenAPI, AsyncAPI, SDK, publish, or provider commands as agent verification unless the root command contract exposes them as eligible mustflow intents.
 
 The checker is intentionally local and provider-neutral. It reads committed YAML and does not start a backend server, publish OpenAPI, generate SDKs, or call external providers.
 
