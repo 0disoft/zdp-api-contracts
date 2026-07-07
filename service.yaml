@@ -6,7 +6,7 @@
 contract:
   schema_version: 2
   contract_version: 1
-  last_reviewed_at: null
+  last_reviewed_at: 2026-07-07
   review_owner: null
   review_interval_days: 60
   approved_by: []
