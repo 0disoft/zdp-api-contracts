@@ -8,6 +8,7 @@ This repository owns API contract sources only. It must not become the live API 
 - Use the configured mustflow intent `zdp_architecture_validate_api_contracts_repository` for repository architecture validation.
 - Use `zdp_api_contracts_npm_pack_dry_run` before package surface review or release preparation.
 - Use `zdp_api_contracts_npm_publish_dry_run` only for approved publish-readiness dry runs; it is not a publish command.
+- GitHub Actions CI validates the root `service.yaml` with `0disoft/service-catalog-generator@v0.5.9`, `input-schema: zdp-v2`, unknown service dependencies allowed, and warnings promoted to failure.
 - Review `contracts/` changes together with `service.yaml`.
 - Keep breaking contract changes paired with `CHANGELOG.md` and migration notes.
 - Treat `contracts/sdk-generation-input.yaml` as the SDK handoff contract, not as generated SDK output.
@@ -18,6 +19,8 @@ This repository owns API contract sources only. It must not become the live API 
 - Do not run raw package, generator, server, OpenAPI, AsyncAPI, SDK, publish, or provider commands as agent verification unless the root command contract exposes them as eligible mustflow intents.
 
 The checker is intentionally local and provider-neutral. It reads committed YAML and does not start a backend server, publish OpenAPI, generate SDKs, or call external providers.
+
+The service catalog action is a repository-local dogfood gate for the checked-in manifest. It does not replace the central `zdp-architecture` catalog workflow, which still owns multi-repository catalog assembly and cross-service graph evidence.
 
 If SDK generation input validation fails, downstream SDK refresh must stop. The useful effect is simple: SDKs keep receiving route metadata, success statuses, error trace fields, webhook replay policy, and forbidden sensitive values from one source instead of each SDK inventing its own interpretation.
 

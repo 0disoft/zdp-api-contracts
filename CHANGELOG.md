@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.7.3
+
+### Changed
+
+- GitHub Actions CI now dogfoods `service-catalog-generator@v0.5.9` against the root ZDP `service.yaml` before package-local checks run.
+
 ## 0.7.2
 
 ### Changed

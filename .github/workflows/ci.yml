@@ -22,6 +22,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Validate service catalog manifest
+        uses: 0disoft/service-catalog-generator@v0.5.9
+        with:
+          roots: .
+          input-schema: zdp-v2
+          allow-unknown-dependencies: "true"
+          fail-on-warning: "true"
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
