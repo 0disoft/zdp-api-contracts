@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.7.6
+
+### Changed
+
+- Action bundle version을 바로잡은 `service-catalog-generator` v0.5.11 forward fix로 service catalog validation을 올렸다.
+
 ## 0.7.5
 
 ### Changed
