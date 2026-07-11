@@ -47,6 +47,7 @@ describe('api export plan', () => {
       'core.auth.sessions.create',
       'core.auth.sessions.refresh',
       'core.auth.sessions.revoke_current',
+      'core.auth.sessions.get_current',
       'core.auth.recovery_requests.create',
       'core.auth.passkey_challenges.create',
       'core.auth.passkey_assertions.verify',
@@ -72,6 +73,16 @@ describe('api export plan', () => {
           'authentication_failed',
           'idempotency_conflict'
         ])
+      },
+      'core.auth.sessions.get_current': {
+        method: 'GET',
+        path: '/v1/auth/sessions/current',
+        authRequired: true,
+        idempotency: 'not_required',
+        requestSchemaRef:
+          'contracts/apis/core-api/auth-session-consumer.yaml#AuthSessionCurrentGetRequest',
+        responseSchemaRef:
+          'contracts/apis/core-api/auth-session-consumer.yaml#AuthSessionCurrentGetResponse'
       },
       'money.referral_rewards.status.get': {
         method: 'GET',
@@ -253,6 +264,19 @@ function loadCommittedContracts(): ApiContracts {
       )
     ),
     schemaBundles: [
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'auth-session-consumer.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/auth-session-consumer.yaml'
+      ),
       parseApiSchemaBundleContract(
         readFileSync(
           join(

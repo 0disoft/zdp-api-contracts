@@ -59,7 +59,7 @@ API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelo
 - API catalog: 실제 route 정의가 들어올 때 `operation_id`, `service_id`, schema ref, method, success status가 표준 계약과 맞는지 확인하는 자리
 - SDK generation input: 활성 SDK target과 허용 target pool, route/error/webhook metadata, SDK가 소유하면 안 되는 runtime/token/final authorization 경계
 
-첫 route catalog는 `core-api` auth/session 계약이다. 이 계약은 `/v1/auth/registrations`, `/v1/auth/sessions`, `/v1/auth/sessions/refresh`, `/v1/auth/sessions/current`, `/v1/auth/recovery/requests`, `/v1/auth/passkey/challenges`, `/v1/auth/passkey/assertions`, `/v1/auth/oauth/callbacks/{provider}`의 method, schema ref, session effect, audit event, idempotency, credential policy를 고정한다. 이 경로들은 live endpoint가 아니라 `zdp-web-apps`의 auth route 승격 전제 조건이다.
+첫 route catalog는 `core-api` auth/session 계약이다. 이 계약은 `/v1/auth/registrations`, `/v1/auth/sessions`, `/v1/auth/sessions/refresh`, `/v1/auth/sessions/current`의 GET·DELETE, `/v1/auth/recovery/requests`, `/v1/auth/passkey/challenges`, `/v1/auth/passkey/assertions`, `/v1/auth/oauth/callbacks/{provider}`의 method, schema ref, session effect, audit event, idempotency, credential policy를 고정한다. GET current-session은 제품 consumer가 transport credential을 payload로 복제하지 않고 actor·tenant·만료 상태를 검증하기 위한 읽기 계약이다. 이 경로들은 live endpoint가 아니라 `zdp-web-apps`와 제품 consumer의 auth route 승격 전제 조건이다.
 
 이렇게 해두면 제품 handler나 화면 payload가 API 계약 원천인 척 들어오는 일을 초반에 막을 수 있다. 또한 에러 응답에 provider secret이나 customer private payload가 섞이는 사고, 웹훅이 중복 처리 방지 없이 열리는 사고를 checker 단계에서 먼저 잡는다.
 

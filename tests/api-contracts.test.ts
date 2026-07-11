@@ -36,6 +36,7 @@ describe('api contract checker', () => {
       'core.auth.sessions.create',
       'core.auth.sessions.refresh',
       'core.auth.sessions.revoke_current',
+      'core.auth.sessions.get_current',
       'core.auth.recovery_requests.create',
       'core.auth.passkey_challenges.create',
       'core.auth.passkey_assertions.verify',
@@ -60,6 +61,16 @@ describe('api contract checker', () => {
     expect(
       authRoutes.filter((route) => route.sessionEffect === 'issue').length
     ).toBe(3);
+    expect(
+      authRoutes.find((route) => route.operationId === 'core.auth.sessions.get_current')
+    ).toMatchObject({
+      method: 'GET',
+      path: '/v1/auth/sessions/current',
+      authRequired: true,
+      idempotency: 'not_required',
+      permissionCheck: 'core.identity.session.read_self',
+      sessionEffect: 'none'
+    });
     expect(
       contracts.apiCatalog.routes.find(
         (route) => route.operationId === 'core.referral.uses.create'
@@ -416,17 +427,21 @@ describe('api contract checker', () => {
     const contracts = await loadApiContracts(process.cwd());
 
     expect(contracts.schemaBundles.map((bundle) => bundle.file)).toEqual([
+      'contracts/apis/core-api/auth-session-consumer.yaml',
       'contracts/apis/core-api/auth-session.yaml',
       'contracts/apis/core-api/referral.yaml',
       'contracts/apis/money-api/referral-reward.yaml'
     ]);
     expect(contracts.schemaBundles[0]?.schemas.map((schema) => schema.id)).toContain(
-      'AuthSessionCreateRequest'
+      'AuthSessionCurrentGetRequest'
     );
     expect(contracts.schemaBundles[1]?.schemas.map((schema) => schema.id)).toContain(
-      'ReferralUseCreateRequest'
+      'AuthSessionCreateRequest'
     );
     expect(contracts.schemaBundles[2]?.schemas.map((schema) => schema.id)).toContain(
+      'ReferralUseCreateRequest'
+    );
+    expect(contracts.schemaBundles[3]?.schemas.map((schema) => schema.id)).toContain(
       'ReferralRewardStatusGetResponse'
     );
   });
@@ -456,7 +471,7 @@ describe('api contract checker', () => {
 
   it('fails when a secret request field is echoed by the response schema', () => {
     const contracts = loadCommittedContracts();
-    const schemaBundle = schemaBundleAt(contracts, 0);
+    const schemaBundle = schemaBundleAt(contracts, 1);
     const result = validateApiContracts({
       ...contracts,
       schemaBundles: [
@@ -584,7 +599,7 @@ describe('api contract checker', () => {
 
   it('fails when an idempotent route schema drops idempotency metadata', () => {
     const contracts = loadCommittedContracts();
-    const schemaBundle = schemaBundleAt(contracts, 0);
+    const schemaBundle = schemaBundleAt(contracts, 1);
     const result = validateApiContracts({
       ...contracts,
       schemaBundles: [
@@ -610,7 +625,7 @@ describe('api contract checker', () => {
 
   it('fails when a non-idempotent route schema requires idempotency metadata', () => {
     const contracts = loadCommittedContracts();
-    const schemaBundle = schemaBundleAt(contracts, 2);
+    const schemaBundle = schemaBundleAt(contracts, 3);
     const result = validateApiContracts({
       ...contracts,
       schemaBundles: [
@@ -731,6 +746,19 @@ function loadCommittedContracts(): ApiContracts {
       )
     ),
     schemaBundles: [
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'auth-session-consumer.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/auth-session-consumer.yaml'
+      ),
       parseApiSchemaBundleContract(
         readFileSync(
           join(

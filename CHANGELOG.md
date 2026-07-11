@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.8.0
+
+### Added
+
+- 제품 consumer가 현재 세션의 actor, tenant, 만료 상태를 검증할 수 있도록 `core.auth.sessions.get_current` 읽기 계약과 bodyless request schema를 추가했다.
+
 ## 0.7.6
 
 ### Changed

@@ -1,0 +1,35 @@
+schema_bundle:
+  service_id: core-api
+  owner_boundary: identity
+  status: contract-only
+  purpose: describe the current-session identity read used by authenticated product consumers before live handlers or generated OpenAPI exist
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: AuthSessionCurrentGetRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: []
+    - id: AuthSessionCurrentGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - session_ref
+        - actor_ref
+        - tenant_ref
+        - expires_at

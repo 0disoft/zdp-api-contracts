@@ -506,7 +506,7 @@ function parseApiSchemaDefinition(
       context
     ),
     sessionEffect: optionalString(schema, 'session_effect', context),
-    requiredFields: requiredStringList(schema, 'required_fields', context),
+    requiredFields: requiredStringListAllowEmpty(schema, 'required_fields', context),
     secretFields: optionalStringList(schema, 'secret_fields', context)
   };
 }
@@ -543,6 +543,21 @@ function requiredStringList(
     !value.every((item) => typeof item === 'string' && item.trim().length > 0)
   ) {
     throw new Error(`${context} must declare non-empty string list \`${key}\`.`);
+  }
+  return value;
+}
+
+function requiredStringListAllowEmpty(
+  data: Record<string, unknown>,
+  key: string,
+  context: string
+): readonly string[] {
+  const value = data[key];
+  if (
+    !Array.isArray(value) ||
+    !value.every((item) => typeof item === 'string' && item.trim().length > 0)
+  ) {
+    throw new Error(`${context} must declare string list \`${key}\`.`);
   }
   return value;
 }
