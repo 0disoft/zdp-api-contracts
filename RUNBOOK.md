@@ -8,7 +8,7 @@ This repository owns API contract sources only. It must not become the live API 
 - Use the configured mustflow intent `zdp_architecture_validate_api_contracts_repository` for repository architecture validation.
 - Use `zdp_api_contracts_npm_pack_dry_run` before package surface review or release preparation.
 - Use `zdp_api_contracts_npm_publish_dry_run` only for approved publish-readiness dry runs; it is not a publish command.
-- GitHub Actions CI validates the root `service.yaml` with `0disoft/service-catalog-generator@v0.5.9`, `input-schema: zdp-v2`, unknown service dependencies allowed, and warnings promoted to failure.
+- GitHub Actions CI validates the root `service.yaml` with full-SHA-pinned `0disoft/service-catalog-generator` v0.5.10, `input-schema: zdp-v2`, unknown service dependencies allowed, and warnings promoted to failure.
 - Review `contracts/` changes together with `service.yaml`.
 - Keep breaking contract changes paired with `CHANGELOG.md` and migration notes.
 - Treat `contracts/sdk-generation-input.yaml` as the SDK handoff contract, not as generated SDK output.

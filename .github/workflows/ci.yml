@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
 
       - name: Validate service catalog manifest
-        uses: 0disoft/service-catalog-generator@870fb4cebc3e6ca45b1f8a2d61c7c4fef51c4079 # v0.5.9
+        uses: 0disoft/service-catalog-generator@f9607267db2fa366324476b2214a6e9fcf55c0a1 # v0.5.10
         with:
           roots: .
           input-schema: zdp-v2

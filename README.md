@@ -45,7 +45,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 
 루트 `service.yaml`이 이 저장소의 서비스 계약이다. `contracts/` 아래 파일은 아직 실행 가능한 OpenAPI 전체가 아니라 API 계약이 지켜야 할 최소 구조다.
 
-CI는 `0disoft/service-catalog-generator@v0.5.9`를 사용해 루트 `service.yaml`을 `zdp-v2` 입력으로 컴파일한다. 이 검증은 중앙 `zdp-architecture` 카탈로그 산출물의 대체물이 아니라, 이 저장소가 자기 서비스 manifest를 깨뜨리지 않았는지 pull request 단계에서 먼저 확인하는 dogfood gate다. 이 저장소의 service dependency는 전체 카탈로그가 아니라 단일 repo context에서 검사되므로 unknown dependency는 허용하되 warning은 실패로 처리한다.
+CI는 full commit SHA로 고정한 `0disoft/service-catalog-generator` v0.5.10을 사용해 루트 `service.yaml`을 `zdp-v2` 입력으로 컴파일한다. 이 검증은 중앙 `zdp-architecture` 카탈로그 산출물의 대체물이 아니라, 이 저장소가 자기 서비스 manifest를 깨뜨리지 않았는지 pull request 단계에서 먼저 확인하는 dogfood gate다. 이 저장소의 service dependency는 전체 카탈로그가 아니라 단일 repo context에서 검사되므로 unknown dependency는 허용하되 warning은 실패로 처리한다.
 
 패키지 표면은 source package skeleton이다. root export는 `src/index.ts`이고, 하위 export는 `zdp-api-contracts/api-contracts`, `zdp-api-contracts/api-export-plan`, `zdp-api-contracts/contracts/*`만 허용한다. `files` whitelist는 `src/`, `contracts/`, 운영 문서, `LICENSE`만 포함한다. 실제 OpenAPI artifact, generated SDK, live endpoint 정보는 이 패키지에 포함하지 않는다.
 

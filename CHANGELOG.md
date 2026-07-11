@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.7.5
+
+### Changed
+
+- service catalog validation을 full-SHA-pinned `service-catalog-generator` v0.5.10으로 올렸다.
+
 ## 0.7.4
 
 ### Changed
