@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.7.4
+
+### Changed
+
+- GitHub Actions CI의 모든 외부 Action을 full commit SHA로 고정하고 checkout credential persistence를 껐다.
+- service catalog validation 문서를 full-SHA-pinned `service-catalog-generator` v0.5.9 계약과 동기화했다.
+
 ## 0.7.3
 
 ### Changed
