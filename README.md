@@ -14,6 +14,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 | route 계약 | `docs/contracts/route-contract.md` |
 | error envelope | `docs/contracts/error-envelope.md` |
 | SDK generation input | `docs/contracts/sdk-generation.md` |
+| calculator contract | `docs/contracts/calculator-contract.md` |
 | package surface | `docs/ops/package-surface.md` |
 
 ## 현재 범위
@@ -29,6 +30,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - auth/session route 승격에 필요한 session issue, refresh, logout/revocation, passkey challenge, OAuth callback 계약
 - typed fetch client가 읽어야 할 error envelope, request/trace id, timeout, abort signal, mutation idempotency handoff
 - npm package metadata, MIT license, public export map, package file whitelist
+- 국가 공통 계산기 6종의 정의, 표준 입력·결과 metadata, 안정 오류와 계약·엔진 버전 handoff
 
 ## 현재 제외
 
@@ -40,6 +42,8 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - 결제, 원장, 개인정보, AI 데이터 접근 로직
 - refresh token plaintext, provider secret, authorization header, cookie header를 request/response payload로 싣는 방식
 - 실제 npm publish 실행
+- 계산 함수, 숫자·날짜 엔진, 로케일 파싱·표시
+- 제품별 계산기 페이지, SEO, 광고, 전환 payload
 
 ## 계약
 
@@ -47,17 +51,18 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 
 CI는 full commit SHA로 고정한 `0disoft/service-catalog-generator` v0.5.11을 사용해 루트 `service.yaml`을 `zdp-v2` 입력으로 컴파일한다. 이 검증은 중앙 `zdp-architecture` 카탈로그 산출물의 대체물이 아니라, 이 저장소가 자기 서비스 manifest를 깨뜨리지 않았는지 pull request 단계에서 먼저 확인하는 dogfood gate다. 이 저장소의 service dependency는 전체 카탈로그가 아니라 단일 repo context에서 검사되므로 unknown dependency는 허용하되 warning은 실패로 처리한다.
 
-패키지 표면은 source package skeleton이다. root export는 `src/index.ts`이고, 하위 export는 `zdp-api-contracts/api-contracts`, `zdp-api-contracts/api-export-plan`, `zdp-api-contracts/contracts/*`만 허용한다. `files` whitelist는 `src/`, `contracts/`, 운영 문서, `LICENSE`만 포함한다. 실제 OpenAPI artifact, generated SDK, live endpoint 정보는 이 패키지에 포함하지 않는다.
+패키지 표면은 source package skeleton이다. root export는 `src/index.ts`이고, 하위 export는 `zdp-api-contracts/api-contracts`, `zdp-api-contracts/api-export-plan`, `zdp-api-contracts/contracts/*`만 허용한다. 계산기 계약 타입은 기존 root와 `api-contracts` export로 제공하고 원본은 `contracts/calculators/catalog.yaml`에 둔다. `files` whitelist는 `src/`, `contracts/`, 운영 문서, `LICENSE`만 포함한다. 실제 OpenAPI artifact, generated SDK, live endpoint 정보는 이 패키지에 포함하지 않는다.
 
 ## 검증
 
-API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelope.yaml`, `contracts/webhook-contract.yaml`, `contracts/sdk-generation-input.yaml`, `contracts/apis/catalog.yaml`을 읽는다. 이 검증기는 실제 API 서버나 SDK 생성기를 실행하지 않고, 계약 skeleton과 route catalog가 다음 경계를 잃지 않았는지만 확인한다.
+API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelope.yaml`, `contracts/webhook-contract.yaml`, `contracts/sdk-generation-input.yaml`, `contracts/apis/catalog.yaml`, `contracts/calculators/catalog.yaml`을 읽는다. 이 검증기는 실제 API 서버, 계산 엔진, SDK 생성기를 실행하지 않고 계약 skeleton과 catalog가 다음 경계를 잃지 않았는지만 확인한다.
 
 - route contract: resource/action/method/path, 성공 status code, 권한 검사, 감사 이벤트, 멱등성, owner boundary, tenant boundary, request/trace id, session effect, credential policy, error code 기준
 - error envelope: `request_id`, `trace_id` 추적 필드와 stack trace/provider secret/customer private payload 금지 기준
 - webhook contract: signature verification, idempotency key, replay policy, dead-letter policy 기준
 - API catalog: 실제 route 정의가 들어올 때 `operation_id`, `service_id`, schema ref, method, success status가 표준 계약과 맞는지 확인하는 자리
 - SDK generation input: 활성 SDK target과 허용 target pool, route/error/webhook metadata, SDK가 소유하면 안 되는 runtime/token/final authorization 경계
+- calculator catalog: 첫 국가 공통 6종, 값 종류·단위·오류 allowlist, 계약·엔진 버전, 화면 payload와 계산 함수 금지 경계
 
 첫 route catalog는 `core-api` auth/session 계약이다. 이 계약은 `/v1/auth/registrations`, `/v1/auth/sessions`, `/v1/auth/sessions/refresh`, `/v1/auth/sessions/current`의 GET·DELETE, `/v1/auth/recovery/requests`, `/v1/auth/passkey/challenges`, `/v1/auth/passkey/assertions`, `/v1/auth/oauth/callbacks/{provider}`의 method, schema ref, session effect, audit event, idempotency, credential policy를 고정한다. GET current-session은 제품 consumer가 transport credential을 payload로 복제하지 않고 actor·tenant·만료 상태를 검증하기 위한 읽기 계약이다. 이 경로들은 live endpoint가 아니라 `zdp-web-apps`와 제품 consumer의 auth route 승격 전제 조건이다.
 

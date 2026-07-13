@@ -14,6 +14,7 @@
 - export dry-run plan for OpenAPI, SDK, webhook schema, and docs
 - typed fetch client handoff metadata
 - authorization, audit, idempotency, metering hook declaration
+- 국가 공통 계산기의 정의, 표준 입력·결과 metadata, 안정 오류 코드와 계약·엔진 버전 handoff
 
 소유하지 않는다:
 
@@ -26,6 +27,9 @@
 - final authorization decision
 - 실제 public endpoint 운영
 - generated OpenAPI, generated SDK, or published docs artifacts
+- 계산 공식과 실행 엔진
+- 로케일 파싱·표시 문자열
+- 제품별 계산기 페이지, SEO, 광고, 전환 payload
 
 ## 분리 트리거
 
@@ -33,3 +37,4 @@
 - SDK generator 입력과 human-facing docs가 독립 검증을 요구한다.
 - webhook schema가 provider별 운영 장애 대응을 독립적으로 요구한다.
 - export plan이 실제 artifact 생성, publish, 또는 live endpoint 검증을 시작해야 한다.
+- 계산기 계약과 실행 엔진이 서로 다른 릴리스 주기와 호환성 정책을 요구한다.

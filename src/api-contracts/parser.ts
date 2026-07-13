@@ -6,6 +6,10 @@ import type {
   ApiRouteDefinition,
   ApiSchemaDefinition,
   ApiSchemaBundleContract,
+  CalculatorCatalogContract,
+  CalculatorDefinition,
+  CalculatorInputDefinition,
+  CalculatorOutputDefinition,
   ErrorEnvelopeContract,
   RouteContract,
   SdkGenerationInputContract,
@@ -67,7 +71,14 @@ export class ApiContractLoadError extends Error {
  */
 export async function loadApiContracts(root = process.cwd()): Promise<ApiContracts> {
   const contractsRoot = join(root, 'contracts');
-  const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog] =
+  const [
+    route,
+    errorEnvelope,
+    webhook,
+    sdkGenerationInput,
+    apiCatalog,
+    calculatorCatalog
+  ] =
     await Promise.all([
       loadContract(
         contractsRoot,
@@ -98,6 +109,12 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
         'api-catalog',
         join('apis', 'catalog.yaml'),
         parseApiCatalogContract
+      ),
+      loadContract(
+        contractsRoot,
+        'calculator-catalog',
+        join('calculators', 'catalog.yaml'),
+        parseCalculatorCatalogContract
       )
     ]);
 
@@ -106,7 +123,8 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     errorEnvelope,
     webhook,
     sdkGenerationInput,
-    apiCatalog
+    apiCatalog,
+    calculatorCatalog
   ] as const;
   const failures = results.filter(isContractLoadFailure);
   if (failures.length > 0) {
@@ -118,6 +136,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
   const loadedWebhook = requireLoadedContract(webhook);
   const loadedSdkGenerationInput = requireLoadedContract(sdkGenerationInput);
   const loadedApiCatalog = requireLoadedContract(apiCatalog);
+  const loadedCalculatorCatalog = requireLoadedContract(calculatorCatalog);
   const schemaBundleResults = await Promise.all(
     schemaBundleFilesFromCatalog(loadedApiCatalog.value).map((file) =>
       loadContract(
@@ -141,7 +160,8 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     apiCatalog: loadedApiCatalog.value,
     schemaBundles: schemaBundleResults.map(
       (result) => requireLoadedContract(result).value
-    )
+    ),
+    calculatorCatalog: loadedCalculatorCatalog.value
   };
 }
 
@@ -345,6 +365,86 @@ export function parseApiCatalogContract(source: string): ApiCatalogContract {
   };
 }
 
+export function parseCalculatorCatalogContract(
+  source: string
+): CalculatorCatalogContract {
+  const file = 'contracts/calculators/catalog.yaml';
+  const data = parseYamlObject(source, file);
+  assertOnlyKeys(data, ['calculator_contract', 'definitions'], file);
+  const calculatorContract = requiredObject(data, 'calculator_contract', file);
+  assertOnlyKeys(
+    calculatorContract,
+    [
+      'schema_version',
+      'status',
+      'contract_version',
+      'owner_boundary',
+      'required_definition_fields',
+      'allowed_lifecycle_statuses',
+      'allowed_value_kinds',
+      'allowed_unit_dimensions',
+      'allowed_unit_policies',
+      'stable_error_codes'
+    ],
+    `${file}#calculator_contract`
+  );
+  const definitions = requiredRecordListAllowEmpty(data, 'definitions', file);
+
+  return {
+    schemaVersion: requiredNumber(
+      calculatorContract,
+      'schema_version',
+      `${file}#calculator_contract`
+    ),
+    status: requiredString(
+      calculatorContract,
+      'status',
+      `${file}#calculator_contract`
+    ),
+    contractVersion: requiredString(
+      calculatorContract,
+      'contract_version',
+      `${file}#calculator_contract`
+    ),
+    ownerBoundary: requiredString(
+      calculatorContract,
+      'owner_boundary',
+      `${file}#calculator_contract`
+    ),
+    requiredDefinitionFields: requiredStringList(
+      calculatorContract,
+      'required_definition_fields',
+      `${file}#calculator_contract`
+    ),
+    allowedLifecycleStatuses: requiredStringList(
+      calculatorContract,
+      'allowed_lifecycle_statuses',
+      `${file}#calculator_contract`
+    ),
+    allowedValueKinds: requiredStringList(
+      calculatorContract,
+      'allowed_value_kinds',
+      `${file}#calculator_contract`
+    ),
+    allowedUnitDimensions: requiredStringList(
+      calculatorContract,
+      'allowed_unit_dimensions',
+      `${file}#calculator_contract`
+    ),
+    allowedUnitPolicies: requiredStringList(
+      calculatorContract,
+      'allowed_unit_policies',
+      `${file}#calculator_contract`
+    ),
+    stableErrorCodes: requiredStringList(
+      calculatorContract,
+      'stable_error_codes',
+      `${file}#calculator_contract`
+    ),
+    definitions: definitions.map(parseCalculatorDefinition)
+  };
+}
+
 export function parseApiSchemaBundleContract(
   source: string,
   file = 'contracts/apis/<service>/<schema>.yaml'
@@ -511,6 +611,104 @@ function parseApiSchemaDefinition(
   };
 }
 
+function parseCalculatorDefinition(
+  definition: Record<string, unknown>,
+  index: number
+): CalculatorDefinition {
+  const context = `contracts/calculators/catalog.yaml#definitions[${index}]`;
+  assertOnlyKeys(
+    definition,
+    [
+      'id',
+      'lifecycle_status',
+      'contract_version',
+      'compatible_engine_versions',
+      'jurisdiction',
+      'precision_policy',
+      'rounding_policy',
+      'inputs',
+      'outputs',
+      'error_codes',
+      'semantic_rules'
+    ],
+    context
+  );
+  const inputs = requiredRecordListNonEmpty(definition, 'inputs', context);
+  const outputs = requiredRecordListNonEmpty(definition, 'outputs', context);
+
+  return {
+    id: requiredString(definition, 'id', context),
+    lifecycleStatus: requiredString(definition, 'lifecycle_status', context),
+    contractVersion: requiredString(definition, 'contract_version', context),
+    compatibleEngineVersions: requiredStringList(
+      definition,
+      'compatible_engine_versions',
+      context
+    ),
+    jurisdiction: requiredString(definition, 'jurisdiction', context),
+    precisionPolicy: requiredString(definition, 'precision_policy', context),
+    roundingPolicy: requiredString(definition, 'rounding_policy', context),
+    inputs: inputs.map((input, inputIndex) =>
+      parseCalculatorInput(input, `${context}.inputs[${inputIndex}]`)
+    ),
+    outputs: outputs.map((output, outputIndex) =>
+      parseCalculatorOutput(output, `${context}.outputs[${outputIndex}]`)
+    ),
+    errorCodes: requiredStringList(definition, 'error_codes', context),
+    semanticRules: requiredStringList(definition, 'semantic_rules', context)
+  };
+}
+
+function parseCalculatorInput(
+  input: Record<string, unknown>,
+  context: string
+): CalculatorInputDefinition {
+  assertOnlyKeys(
+    input,
+    [
+      'id',
+      'value_kind',
+      'unit_dimension',
+      'unit_policy',
+      'unit_options',
+      'allowed_values',
+      'required',
+      'domain'
+    ],
+    context
+  );
+
+  return {
+    id: requiredString(input, 'id', context),
+    valueKind: requiredString(input, 'value_kind', context),
+    unitDimension: requiredString(input, 'unit_dimension', context),
+    unitPolicy: requiredString(input, 'unit_policy', context),
+    unitOptions: requiredStringListAllowEmpty(input, 'unit_options', context),
+    allowedValues: requiredStringListAllowEmpty(input, 'allowed_values', context),
+    required: requiredBoolean(input, 'required', context),
+    domain: requiredString(input, 'domain', context)
+  };
+}
+
+function parseCalculatorOutput(
+  output: Record<string, unknown>,
+  context: string
+): CalculatorOutputDefinition {
+  assertOnlyKeys(
+    output,
+    ['id', 'value_kind', 'unit_dimension', 'unit_policy', 'unit_options'],
+    context
+  );
+
+  return {
+    id: requiredString(output, 'id', context),
+    valueKind: requiredString(output, 'value_kind', context),
+    unitDimension: requiredString(output, 'unit_dimension', context),
+    unitPolicy: requiredString(output, 'unit_policy', context),
+    unitOptions: requiredStringListAllowEmpty(output, 'unit_options', context)
+  };
+}
+
 function parseYamlObject(source: string, file: string): Record<string, unknown> {
   const data = Bun.YAML.parse(source) as unknown;
   if (!isRecord(data)) {
@@ -590,6 +788,18 @@ function requiredRecordListAllowEmpty(
   return value;
 }
 
+function requiredRecordListNonEmpty(
+  data: Record<string, unknown>,
+  key: string,
+  context: string
+): readonly Record<string, unknown>[] {
+  const value = requiredRecordListAllowEmpty(data, key, context);
+  if (value.length === 0) {
+    throw new Error(`${context} must declare non-empty object list \`${key}\`.`);
+  }
+  return value;
+}
+
 function requiredString(
   data: Record<string, unknown>,
   key: string,
@@ -661,6 +871,18 @@ function requiredNumber(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function assertOnlyKeys(
+  data: Record<string, unknown>,
+  allowedKeys: readonly string[],
+  context: string
+): void {
+  for (const key of Object.keys(data)) {
+    if (!allowedKeys.includes(key)) {
+      throw new Error(`${context} must not declare unknown field \`${key}\`.`);
+    }
+  }
 }
 
 function uniqueSorted(values: readonly string[]): readonly string[] {

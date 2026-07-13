@@ -1,5 +1,16 @@
 # CHANGELOG.md
 
+## 0.9.0
+
+### Added
+
+- 국가 정책에 의존하지 않는 첫 계산기 6종의 정의, 표준 입력·결과 metadata, 안정 오류 코드, 계약·엔진 버전 handoff를 `contracts/calculators/catalog.yaml`에 추가했다.
+- 계산기 계약 parser와 semantic validator를 public API contract checker에 연결하고, 중복 ID, 미검토 값 종류, 버전 드리프트, 화면 payload 침투를 막는 회귀 테스트를 추가했다.
+
+### Changed
+
+- 저장소 경계를 API route 계약뿐 아니라 여러 제품이 재사용하는 계산기 정의 계약까지 포함하도록 문서화했다. 계산 공식과 제품 화면 payload는 계속 소유하지 않는다.
+
 ## 0.8.0
 
 ### Added

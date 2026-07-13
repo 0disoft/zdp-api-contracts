@@ -5,6 +5,54 @@ export interface ApiContracts {
   readonly sdkGenerationInput: SdkGenerationInputContract;
   readonly apiCatalog: ApiCatalogContract;
   readonly schemaBundles: readonly ApiSchemaBundleContract[];
+  readonly calculatorCatalog: CalculatorCatalogContract;
+}
+
+export interface CalculatorCatalogContract {
+  readonly schemaVersion: number;
+  readonly status: string;
+  readonly contractVersion: string;
+  readonly ownerBoundary: string;
+  readonly requiredDefinitionFields: readonly string[];
+  readonly allowedLifecycleStatuses: readonly string[];
+  readonly allowedValueKinds: readonly string[];
+  readonly allowedUnitDimensions: readonly string[];
+  readonly allowedUnitPolicies: readonly string[];
+  readonly stableErrorCodes: readonly string[];
+  readonly definitions: readonly CalculatorDefinition[];
+}
+
+export interface CalculatorDefinition {
+  readonly id: string;
+  readonly lifecycleStatus: string;
+  readonly contractVersion: string;
+  readonly compatibleEngineVersions: readonly string[];
+  readonly jurisdiction: string;
+  readonly precisionPolicy: string;
+  readonly roundingPolicy: string;
+  readonly inputs: readonly CalculatorInputDefinition[];
+  readonly outputs: readonly CalculatorOutputDefinition[];
+  readonly errorCodes: readonly string[];
+  readonly semanticRules: readonly string[];
+}
+
+export interface CalculatorInputDefinition {
+  readonly id: string;
+  readonly valueKind: string;
+  readonly unitDimension: string;
+  readonly unitPolicy: string;
+  readonly unitOptions: readonly string[];
+  readonly allowedValues: readonly string[];
+  readonly required: boolean;
+  readonly domain: string;
+}
+
+export interface CalculatorOutputDefinition {
+  readonly id: string;
+  readonly valueKind: string;
+  readonly unitDimension: string;
+  readonly unitPolicy: string;
+  readonly unitOptions: readonly string[];
 }
 
 export interface RouteContract {

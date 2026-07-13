@@ -8,6 +8,8 @@
 - API checker export: `src/api-contracts/index.ts`
 - export plan export: `src/api-export-plan/index.ts`
 - contract files: `contracts/*`
+- calculator contract types: root와 `api-contracts` export를 통한 `CalculatorCatalogContract` 계열
+- calculator source contract: `contracts/calculators/catalog.yaml`
 
 ## Package Files
 

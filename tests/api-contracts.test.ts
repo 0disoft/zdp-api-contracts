@@ -7,6 +7,7 @@ import {
   loadApiContracts,
   parseApiCatalogContract,
   parseApiSchemaBundleContract,
+  parseCalculatorCatalogContract,
   parseErrorEnvelopeContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
@@ -16,7 +17,8 @@ import { validateApiContracts } from '../src/api-contracts/validator';
 import type {
   ApiContracts,
   ApiRouteDefinition,
-  ApiSchemaBundleContract
+  ApiSchemaBundleContract,
+  CalculatorDefinition
 } from '../src/api-contracts/types';
 
 describe('api contract checker', () => {
@@ -25,6 +27,106 @@ describe('api contract checker', () => {
 
     expect(result.diagnostics).toEqual([]);
     expect(result.ok).toBe(true);
+  });
+
+  it('loads the reviewed global calculator batch with stable contract metadata', () => {
+    const contracts = loadCommittedContracts();
+
+    expect(contracts.calculatorCatalog.contractVersion).toBe('1.0.0');
+    expect(
+      contracts.calculatorCatalog.definitions.map((definition) => definition.id)
+    ).toEqual([
+      'percentage-change',
+      'margin-markup',
+      'break-even-point',
+      'compound-interest',
+      'data-transfer-time',
+      'date-difference'
+    ]);
+    expect(
+      contracts.calculatorCatalog.definitions.every(
+        (definition) =>
+          definition.jurisdiction === 'global' &&
+          definition.lifecycleStatus === 'draft' &&
+          definition.precisionPolicy === 'explicit_before_active' &&
+          definition.roundingPolicy === 'explicit_before_active'
+      )
+    ).toBe(true);
+  });
+
+  it('rejects screen-shaped fields in calculator definitions at parse time', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'contracts', 'calculators', 'catalog.yaml'),
+      'utf8'
+    ).replace(
+      '    lifecycle_status: draft',
+      '    lifecycle_status: draft\n    screen_component_payload: forbidden'
+    );
+
+    expect(() => parseCalculatorCatalogContract(source)).toThrow(
+      'must not declare unknown field `screen_component_payload`'
+    );
+  });
+
+  it('rejects duplicate calculator ids', () => {
+    const contracts = loadCommittedContracts();
+    const duplicate = calculatorAt(contracts, 0);
+    const result = validateApiContracts({
+      ...contracts,
+      calculatorCatalog: {
+        ...contracts.calculatorCatalog,
+        definitions: [...contracts.calculatorCatalog.definitions, duplicate]
+      }
+    });
+
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CALCULATOR_ID_DUPLICATE'
+    );
+  });
+
+  it('rejects unreviewed calculator value kinds', () => {
+    const contracts = loadCommittedContracts();
+    const definition = calculatorAt(contracts, 0);
+    const firstInput = definition.inputs[0];
+    if (!firstInput) {
+      throw new Error('Expected percentage-change to have an input.');
+    }
+    const result = validateApiContracts({
+      ...contracts,
+      calculatorCatalog: {
+        ...contracts.calculatorCatalog,
+        definitions: [
+          {
+            ...definition,
+            inputs: [{ ...firstInput, valueKind: 'localized_number' }, ...definition.inputs.slice(1)]
+          },
+          ...contracts.calculatorCatalog.definitions.slice(1)
+        ]
+      }
+    });
+
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CALCULATOR_VALUE_KIND_INVALID'
+    );
+  });
+
+  it('rejects calculator definition and catalog version drift', () => {
+    const contracts = loadCommittedContracts();
+    const definition = calculatorAt(contracts, 0);
+    const result = validateApiContracts({
+      ...contracts,
+      calculatorCatalog: {
+        ...contracts.calculatorCatalog,
+        definitions: [
+          { ...definition, contractVersion: '2.0.0' },
+          ...contracts.calculatorCatalog.definitions.slice(1)
+        ]
+      }
+    });
+
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CALCULATOR_VERSION_MISMATCH'
+    );
   });
 
   it('keeps core auth session routes explicit in the API catalog with referral and money reward routes', () => {
@@ -722,6 +824,17 @@ function schemaBundleAt(
   return schemaBundle;
 }
 
+function calculatorAt(
+  contracts: ApiContracts,
+  index: number
+): CalculatorDefinition {
+  const calculator = contracts.calculatorCatalog.definitions[index];
+  if (!calculator) {
+    throw new Error(`Expected committed calculator at index ${index}.`);
+  }
+  return calculator;
+}
+
 function loadCommittedContracts(): ApiContracts {
   return {
     route: parseRouteContract(
@@ -792,6 +905,12 @@ function loadCommittedContracts(): ApiContracts {
         ),
         'contracts/apis/money-api/referral-reward.yaml'
       )
-    ]
+    ],
+    calculatorCatalog: parseCalculatorCatalogContract(
+      readFileSync(
+        join(process.cwd(), 'contracts', 'calculators', 'catalog.yaml'),
+        'utf8'
+      )
+    )
   };
 }

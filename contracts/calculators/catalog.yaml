@@ -1,0 +1,405 @@
+calculator_contract:
+  schema_version: 1
+  status: draft
+  contract_version: "1.0.0"
+  owner_boundary: calculator_contracts
+  required_definition_fields:
+    - id
+    - lifecycle_status
+    - contract_version
+    - compatible_engine_versions
+    - jurisdiction
+    - precision_policy
+    - rounding_policy
+    - inputs
+    - outputs
+    - error_codes
+    - semantic_rules
+  allowed_lifecycle_statuses:
+    - draft
+    - reviewed
+    - active
+    - retired
+  allowed_value_kinds:
+    - decimal
+    - integer
+    - date
+    - enum
+  allowed_unit_dimensions:
+    - dimensionless
+    - percent
+    - currency
+    - count
+    - duration
+    - data_size
+    - data_rate
+    - date
+  allowed_unit_policies:
+    - none
+    - caller_supplied
+    - enumerated
+  stable_error_codes:
+    - invalid_input
+    - domain_error
+    - limit_exceeded
+    - contract_mismatch
+    - denominator_zero
+    - non_positive_contribution_margin
+    - unsupported_unit
+    - incompatible_units
+    - invalid_date_range
+    - precision_policy_required
+    - rounding_policy_required
+
+definitions:
+  - id: percentage-change
+    lifecycle_status: draft
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.x"
+    jurisdiction: global
+    precision_policy: explicit_before_active
+    rounding_policy: explicit_before_active
+    inputs:
+      - id: initial_value
+        value_kind: decimal
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: any_finite_decimal
+      - id: final_value
+        value_kind: decimal
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: any_finite_decimal
+    outputs:
+      - id: percentage_change
+        value_kind: decimal
+        unit_dimension: percent
+        unit_policy: enumerated
+        unit_options:
+          - percent
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - denominator_zero
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - initial_value_is_denominator
+      - zero_initial_value_returns_denominator_zero
+      - signed_result_is_preserved
+
+  - id: margin-markup
+    lifecycle_status: draft
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.x"
+    jurisdiction: global
+    precision_policy: explicit_before_active
+    rounding_policy: explicit_before_active
+    inputs:
+      - id: cost
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal
+      - id: selling_price
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal
+    outputs:
+      - id: margin_percentage
+        value_kind: decimal
+        unit_dimension: percent
+        unit_policy: enumerated
+        unit_options:
+          - percent
+      - id: markup_percentage
+        value_kind: decimal
+        unit_dimension: percent
+        unit_policy: enumerated
+        unit_options:
+          - percent
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - denominator_zero
+      - incompatible_units
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - gross_profit_is_selling_price_minus_cost
+      - margin_uses_selling_price_as_denominator
+      - markup_uses_cost_as_denominator
+      - zero_denominator_returns_denominator_zero
+      - cost_and_selling_price_currency_must_match
+
+  - id: break-even-point
+    lifecycle_status: draft
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.x"
+    jurisdiction: global
+    precision_policy: explicit_before_active
+    rounding_policy: explicit_before_active
+    inputs:
+      - id: fixed_cost
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal
+      - id: unit_price
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: positive_finite_decimal
+      - id: unit_variable_cost
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal
+    outputs:
+      - id: contribution_margin_per_unit
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+      - id: break_even_quantity
+        value_kind: decimal
+        unit_dimension: count
+        unit_policy: enumerated
+        unit_options:
+          - items
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - non_positive_contribution_margin
+      - incompatible_units
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - contribution_margin_is_unit_price_minus_unit_variable_cost
+      - non_positive_contribution_margin_returns_specific_error
+      - break_even_quantity_is_fixed_cost_divided_by_contribution_margin
+      - all_currency_inputs_must_match
+
+  - id: compound-interest
+    lifecycle_status: draft
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.x"
+    jurisdiction: global
+    precision_policy: explicit_before_active
+    rounding_policy: explicit_before_active
+    inputs:
+      - id: principal
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal
+      - id: nominal_annual_rate
+        value_kind: decimal
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: finite_decimal_greater_than_negative_one
+      - id: duration_years
+        value_kind: decimal
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - years
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal
+      - id: compounding_frequency
+        value_kind: enum
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values:
+          - "1_per_year"
+          - "2_per_year"
+          - "4_per_year"
+          - "12_per_year"
+          - "365_per_year"
+        required: true
+        domain: allowed_values_only
+    outputs:
+      - id: future_value
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+      - id: interest_earned
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - nominal_annual_rate_is_decimal_ratio
+      - compounding_frequency_is_periods_per_year
+      - future_value_uses_discrete_compounding
+      - interest_earned_is_future_value_minus_principal
+      - principal_currency_is_preserved
+
+  - id: data-transfer-time
+    lifecycle_status: draft
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.x"
+    jurisdiction: global
+    precision_policy: explicit_before_active
+    rounding_policy: explicit_before_active
+    inputs:
+      - id: data_size
+        value_kind: decimal
+        unit_dimension: data_size
+        unit_policy: enumerated
+        unit_options:
+          - bit
+          - byte
+          - kilobit
+          - kilobyte
+          - megabit
+          - megabyte
+          - gigabit
+          - gigabyte
+          - terabit
+          - terabyte
+          - kibibyte
+          - mebibyte
+          - gibibyte
+          - tebibyte
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal
+      - id: data_rate
+        value_kind: decimal
+        unit_dimension: data_rate
+        unit_policy: enumerated
+        unit_options:
+          - bits_per_second
+          - kilobits_per_second
+          - megabits_per_second
+          - gigabits_per_second
+        allowed_values: []
+        required: true
+        domain: positive_finite_decimal
+    outputs:
+      - id: transfer_duration
+        value_kind: decimal
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - seconds
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - unsupported_unit
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - decimal_prefix_units_use_powers_of_1000
+      - binary_prefix_units_use_powers_of_1024
+      - data_rate_normalizes_to_bits_per_second
+      - transfer_duration_is_total_bits_divided_by_bits_per_second
+
+  - id: date-difference
+    lifecycle_status: draft
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.x"
+    jurisdiction: global
+    precision_policy: explicit_before_active
+    rounding_policy: explicit_before_active
+    inputs:
+      - id: start_date
+        value_kind: date
+        unit_dimension: date
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: iso_8601_calendar_date
+      - id: end_date
+        value_kind: date
+        unit_dimension: date
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: iso_8601_calendar_date
+      - id: boundary_mode
+        value_kind: enum
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values:
+          - exclusive
+          - inclusive
+        required: true
+        domain: allowed_values_only
+    outputs:
+      - id: elapsed_days
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - days
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - invalid_date_range
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - inputs_are_plain_iso_8601_calendar_dates
+      - time_of_day_and_timezone_are_not_accepted
+      - end_date_before_start_date_returns_invalid_date_range
+      - exclusive_mode_excludes_end_boundary
+      - inclusive_mode_includes_both_boundaries

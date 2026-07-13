@@ -1,10 +1,10 @@
 {
   "name": "zdp-api-contracts",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": false,
   "license": "MIT",
   "type": "module",
-  "description": "ZDP API contract skeletons, route metadata, and SDK generation handoff contracts.",
+  "description": "ZDP API and reusable calculator contract sources, route metadata, and SDK generation handoffs.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/0disoft/zdp-api-contracts.git"

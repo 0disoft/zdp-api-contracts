@@ -12,6 +12,7 @@
 | `contracts/error-envelope.yaml` | 표준 오류 응답 shape |
 | `contracts/webhook-contract.yaml` | webhook signature, idempotency, replay, dead-letter handoff |
 | `contracts/sdk-generation-input.yaml` | SDK generator가 읽을 source contract와 금지 ownership |
+| `contracts/calculators/catalog.yaml` | 국가 공통 계산기 정의, 표준 입력·결과, 오류와 버전 handoff |
 | `src/api-contracts/*` | contract parser and validator |
 | `src/api-export-plan/*` | dry-run export plan builder |
 | `scripts/*` | local checker and export plan entrypoints |
@@ -23,3 +24,4 @@
 - error change: `AGENTS.md` -> `contracts/error-envelope.yaml` -> `contracts/sdk-generation-input.yaml` -> validator tests -> `VALIDATION.md`
 - SDK handoff change: `AGENTS.md` -> `contracts/sdk-generation-input.yaml` -> `src/api-export-plan/*` -> `README.md`
 - package surface change: `package.json` -> `src/index.ts` -> README package section -> `VALIDATION.md`
+- calculator contract change: `AGENTS.md` -> `BOUNDARY.md` -> `contracts/calculators/catalog.yaml` -> parser/validator/tests -> `docs/contracts/calculator-contract.md` -> `VALIDATION.md`

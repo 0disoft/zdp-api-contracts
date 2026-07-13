@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import {
   parseApiCatalogContract,
   parseApiSchemaBundleContract,
+  parseCalculatorCatalogContract,
   parseErrorEnvelopeContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
@@ -260,6 +261,12 @@ function loadCommittedContracts(): ApiContracts {
     apiCatalog: parseApiCatalogContract(
       readFileSync(
         join(process.cwd(), 'contracts', 'apis', 'catalog.yaml'),
+        'utf8'
+      )
+    ),
+    calculatorCatalog: parseCalculatorCatalogContract(
+      readFileSync(
+        join(process.cwd(), 'contracts', 'calculators', 'catalog.yaml'),
         'utf8'
       )
     ),

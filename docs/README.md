@@ -12,7 +12,8 @@
 | SDK generation input | `contracts/sdk-generation.md` |
 | export dry-run plan | `ops/export-plan.md` |
 | package surface | `ops/package-surface.md` |
+| calculator contract | `contracts/calculator-contract.md` |
 
 ## Boundary
 
-이 저장소는 API 계약 skeleton, route metadata, error envelope, webhook handoff, SDK generation input, export plan을 소유한다. live API endpoint, backend handler, generated SDK source, product screen payload는 소유하지 않는다.
+이 저장소는 API 계약 skeleton, route metadata, error envelope, webhook handoff, SDK generation input, export plan과 교차 제품 계산기 정의 계약을 소유한다. live API endpoint, backend handler, generated SDK source, 계산 함수, product screen payload는 소유하지 않는다.
