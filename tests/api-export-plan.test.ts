@@ -5,6 +5,7 @@ import {
   parseApiCatalogContract,
   parseApiSchemaBundleContract,
   parseCalculatorCatalogContract,
+  parseCalculatorConformanceContract,
   parseErrorEnvelopeContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
@@ -267,6 +268,12 @@ function loadCommittedContracts(): ApiContracts {
     calculatorCatalog: parseCalculatorCatalogContract(
       readFileSync(
         join(process.cwd(), 'contracts', 'calculators', 'catalog.yaml'),
+        'utf8'
+      )
+    ),
+    calculatorConformance: parseCalculatorConformanceContract(
+      readFileSync(
+        join(process.cwd(), 'contracts', 'calculators', 'conformance.yaml'),
         'utf8'
       )
     ),

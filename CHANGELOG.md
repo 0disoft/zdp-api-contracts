@@ -1,5 +1,16 @@
 # CHANGELOG.md
 
+## 0.10.0
+
+### Added
+
+- `percentage-change`와 `margin-markup`의 공통 성공·오류 적합성 벡터를 `contracts/calculators/conformance.yaml`에 추가했다.
+- 적합성 벡터의 계약 버전, 입력 한계, 반올림 모드, 필드와 오류 코드 드리프트를 검사하는 parser와 validator를 추가했다.
+
+### Changed
+
+- 첫 구현 대상 두 계산기의 lifecycle을 reviewed로 올리고 ASCII decimal string, 최대 1000자리 입력, 호출자 지정 0-100 소수 자리, half-away-from-zero 반올림 정책을 확정했다.
+
 ## 0.9.0
 
 ### Added

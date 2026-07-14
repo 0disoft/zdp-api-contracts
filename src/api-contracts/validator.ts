@@ -5,6 +5,7 @@ import type {
   ApiRouteDefinition,
   ApiSchemaBundleContract,
   ApiSchemaDefinition,
+  CalculatorConformanceCase,
   CalculatorDefinition,
   CalculatorInputDefinition,
   CalculatorOutputDefinition
@@ -88,6 +89,16 @@ const REQUIRED_CALCULATOR_BASE_ERROR_CODES = [
 ] as const;
 
 const CALCULATOR_CATALOG_FILE = 'contracts/calculators/catalog.yaml';
+const CALCULATOR_CONFORMANCE_FILE = 'contracts/calculators/conformance.yaml';
+const REVIEWED_CALCULATOR_IDS = ['percentage-change', 'margin-markup'] as const;
+const REVIEWED_PRECISION_POLICY =
+  'canonical_ascii_decimal_string_max_1000_digits';
+const REVIEWED_ROUNDING_POLICY =
+  'caller_decimal_places_0_to_100_half_away_from_zero';
+const CONFORMANCE_DECIMAL_INPUT_POLICY = 'canonical_ascii_decimal_string';
+const CONFORMANCE_ROUNDING_MODE = 'half_away_from_zero';
+const CONFORMANCE_MAX_INPUT_DIGITS = 1000;
+const CONFORMANCE_MAX_DECIMAL_PLACES = 100;
 const CALCULATOR_ID_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 const CALCULATOR_FIELD_ID_PATTERN = /^[a-z][a-z0-9_]*$/;
 const CALCULATOR_RULE_PATTERN = /^[a-z][a-z0-9_]*$/;
@@ -371,6 +382,7 @@ export function validateApiContracts(
   validateApiCatalogContract(contracts, schemaBundlesByFile, diagnostics);
   validateSchemaBundles(contracts, schemaBundlesByFile, diagnostics);
   validateCalculatorCatalog(contracts, diagnostics);
+  validateCalculatorConformance(contracts, diagnostics);
 
   return {
     ok: diagnostics.length === 0,
@@ -396,7 +408,7 @@ function validateCalculatorCatalog(
       code: 'API_CALCULATOR_STATUS_INVALID',
       file: CALCULATOR_CATALOG_FILE,
       path: 'calculator_contract.status',
-      message: 'Calculator catalog must stay draft until precision and rounding policies are reviewed.'
+      message: 'Calculator catalog must stay draft until every first-batch definition is reviewed.'
     });
   }
   if (!CALCULATOR_VERSION_PATTERN.test(catalog.contractVersion)) {
@@ -535,20 +547,39 @@ function validateCalculatorDefinition(
       'The first calculator batch must stay jurisdiction global.'
     );
   }
-  if (definition.precisionPolicy !== 'explicit_before_active') {
+  const isReviewedCalculator = includesValue(
+    REVIEWED_CALCULATOR_IDS,
+    definition.id
+  );
+  const expectedPrecisionPolicy = isReviewedCalculator
+    ? REVIEWED_PRECISION_POLICY
+    : 'explicit_before_active';
+  const expectedRoundingPolicy = isReviewedCalculator
+    ? REVIEWED_ROUNDING_POLICY
+    : 'explicit_before_active';
+  if (definition.precisionPolicy !== expectedPrecisionPolicy) {
     pushCalculatorDiagnostic(
       diagnostics,
       'API_CALCULATOR_PRECISION_POLICY_INVALID',
       `${path}.precision_policy`,
-      'Draft calculators must require an explicit precision policy before activation.'
+      `Calculator precision_policy must be \`${expectedPrecisionPolicy}\`.`
     );
   }
-  if (definition.roundingPolicy !== 'explicit_before_active') {
+  if (definition.roundingPolicy !== expectedRoundingPolicy) {
     pushCalculatorDiagnostic(
       diagnostics,
       'API_CALCULATOR_ROUNDING_POLICY_INVALID',
       `${path}.rounding_policy`,
-      'Draft calculators must require an explicit rounding policy before activation.'
+      `Calculator rounding_policy must be \`${expectedRoundingPolicy}\`.`
+    );
+  }
+  const expectedLifecycle = isReviewedCalculator ? 'reviewed' : 'draft';
+  if (definition.lifecycleStatus !== expectedLifecycle) {
+    pushCalculatorDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_REVIEW_STATE_INVALID',
+      `${path}.lifecycle_status`,
+      `Calculator lifecycle_status must be \`${expectedLifecycle}\` for the current implementation batch.`
     );
   }
 
@@ -612,6 +643,227 @@ function validateCalculatorDefinition(
       );
     }
   }
+}
+
+function validateCalculatorConformance(
+  contracts: ApiContracts,
+  diagnostics: ApiContractDiagnostic[]
+): void {
+  const conformance = contracts.calculatorConformance;
+  if (conformance.schemaVersion !== 1) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_SCHEMA_VERSION_INVALID',
+      'calculator_conformance.schema_version',
+      'Calculator conformance schema_version must be 1.'
+    );
+  }
+  if (conformance.contractVersion !== contracts.calculatorCatalog.contractVersion) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_VERSION_MISMATCH',
+      'calculator_conformance.contract_version',
+      'Calculator conformance contract_version must match the calculator catalog.'
+    );
+  }
+  if (conformance.engineVersionRange !== '0.x') {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_ENGINE_VERSION_INVALID',
+      'calculator_conformance.engine_version_range',
+      'The first calculator engine compatibility range must be `0.x`.'
+    );
+  }
+  if (conformance.decimalInputPolicy !== CONFORMANCE_DECIMAL_INPUT_POLICY) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_INPUT_POLICY_INVALID',
+      'calculator_conformance.decimal_input_policy',
+      `Decimal input policy must be \`${CONFORMANCE_DECIMAL_INPUT_POLICY}\`.`
+    );
+  }
+  if (conformance.maxInputDigits !== CONFORMANCE_MAX_INPUT_DIGITS) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_INPUT_LIMIT_INVALID',
+      'calculator_conformance.max_input_digits',
+      `max_input_digits must be ${CONFORMANCE_MAX_INPUT_DIGITS}.`
+    );
+  }
+  if (conformance.maxDecimalPlaces !== CONFORMANCE_MAX_DECIMAL_PLACES) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_DECIMAL_PLACES_INVALID',
+      'calculator_conformance.max_decimal_places',
+      `max_decimal_places must be ${CONFORMANCE_MAX_DECIMAL_PLACES}.`
+    );
+  }
+  if (conformance.roundingMode !== CONFORMANCE_ROUNDING_MODE) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_ROUNDING_INVALID',
+      'calculator_conformance.rounding_mode',
+      `rounding_mode must be \`${CONFORMANCE_ROUNDING_MODE}\`.`
+    );
+  }
+
+  validateUniqueConformanceCaseIds(conformance.cases, diagnostics);
+  for (const calculatorId of REVIEWED_CALCULATOR_IDS) {
+    const cases = conformance.cases.filter(
+      (testCase) => testCase.calculatorId === calculatorId
+    );
+    if (!cases.some((testCase) => testCase.expected.status === 'success')) {
+      pushCalculatorConformanceDiagnostic(
+        diagnostics,
+        'API_CALCULATOR_CONFORMANCE_SUCCESS_CASE_MISSING',
+        'cases',
+        `Reviewed calculator \`${calculatorId}\` needs a success fixture.`
+      );
+    }
+    if (!cases.some((testCase) => testCase.expected.status === 'error')) {
+      pushCalculatorConformanceDiagnostic(
+        diagnostics,
+        'API_CALCULATOR_CONFORMANCE_ERROR_CASE_MISSING',
+        'cases',
+        `Reviewed calculator \`${calculatorId}\` needs an error fixture.`
+      );
+    }
+  }
+  conformance.cases.forEach((testCase, index) =>
+    validateCalculatorConformanceCase(contracts, testCase, index, diagnostics)
+  );
+}
+
+function validateCalculatorConformanceCase(
+  contracts: ApiContracts,
+  testCase: CalculatorConformanceCase,
+  index: number,
+  diagnostics: ApiContractDiagnostic[]
+): void {
+  const path = `cases[${index}]`;
+  if (!/^[a-z][a-z0-9-]*\.[a-z][a-z0-9-]*$/.test(testCase.id)) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_CASE_ID_INVALID',
+      `${path}.id`,
+      `Conformance case id \`${testCase.id}\` must use calculator.case kebab-case.`
+    );
+  }
+  const definition = contracts.calculatorCatalog.definitions.find(
+    (candidate) => candidate.id === testCase.calculatorId
+  );
+  if (!definition || !includesValue(REVIEWED_CALCULATOR_IDS, testCase.calculatorId)) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_CALCULATOR_INVALID',
+      `${path}.calculator_id`,
+      `Conformance calculator \`${testCase.calculatorId}\` is not in the reviewed engine batch.`
+    );
+    return;
+  }
+  if (
+    !Number.isInteger(testCase.options.decimalPlaces) ||
+    testCase.options.decimalPlaces < 0 ||
+    testCase.options.decimalPlaces > CONFORMANCE_MAX_DECIMAL_PLACES
+  ) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_DECIMAL_PLACES_OUT_OF_RANGE',
+      `${path}.options.decimal_places`,
+      `decimal_places must be an integer from 0 to ${CONFORMANCE_MAX_DECIMAL_PLACES}.`
+    );
+  }
+  validateConformanceKeys(
+    Object.keys(testCase.input),
+    definition.inputs.map((input) => input.id),
+    `${path}.input`,
+    diagnostics
+  );
+  if (testCase.expected.status === 'success') {
+    validateConformanceKeys(
+      Object.keys(testCase.expected.output),
+      definition.outputs.map((output) => output.id),
+      `${path}.expected.output`,
+      diagnostics
+    );
+    for (const [field, output] of Object.entries(testCase.expected.output)) {
+      if (!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(output.value)) {
+        pushCalculatorConformanceDiagnostic(
+          diagnostics,
+          'API_CALCULATOR_CONFORMANCE_OUTPUT_VALUE_INVALID',
+          `${path}.expected.output.${field}.value`,
+          'Successful fixture output values must be canonical ASCII decimal strings.'
+        );
+      }
+    }
+  } else if (!definition.errorCodes.includes(testCase.expected.errorCode)) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_ERROR_CODE_INVALID',
+      `${path}.expected.error_code`,
+      `Error fixture code \`${testCase.expected.errorCode}\` is not declared by \`${definition.id}\`.`
+    );
+  }
+}
+
+function validateConformanceKeys(
+  actual: readonly string[],
+  expected: readonly string[],
+  path: string,
+  diagnostics: ApiContractDiagnostic[]
+): void {
+  for (const key of expected) {
+    if (!actual.includes(key)) {
+      pushCalculatorConformanceDiagnostic(
+        diagnostics,
+        'API_CALCULATOR_CONFORMANCE_FIELD_MISSING',
+        path,
+        `Conformance fixture must include field \`${key}\`.`
+      );
+    }
+  }
+  for (const key of actual) {
+    if (!expected.includes(key)) {
+      pushCalculatorConformanceDiagnostic(
+        diagnostics,
+        'API_CALCULATOR_CONFORMANCE_FIELD_UNKNOWN',
+        `${path}.${key}`,
+        `Conformance fixture field \`${key}\` is not declared by the calculator contract.`
+      );
+    }
+  }
+}
+
+function validateUniqueConformanceCaseIds(
+  cases: readonly CalculatorConformanceCase[],
+  diagnostics: ApiContractDiagnostic[]
+): void {
+  const seen = new Set<string>();
+  cases.forEach((testCase, index) => {
+    if (seen.has(testCase.id)) {
+      pushCalculatorConformanceDiagnostic(
+        diagnostics,
+        'API_CALCULATOR_CONFORMANCE_CASE_DUPLICATE',
+        `cases[${index}].id`,
+        `Conformance case id \`${testCase.id}\` must be unique.`
+      );
+    }
+    seen.add(testCase.id);
+  });
+}
+
+function pushCalculatorConformanceDiagnostic(
+  diagnostics: ApiContractDiagnostic[],
+  code: string,
+  path: string,
+  message: string
+): void {
+  diagnostics.push({
+    code,
+    file: CALCULATOR_CONFORMANCE_FILE,
+    path,
+    message
+  });
 }
 
 function validateCalculatorInput(

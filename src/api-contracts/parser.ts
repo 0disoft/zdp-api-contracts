@@ -7,6 +7,11 @@ import type {
   ApiSchemaDefinition,
   ApiSchemaBundleContract,
   CalculatorCatalogContract,
+  CalculatorConformanceCase,
+  CalculatorConformanceContract,
+  CalculatorConformanceExpectation,
+  CalculatorConformanceInputValue,
+  CalculatorConformanceUnitValue,
   CalculatorDefinition,
   CalculatorInputDefinition,
   CalculatorOutputDefinition,
@@ -77,7 +82,8 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     webhook,
     sdkGenerationInput,
     apiCatalog,
-    calculatorCatalog
+    calculatorCatalog,
+    calculatorConformance
   ] =
     await Promise.all([
       loadContract(
@@ -115,6 +121,12 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
         'calculator-catalog',
         join('calculators', 'catalog.yaml'),
         parseCalculatorCatalogContract
+      ),
+      loadContract(
+        contractsRoot,
+        'calculator-conformance',
+        join('calculators', 'conformance.yaml'),
+        parseCalculatorConformanceContract
       )
     ]);
 
@@ -124,7 +136,8 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     webhook,
     sdkGenerationInput,
     apiCatalog,
-    calculatorCatalog
+    calculatorCatalog,
+    calculatorConformance
   ] as const;
   const failures = results.filter(isContractLoadFailure);
   if (failures.length > 0) {
@@ -137,6 +150,9 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
   const loadedSdkGenerationInput = requireLoadedContract(sdkGenerationInput);
   const loadedApiCatalog = requireLoadedContract(apiCatalog);
   const loadedCalculatorCatalog = requireLoadedContract(calculatorCatalog);
+  const loadedCalculatorConformance = requireLoadedContract(
+    calculatorConformance
+  );
   const schemaBundleResults = await Promise.all(
     schemaBundleFilesFromCatalog(loadedApiCatalog.value).map((file) =>
       loadContract(
@@ -161,7 +177,8 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     schemaBundles: schemaBundleResults.map(
       (result) => requireLoadedContract(result).value
     ),
-    calculatorCatalog: loadedCalculatorCatalog.value
+    calculatorCatalog: loadedCalculatorCatalog.value,
+    calculatorConformance: loadedCalculatorConformance.value
   };
 }
 
@@ -445,6 +462,68 @@ export function parseCalculatorCatalogContract(
   };
 }
 
+export function parseCalculatorConformanceContract(
+  source: string
+): CalculatorConformanceContract {
+  const file = 'contracts/calculators/conformance.yaml';
+  const data = parseYamlObject(source, file);
+  assertOnlyKeys(data, ['calculator_conformance', 'cases'], file);
+  const contract = requiredObject(data, 'calculator_conformance', file);
+  assertOnlyKeys(
+    contract,
+    [
+      'schema_version',
+      'contract_version',
+      'engine_version_range',
+      'decimal_input_policy',
+      'max_input_digits',
+      'max_decimal_places',
+      'rounding_mode'
+    ],
+    `${file}#calculator_conformance`
+  );
+  const cases = requiredRecordListNonEmpty(data, 'cases', file);
+
+  return {
+    schemaVersion: requiredNumber(
+      contract,
+      'schema_version',
+      `${file}#calculator_conformance`
+    ),
+    contractVersion: requiredString(
+      contract,
+      'contract_version',
+      `${file}#calculator_conformance`
+    ),
+    engineVersionRange: requiredString(
+      contract,
+      'engine_version_range',
+      `${file}#calculator_conformance`
+    ),
+    decimalInputPolicy: requiredString(
+      contract,
+      'decimal_input_policy',
+      `${file}#calculator_conformance`
+    ),
+    maxInputDigits: requiredNumber(
+      contract,
+      'max_input_digits',
+      `${file}#calculator_conformance`
+    ),
+    maxDecimalPlaces: requiredNumber(
+      contract,
+      'max_decimal_places',
+      `${file}#calculator_conformance`
+    ),
+    roundingMode: requiredString(
+      contract,
+      'rounding_mode',
+      `${file}#calculator_conformance`
+    ),
+    cases: cases.map(parseCalculatorConformanceCase)
+  };
+}
+
 export function parseApiSchemaBundleContract(
   source: string,
   file = 'contracts/apis/<service>/<schema>.yaml'
@@ -706,6 +785,105 @@ function parseCalculatorOutput(
     unitDimension: requiredString(output, 'unit_dimension', context),
     unitPolicy: requiredString(output, 'unit_policy', context),
     unitOptions: requiredStringListAllowEmpty(output, 'unit_options', context)
+  };
+}
+
+function parseCalculatorConformanceCase(
+  testCase: Record<string, unknown>,
+  index: number
+): CalculatorConformanceCase {
+  const context = `contracts/calculators/conformance.yaml#cases[${index}]`;
+  assertOnlyKeys(
+    testCase,
+    ['id', 'calculator_id', 'input', 'options', 'expected'],
+    context
+  );
+  const input = requiredObject(testCase, 'input', context);
+  const options = requiredObject(testCase, 'options', context);
+  const expected = requiredObject(testCase, 'expected', context);
+  assertOnlyKeys(options, ['decimal_places'], `${context}.options`);
+
+  return {
+    id: requiredString(testCase, 'id', context),
+    calculatorId: requiredString(testCase, 'calculator_id', context),
+    input: Object.fromEntries(
+      Object.entries(input).map(([key, value]) => [
+        key,
+        parseCalculatorConformanceInputValue(value, `${context}.input.${key}`)
+      ])
+    ),
+    options: {
+      decimalPlaces: requiredNumber(
+        options,
+        'decimal_places',
+        `${context}.options`
+      )
+    },
+    expected: parseCalculatorConformanceExpectation(expected, context)
+  };
+}
+
+function parseCalculatorConformanceInputValue(
+  value: unknown,
+  context: string
+): CalculatorConformanceInputValue {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (!isRecord(value)) {
+    throw new Error(`${context} must be a decimal string or value/unit object.`);
+  }
+  return parseCalculatorConformanceUnitValue(value, context);
+}
+
+function parseCalculatorConformanceExpectation(
+  expected: Record<string, unknown>,
+  context: string
+): CalculatorConformanceExpectation {
+  const status = requiredString(expected, 'status', `${context}.expected`);
+  if (status === 'success') {
+    assertOnlyKeys(expected, ['status', 'output'], `${context}.expected`);
+    const output = requiredObject(expected, 'output', `${context}.expected`);
+    return {
+      status,
+      output: Object.fromEntries(
+        Object.entries(output).map(([key, value]) => {
+          if (!isRecord(value)) {
+            throw new Error(`${context}.expected.output.${key} must be an object.`);
+          }
+          return [
+            key,
+            parseCalculatorConformanceUnitValue(
+              value,
+              `${context}.expected.output.${key}`
+            )
+          ];
+        })
+      )
+    };
+  }
+  if (status === 'error') {
+    assertOnlyKeys(expected, ['status', 'error_code'], `${context}.expected`);
+    return {
+      status,
+      errorCode: requiredString(
+        expected,
+        'error_code',
+        `${context}.expected`
+      )
+    };
+  }
+  throw new Error(`${context}.expected.status must be success or error.`);
+}
+
+function parseCalculatorConformanceUnitValue(
+  value: Record<string, unknown>,
+  context: string
+): CalculatorConformanceUnitValue {
+  assertOnlyKeys(value, ['value', 'unit'], context);
+  return {
+    value: requiredString(value, 'value', context),
+    unit: requiredString(value, 'unit', context)
   };
 }
 

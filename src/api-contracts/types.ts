@@ -6,7 +6,52 @@ export interface ApiContracts {
   readonly apiCatalog: ApiCatalogContract;
   readonly schemaBundles: readonly ApiSchemaBundleContract[];
   readonly calculatorCatalog: CalculatorCatalogContract;
+  readonly calculatorConformance: CalculatorConformanceContract;
 }
+
+export interface CalculatorConformanceContract {
+  readonly schemaVersion: number;
+  readonly contractVersion: string;
+  readonly engineVersionRange: string;
+  readonly decimalInputPolicy: string;
+  readonly maxInputDigits: number;
+  readonly maxDecimalPlaces: number;
+  readonly roundingMode: string;
+  readonly cases: readonly CalculatorConformanceCase[];
+}
+
+export interface CalculatorConformanceCase {
+  readonly id: string;
+  readonly calculatorId: string;
+  readonly input: Readonly<Record<string, CalculatorConformanceInputValue>>;
+  readonly options: CalculatorConformanceOptions;
+  readonly expected: CalculatorConformanceExpectation;
+}
+
+export type CalculatorConformanceInputValue =
+  | string
+  | CalculatorConformanceUnitValue;
+
+export interface CalculatorConformanceUnitValue {
+  readonly value: string;
+  readonly unit: string;
+}
+
+export interface CalculatorConformanceOptions {
+  readonly decimalPlaces: number;
+}
+
+export type CalculatorConformanceExpectation =
+  | {
+      readonly status: 'success';
+      readonly output: Readonly<
+        Record<string, CalculatorConformanceUnitValue>
+      >;
+    }
+  | {
+      readonly status: 'error';
+      readonly errorCode: string;
+    };
 
 export interface CalculatorCatalogContract {
   readonly schemaVersion: number;

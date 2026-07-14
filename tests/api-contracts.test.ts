@@ -8,6 +8,7 @@ import {
   parseApiCatalogContract,
   parseApiSchemaBundleContract,
   parseCalculatorCatalogContract,
+  parseCalculatorConformanceContract,
   parseErrorEnvelopeContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
@@ -44,14 +45,20 @@ describe('api contract checker', () => {
       'date-difference'
     ]);
     expect(
-      contracts.calculatorCatalog.definitions.every(
+      contracts.calculatorCatalog.definitions.slice(0, 2).every(
         (definition) =>
           definition.jurisdiction === 'global' &&
-          definition.lifecycleStatus === 'draft' &&
-          definition.precisionPolicy === 'explicit_before_active' &&
-          definition.roundingPolicy === 'explicit_before_active'
+          definition.lifecycleStatus === 'reviewed' &&
+          definition.precisionPolicy ===
+            'canonical_ascii_decimal_string_max_1000_digits' &&
+          definition.roundingPolicy ===
+            'caller_decimal_places_0_to_100_half_away_from_zero'
       )
     ).toBe(true);
+    expect(contracts.calculatorConformance.cases).toHaveLength(11);
+    expect(contracts.calculatorConformance.roundingMode).toBe(
+      'half_away_from_zero'
+    );
   });
 
   it('rejects screen-shaped fields in calculator definitions at parse time', () => {
@@ -126,6 +133,46 @@ describe('api contract checker', () => {
 
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
       'API_CALCULATOR_VERSION_MISMATCH'
+    );
+  });
+
+  it('rejects calculator conformance version drift', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      calculatorConformance: {
+        ...contracts.calculatorConformance,
+        contractVersion: '2.0.0'
+      }
+    });
+
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CALCULATOR_CONFORMANCE_VERSION_MISMATCH'
+    );
+  });
+
+  it('rejects unknown calculator conformance input fields', () => {
+    const contracts = loadCommittedContracts();
+    const firstCase = contracts.calculatorConformance.cases[0];
+    if (!firstCase) {
+      throw new Error('Expected a committed calculator conformance case.');
+    }
+    const result = validateApiContracts({
+      ...contracts,
+      calculatorConformance: {
+        ...contracts.calculatorConformance,
+        cases: [
+          {
+            ...firstCase,
+            input: { ...firstCase.input, localized_value: '100' }
+          },
+          ...contracts.calculatorConformance.cases.slice(1)
+        ]
+      }
+    });
+
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CALCULATOR_CONFORMANCE_FIELD_UNKNOWN'
     );
   });
 
@@ -909,6 +956,12 @@ function loadCommittedContracts(): ApiContracts {
     calculatorCatalog: parseCalculatorCatalogContract(
       readFileSync(
         join(process.cwd(), 'contracts', 'calculators', 'catalog.yaml'),
+        'utf8'
+      )
+    ),
+    calculatorConformance: parseCalculatorConformanceContract(
+      readFileSync(
+        join(process.cwd(), 'contracts', 'calculators', 'conformance.yaml'),
         'utf8'
       )
     )

@@ -56,8 +56,10 @@
 ## Calculator Contract
 
 - `contracts/calculators/catalog.yaml`만 계산기 정의 원천으로 둔다.
+- `contracts/calculators/conformance.yaml`은 reviewed 계산기의 구현 중립 성공·오류 벡터 원천으로 둔다.
 - 계산기 ID, 계약 버전, 호환 엔진 버전, jurisdiction, 입력, 출력, 오류, semantic rule을 기계 검증한다.
 - 표준 값과 로케일 표시 문자열을 섞지 않는다.
 - 화면 field, SEO, 광고, 제품 문구, 계산 함수 구현을 계약에 넣지 않는다.
 - 미검토 값 종류, 단위 차원, 단위 정책, 오류 코드를 임의로 추가하지 않는다.
 - draft 계산기는 precision과 rounding 정책을 확정하기 전 active로 승격하지 않는다.
+- reviewed 계산기의 contract version, 숫자 한계, 반올림 정책과 적합성 벡터를 함께 바꾼다.

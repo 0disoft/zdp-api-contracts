@@ -38,5 +38,5 @@ function printHelp(): void {
   console.log(`Usage:
   bun scripts/check-api-contracts.ts
 
-Checks contracts/route-contract.yaml, error-envelope.yaml, webhook-contract.yaml, sdk-generation-input.yaml, calculators/catalog.yaml, and apis/catalog.yaml without implementing live API handlers, calculation engines, or SDK output.`);
+Checks contracts/route-contract.yaml, error-envelope.yaml, webhook-contract.yaml, sdk-generation-input.yaml, calculators/catalog.yaml, calculators/conformance.yaml, and apis/catalog.yaml without implementing live API handlers, calculation engines, or SDK output.`);
 }

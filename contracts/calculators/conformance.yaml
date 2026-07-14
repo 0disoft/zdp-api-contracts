@@ -1,0 +1,174 @@
+calculator_conformance:
+  schema_version: 1
+  contract_version: "1.0.0"
+  engine_version_range: "0.x"
+  decimal_input_policy: canonical_ascii_decimal_string
+  max_input_digits: 1000
+  max_decimal_places: 100
+  rounding_mode: half_away_from_zero
+
+cases:
+  - id: percentage-change.basic-increase
+    calculator_id: percentage-change
+    input:
+      initial_value: "100"
+      final_value: "125"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        percentage_change:
+          value: "25.00"
+          unit: percent
+
+  - id: percentage-change.signed-decrease
+    calculator_id: percentage-change
+    input:
+      initial_value: "200"
+      final_value: "150"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        percentage_change:
+          value: "-25.00"
+          unit: percent
+
+  - id: percentage-change.half-away-rounding
+    calculator_id: percentage-change
+    input:
+      initial_value: "2000"
+      final_value: "2063"
+    options:
+      decimal_places: 1
+    expected:
+      status: success
+      output:
+        percentage_change:
+          value: "3.2"
+          unit: percent
+
+  - id: percentage-change.negative-denominator
+    calculator_id: percentage-change
+    input:
+      initial_value: "-100"
+      final_value: "-50"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        percentage_change:
+          value: "-50.00"
+          unit: percent
+
+  - id: percentage-change.zero-denominator
+    calculator_id: percentage-change
+    input:
+      initial_value: "0"
+      final_value: "5"
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: denominator_zero
+
+  - id: percentage-change.locale-formatted-input
+    calculator_id: percentage-change
+    input:
+      initial_value: "1,000"
+      final_value: "1250"
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: invalid_input
+
+  - id: margin-markup.basic-profit
+    calculator_id: margin-markup
+    input:
+      cost:
+        value: "80"
+        unit: USD
+      selling_price:
+        value: "100"
+        unit: USD
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        margin_percentage:
+          value: "20.00"
+          unit: percent
+        markup_percentage:
+          value: "25.00"
+          unit: percent
+
+  - id: margin-markup.loss
+    calculator_id: margin-markup
+    input:
+      cost:
+        value: "120"
+        unit: USD
+      selling_price:
+        value: "100"
+        unit: USD
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        margin_percentage:
+          value: "-20.00"
+          unit: percent
+        markup_percentage:
+          value: "-16.67"
+          unit: percent
+
+  - id: margin-markup.currency-mismatch
+    calculator_id: margin-markup
+    input:
+      cost:
+        value: "80"
+        unit: USD
+      selling_price:
+        value: "100"
+        unit: EUR
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: incompatible_units
+
+  - id: margin-markup.zero-cost
+    calculator_id: margin-markup
+    input:
+      cost:
+        value: "0"
+        unit: USD
+      selling_price:
+        value: "100"
+        unit: USD
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: denominator_zero
+
+  - id: margin-markup.negative-cost
+    calculator_id: margin-markup
+    input:
+      cost:
+        value: "-1"
+        unit: USD
+      selling_price:
+        value: "100"
+        unit: USD
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: domain_error

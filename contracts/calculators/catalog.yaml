@@ -53,13 +53,13 @@ calculator_contract:
 
 definitions:
   - id: percentage-change
-    lifecycle_status: draft
+    lifecycle_status: reviewed
     contract_version: "1.0.0"
     compatible_engine_versions:
       - "0.x"
     jurisdiction: global
-    precision_policy: explicit_before_active
-    rounding_policy: explicit_before_active
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
     inputs:
       - id: initial_value
         value_kind: decimal
@@ -93,18 +93,19 @@ definitions:
       - precision_policy_required
       - rounding_policy_required
     semantic_rules:
+      - percentage_change_is_final_minus_initial_divided_by_initial_times_100
       - initial_value_is_denominator
       - zero_initial_value_returns_denominator_zero
       - signed_result_is_preserved
 
   - id: margin-markup
-    lifecycle_status: draft
+    lifecycle_status: reviewed
     contract_version: "1.0.0"
     compatible_engine_versions:
       - "0.x"
     jurisdiction: global
-    precision_policy: explicit_before_active
-    rounding_policy: explicit_before_active
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
     inputs:
       - id: cost
         value_kind: decimal
@@ -148,7 +149,7 @@ definitions:
       - gross_profit_is_selling_price_minus_cost
       - margin_uses_selling_price_as_denominator
       - markup_uses_cost_as_denominator
-      - zero_denominator_returns_denominator_zero
+      - zero_cost_or_selling_price_returns_denominator_zero
       - cost_and_selling_price_currency_must_match
 
   - id: break-even-point
