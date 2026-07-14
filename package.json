@@ -56,7 +56,7 @@
     "test": "bun test",
     "contracts:check": "bun scripts/check-api-contracts.ts",
     "export:plan": "bun scripts/plan-api-exports.ts",
-    "prepare": "bun run build",
+    "prepack": "bun run build",
     "smoke:package": "bun scripts/smoke-packed-package.ts"
   },
   "devDependencies": {

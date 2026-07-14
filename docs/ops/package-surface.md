@@ -13,7 +13,7 @@
 
 ## Package Files
 
-Package files whitelist는 빌드된 `dist/`, 계약 원문과 운영 문서만 포함한다. TypeScript source, generated OpenAPI, generated SDK, live endpoint 정보, customer payload fixture는 포함하지 않는다. 공개 parser의 `yaml` 의존성은 package runtime dependency로 명시하고, `prepare`는 npm pack과 commit SHA로 고정한 Git dependency 설치에서 같은 `dist/`를 만든다. Tarball smoke는 빈 Node 소비자에서 실제 import와 계약 로딩을 확인한다.
+Package files whitelist는 빌드된 `dist/`, 계약 원문과 운영 문서만 포함한다. TypeScript source, generated OpenAPI, generated SDK, live endpoint 정보, customer payload fixture는 포함하지 않는다. 공개 parser의 `yaml` 의존성은 package runtime dependency로 명시한다. npm publish는 `prepack`에서 `dist/`를 재생성하고, commit SHA로 고정한 Git dependency는 검증 후 커밋된 같은 `dist/`를 소비한다. Tarball smoke는 빈 Node 소비자에서 실제 import와 계약 로딩을 확인한다.
 
 ## Versioning
 

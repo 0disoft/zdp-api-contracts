@@ -6,7 +6,7 @@
 
 - npm package가 TypeScript source 대신 빌드된 Node 호환 ESM과 declaration을 배포하도록 export와 file whitelist를 정리했다.
 - 공개 YAML parser에서 Bun 전용 전역을 제거하고 `yaml` 2.9.0 runtime dependency를 사용하도록 바꿨다.
-- npm publish tarball뿐 아니라 commit SHA로 고정한 Git dependency 설치에서도 `dist/`를 만들도록 package lifecycle을 정리했다.
+- npm publish는 `prepack`에서 `dist/`를 재생성하고, commit SHA로 고정한 Git dependency는 검증 후 커밋된 같은 `dist/`를 소비하도록 정리했다.
 - 실제 tarball을 빈 Node 소비자에 설치해 root와 `api-contracts` subpath를 검증하는 package smoke를 추가했다.
 
 ## 0.10.0
