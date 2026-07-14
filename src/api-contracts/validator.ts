@@ -9,7 +9,7 @@ import type {
   CalculatorDefinition,
   CalculatorInputDefinition,
   CalculatorOutputDefinition
-} from './types';
+} from './types.js';
 
 const REQUIRED_CALCULATOR_DEFINITION_FIELDS = [
   'id',

@@ -1,3 +1,3 @@
-export * from './parser';
-export * from './types';
-export * from './validator';
+export * from './parser.js';
+export * from './types.js';
+export * from './validator.js';

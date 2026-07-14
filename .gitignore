@@ -3,6 +3,7 @@
 !.env.example
 
 dist/
+.tmp/
 generated/
 node_modules/
 *.log

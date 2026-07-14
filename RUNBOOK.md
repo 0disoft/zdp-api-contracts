@@ -6,6 +6,7 @@ This repository owns API contract sources only. It must not become the live API 
 
 - Use the configured mustflow intent `zdp_api_contracts_check` for TypeScript contracts, Bun tests, repo-local API contract validation, and export-plan coverage.
 - Use the configured mustflow intent `zdp_architecture_validate_api_contracts_repository` for repository architecture validation.
+- Use `zdp_api_contracts_build` after source, export, or declaration changes and `zdp_api_contracts_package_smoke` to install the produced tarball in an empty Node consumer.
 - Use `zdp_api_contracts_npm_pack_dry_run` before package surface review or release preparation.
 - Use `zdp_api_contracts_npm_publish_dry_run` only for approved publish-readiness dry runs; it is not a publish command.
 - GitHub Actions CI validates the root `service.yaml` with full-SHA-pinned `0disoft/service-catalog-generator` v0.5.11, `input-schema: zdp-v2`, unknown service dependencies allowed, and warnings promoted to failure.

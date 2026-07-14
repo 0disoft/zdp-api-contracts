@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { parse } from 'yaml';
 import type {
   ApiCatalogContract,
   ApiContracts,
@@ -19,7 +20,7 @@ import type {
   RouteContract,
   SdkGenerationInputContract,
   WebhookContract
-} from './types';
+} from './types.js';
 
 const REQUIRED_CORE_API_SCHEMA_BUNDLE_FILES = [
   'contracts/apis/core-api/auth-session.yaml'
@@ -888,7 +889,7 @@ function parseCalculatorConformanceUnitValue(
 }
 
 function parseYamlObject(source: string, file: string): Record<string, unknown> {
-  const data = Bun.YAML.parse(source) as unknown;
+  const data = parse(source) as unknown;
   if (!isRecord(data)) {
     throw new Error(`${file} must parse to a YAML object.`);
   }

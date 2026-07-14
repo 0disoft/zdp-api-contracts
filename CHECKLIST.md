@@ -48,8 +48,9 @@
 
 ## Package Surface
 
-- public export는 `src/index.ts`, `src/api-contracts`, `src/api-export-plan`, `contracts/*` 경계 안에 둔다.
-- `files` whitelist는 source package skeleton만 포함한다.
+- public export 구현 원천은 `src/index.ts`, `src/api-contracts`, `src/api-export-plan`이고 소비자 entrypoint는 빌드된 `dist/`와 `contracts/*` 경계 안에 둔다.
+- `files` whitelist는 `dist/`, 계약 원문과 소비자 문서만 포함하며 TypeScript source는 배포하지 않는다.
+- release 전 실제 tarball을 빈 Node 소비자에 설치해 root와 공개 subpath의 JavaScript·declaration·runtime dependency를 함께 검증한다.
 - README, CHANGELOG, SECURITY, BOUNDARY, RUNBOOK은 package 사용자가 계약 경계를 확인할 수 있는 문서다.
 - 실제 generated artifact, live endpoint, customer payload fixture를 package에 넣지 않는다.
 

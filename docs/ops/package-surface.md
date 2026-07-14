@@ -4,16 +4,16 @@
 
 ## Public Surface
 
-- root export: `src/index.ts`
-- API checker export: `src/api-contracts/index.ts`
-- export plan export: `src/api-export-plan/index.ts`
+- root source: `src/index.ts`; consumer export: `dist/index.js` and `dist/index.d.ts`
+- API checker source: `src/api-contracts/index.ts`; consumer export: `dist/api-contracts/index.js` and declaration
+- export plan source: `src/api-export-plan/index.ts`; consumer export: `dist/api-export-plan/index.js` and declaration
 - contract files: `contracts/*`
 - calculator contract types: root와 `api-contracts` export를 통한 `CalculatorCatalogContract` 계열
 - calculator source contract: `contracts/calculators/catalog.yaml`
 
 ## Package Files
 
-Package files whitelist는 source package skeleton과 운영 문서만 포함한다. generated OpenAPI, generated SDK, live endpoint 정보, customer payload fixture는 포함하지 않는다.
+Package files whitelist는 빌드된 `dist/`, 계약 원문과 운영 문서만 포함한다. TypeScript source, generated OpenAPI, generated SDK, live endpoint 정보, customer payload fixture는 포함하지 않는다. 공개 parser의 `yaml` 의존성은 package runtime dependency로 명시하고, `prepare`는 npm pack과 commit SHA로 고정한 Git dependency 설치에서 같은 `dist/`를 만든다. Tarball smoke는 빈 Node 소비자에서 실제 import와 계약 로딩을 확인한다.
 
 ## Versioning
 

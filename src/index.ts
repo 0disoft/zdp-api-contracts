@@ -1,2 +1,2 @@
-export * from './api-contracts';
-export * from './api-export-plan';
+export * from './api-contracts/index.js';
+export * from './api-export-plan/index.js';

@@ -1,4 +1,4 @@
-import { validateApiContracts } from '../api-contracts/validator';
+import { validateApiContracts } from '../api-contracts/validator.js';
 import type {
   ApiContractDiagnostic,
   ApiContracts,
@@ -11,7 +11,7 @@ import type {
   ApiSchemaModel,
   ApiSchemaModelKind,
   ApiTypedFetchOperation
-} from '../api-contracts/types';
+} from '../api-contracts/types.js';
 
 const ROUTE_CONTRACT_FILE = 'contracts/route-contract.yaml';
 const ERROR_ENVELOPE_FILE = 'contracts/error-envelope.yaml';
