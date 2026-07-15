@@ -1,0 +1,135 @@
+product_link_handoff:
+  schema_version: 1
+  status: contract-only
+  owner_boundary: identity
+  challenge_ttl_seconds: 600
+  minimum_poll_interval_seconds: 5
+  proof_method: S256
+  proof_verifier_policy: random_32_octets_base64url_no_padding
+  proof_challenge_policy: base64url_no_padding_sha256_of_verifier
+  lifecycle_states:
+    - pending
+    - approved
+    - denied
+    - expired
+    - consumed
+  terminal_states:
+    - denied
+    - expired
+    - consumed
+  allowed_transitions:
+    - from: pending
+      event: approve
+      to: approved
+    - from: pending
+      event: deny
+      to: denied
+    - from: pending
+      event: expire
+      to: expired
+    - from: approved
+      event: exchange
+      to: consumed
+    - from: approved
+      event: expire
+      to: expired
+  single_use_exchange: true
+  correlation_binding: same_challenge_same_correlation_idempotent_different_correlation_rejected
+  required_bindings:
+    - product_ref
+    - client_instance_ref
+    - client_correlation_ref
+    - proof_challenge
+    - requested_scope_refs
+  exchange_response_refs:
+    - subject_ref
+    - workspace_ref
+    - consent_receipt_ref
+    - link_receipt_ref
+    - verified_at
+  forbidden_values:
+    - password
+    - authorization_header
+    - cookie_header
+    - access_token
+    - refresh_token_plaintext
+    - login_identifier
+    - contact_method
+    - integrated_profile
+    - raw_consent_document
+  local_only_policy: allowed_without_account_link_no_sync_entitlement_or_remote_account_features
+
+schema_bundle:
+  service_id: core-api
+  owner_boundary: identity
+  status: contract-only
+  purpose: define a browser-approved single-use desktop product-link handoff without transferring session or credential truth to product clients
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+      - idempotency_key
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: ProductLinkChallengeCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - product_ref
+        - client_instance_ref
+        - client_correlation_ref
+        - proof_challenge
+        - requested_scope_refs
+    - id: ProductLinkChallengeCreateResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - challenge_ref
+        - verification_uri
+        - expires_at
+        - poll_interval_seconds
+    - id: ProductLinkChallengeCompleteRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - challenge_ref
+        - approval_decision
+    - id: ProductLinkChallengeCompleteResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - challenge_ref
+        - state
+        - expires_at
+    - id: ProductLinkChallengeExchangeRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: proof_verifier_input_only_never_echo_or_persist_plaintext
+      required_fields:
+        - challenge_ref
+        - client_correlation_ref
+        - proof_verifier
+      secret_fields:
+        - proof_verifier
+    - id: ProductLinkChallengeExchangeResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - link_receipt_ref
+        - subject_ref
+        - consent_receipt_ref
+        - verified_at

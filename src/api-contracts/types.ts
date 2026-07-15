@@ -5,8 +5,35 @@ export interface ApiContracts {
   readonly sdkGenerationInput: SdkGenerationInputContract;
   readonly apiCatalog: ApiCatalogContract;
   readonly schemaBundles: readonly ApiSchemaBundleContract[];
+  readonly productLinkHandoff: ProductLinkHandoffContract;
   readonly calculatorCatalog: CalculatorCatalogContract;
   readonly calculatorConformance: CalculatorConformanceContract;
+}
+
+export interface ProductLinkHandoffContract {
+  readonly schemaVersion: number;
+  readonly status: string;
+  readonly ownerBoundary: string;
+  readonly challengeTtlSeconds: number;
+  readonly minimumPollIntervalSeconds: number;
+  readonly proofMethod: string;
+  readonly proofVerifierPolicy: string;
+  readonly proofChallengePolicy: string;
+  readonly lifecycleStates: readonly string[];
+  readonly terminalStates: readonly string[];
+  readonly transitions: readonly ProductLinkTransition[];
+  readonly singleUseExchange: boolean;
+  readonly correlationBinding: string;
+  readonly requiredBindings: readonly string[];
+  readonly exchangeResponseRefs: readonly string[];
+  readonly forbiddenValues: readonly string[];
+  readonly localOnlyPolicy: string;
+}
+
+export interface ProductLinkTransition {
+  readonly from: string;
+  readonly event: string;
+  readonly to: string;
 }
 
 export interface CalculatorConformanceContract {

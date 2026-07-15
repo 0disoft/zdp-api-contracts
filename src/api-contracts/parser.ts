@@ -17,6 +17,8 @@ import type {
   CalculatorInputDefinition,
   CalculatorOutputDefinition,
   ErrorEnvelopeContract,
+  ProductLinkHandoffContract,
+  ProductLinkTransition,
   RouteContract,
   SdkGenerationInputContract,
   WebhookContract
@@ -84,7 +86,8 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     sdkGenerationInput,
     apiCatalog,
     calculatorCatalog,
-    calculatorConformance
+    calculatorConformance,
+    productLinkHandoff
   ] =
     await Promise.all([
       loadContract(
@@ -128,6 +131,12 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
         'calculator-conformance',
         join('calculators', 'conformance.yaml'),
         parseCalculatorConformanceContract
+      ),
+      loadContract(
+        contractsRoot,
+        'product-link-handoff',
+        join('apis', 'core-api', 'product-link.yaml'),
+        parseProductLinkHandoffContract
       )
     ]);
 
@@ -138,7 +147,8 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     sdkGenerationInput,
     apiCatalog,
     calculatorCatalog,
-    calculatorConformance
+    calculatorConformance,
+    productLinkHandoff
   ] as const;
   const failures = results.filter(isContractLoadFailure);
   if (failures.length > 0) {
@@ -154,6 +164,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
   const loadedCalculatorConformance = requireLoadedContract(
     calculatorConformance
   );
+  const loadedProductLinkHandoff = requireLoadedContract(productLinkHandoff);
   const schemaBundleResults = await Promise.all(
     schemaBundleFilesFromCatalog(loadedApiCatalog.value).map((file) =>
       loadContract(
@@ -178,8 +189,55 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     schemaBundles: schemaBundleResults.map(
       (result) => requireLoadedContract(result).value
     ),
+    productLinkHandoff: loadedProductLinkHandoff.value,
     calculatorCatalog: loadedCalculatorCatalog.value,
     calculatorConformance: loadedCalculatorConformance.value
+  };
+}
+
+export function parseProductLinkHandoffContract(
+  source: string
+): ProductLinkHandoffContract {
+  const file = 'contracts/apis/core-api/product-link.yaml';
+  const data = parseYamlObject(source, file);
+  const contract = requiredObject(data, 'product_link_handoff', file);
+  const transitions = requiredRecordListNonEmpty(
+    contract,
+    'allowed_transitions',
+    `${file}#product_link_handoff`
+  );
+
+  return {
+    schemaVersion: requiredNumber(contract, 'schema_version', `${file}#product_link_handoff`),
+    status: requiredString(contract, 'status', `${file}#product_link_handoff`),
+    ownerBoundary: requiredString(contract, 'owner_boundary', `${file}#product_link_handoff`),
+    challengeTtlSeconds: requiredNumber(contract, 'challenge_ttl_seconds', `${file}#product_link_handoff`),
+    minimumPollIntervalSeconds: requiredNumber(contract, 'minimum_poll_interval_seconds', `${file}#product_link_handoff`),
+    proofMethod: requiredString(contract, 'proof_method', `${file}#product_link_handoff`),
+    proofVerifierPolicy: requiredString(contract, 'proof_verifier_policy', `${file}#product_link_handoff`),
+    proofChallengePolicy: requiredString(contract, 'proof_challenge_policy', `${file}#product_link_handoff`),
+    lifecycleStates: requiredStringList(contract, 'lifecycle_states', `${file}#product_link_handoff`),
+    terminalStates: requiredStringList(contract, 'terminal_states', `${file}#product_link_handoff`),
+    transitions: transitions.map(parseProductLinkTransition),
+    singleUseExchange: requiredBoolean(contract, 'single_use_exchange', `${file}#product_link_handoff`),
+    correlationBinding: requiredString(contract, 'correlation_binding', `${file}#product_link_handoff`),
+    requiredBindings: requiredStringList(contract, 'required_bindings', `${file}#product_link_handoff`),
+    exchangeResponseRefs: requiredStringList(contract, 'exchange_response_refs', `${file}#product_link_handoff`),
+    forbiddenValues: requiredStringList(contract, 'forbidden_values', `${file}#product_link_handoff`),
+    localOnlyPolicy: requiredString(contract, 'local_only_policy', `${file}#product_link_handoff`)
+  };
+}
+
+function parseProductLinkTransition(
+  transition: Record<string, unknown>,
+  index: number
+): ProductLinkTransition {
+  const context = `contracts/apis/core-api/product-link.yaml#product_link_handoff.allowed_transitions[${index}]`;
+  assertOnlyKeys(transition, ['from', 'event', 'to'], context);
+  return {
+    from: requiredString(transition, 'from', context),
+    event: requiredString(transition, 'event', context),
+    to: requiredString(transition, 'to', context)
   };
 }
 

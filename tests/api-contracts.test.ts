@@ -10,6 +10,7 @@ import {
   parseCalculatorCatalogContract,
   parseCalculatorConformanceContract,
   parseErrorEnvelopeContract,
+  parseProductLinkHandoffContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
   parseWebhookContract
@@ -28,6 +29,46 @@ describe('api contract checker', () => {
 
     expect(result.diagnostics).toEqual([]);
     expect(result.ok).toBe(true);
+  });
+
+  it('keeps desktop product linking single-use and bound to S256 proof', () => {
+    const contracts = loadCommittedContracts();
+
+    expect(contracts.productLinkHandoff.proofMethod).toBe('S256');
+    expect(contracts.productLinkHandoff.challengeTtlSeconds).toBe(600);
+    expect(contracts.productLinkHandoff.singleUseExchange).toBe(true);
+    expect(contracts.productLinkHandoff.exchangeResponseRefs).toEqual([
+      'subject_ref',
+      'workspace_ref',
+      'consent_receipt_ref',
+      'link_receipt_ref',
+      'verified_at'
+    ]);
+    expect(
+      contracts.apiCatalog.routes
+        .filter((route) => route.resource === 'product_link_challenge')
+        .map((route) => route.operationId)
+    ).toEqual([
+      'core.auth.product_link_challenges.create',
+      'core.auth.product_link_challenges.complete',
+      'core.auth.product_link_challenges.exchange'
+    ]);
+  });
+
+  it('rejects reusable desktop product-link exchange', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      productLinkHandoff: {
+        ...contracts.productLinkHandoff,
+        singleUseExchange: false
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_PRODUCT_LINK_SINGLE_USE_REQUIRED'
+    );
   });
 
   it('loads the reviewed global calculator batch with stable contract metadata', () => {
@@ -186,6 +227,9 @@ describe('api contract checker', () => {
       'core.auth.sessions.refresh',
       'core.auth.sessions.revoke_current',
       'core.auth.sessions.get_current',
+      'core.auth.product_link_challenges.create',
+      'core.auth.product_link_challenges.complete',
+      'core.auth.product_link_challenges.exchange',
       'core.auth.recovery_requests.create',
       'core.auth.passkey_challenges.create',
       'core.auth.passkey_assertions.verify',
@@ -578,6 +622,7 @@ describe('api contract checker', () => {
     expect(contracts.schemaBundles.map((bundle) => bundle.file)).toEqual([
       'contracts/apis/core-api/auth-session-consumer.yaml',
       'contracts/apis/core-api/auth-session.yaml',
+      'contracts/apis/core-api/product-link.yaml',
       'contracts/apis/core-api/referral.yaml',
       'contracts/apis/money-api/referral-reward.yaml'
     ]);
@@ -588,9 +633,12 @@ describe('api contract checker', () => {
       'AuthSessionCreateRequest'
     );
     expect(contracts.schemaBundles[2]?.schemas.map((schema) => schema.id)).toContain(
-      'ReferralUseCreateRequest'
+      'ProductLinkChallengeExchangeResponse'
     );
     expect(contracts.schemaBundles[3]?.schemas.map((schema) => schema.id)).toContain(
+      'ReferralUseCreateRequest'
+    );
+    expect(contracts.schemaBundles[4]?.schemas.map((schema) => schema.id)).toContain(
       'ReferralRewardStatusGetResponse'
     );
   });
@@ -774,22 +822,23 @@ describe('api contract checker', () => {
 
   it('fails when a non-idempotent route schema requires idempotency metadata', () => {
     const contracts = loadCommittedContracts();
-    const schemaBundle = schemaBundleAt(contracts, 3);
+    const schemaBundle = schemaBundleAt(contracts, 4);
     const result = validateApiContracts({
       ...contracts,
-      schemaBundles: [
-        ...contracts.schemaBundles.slice(0, 2),
-        {
-          ...schemaBundle,
-          commonEnvelope: {
-            ...schemaBundle.commonEnvelope,
-            requiredRequestMetadata: [
-              ...schemaBundle.commonEnvelope.requiredRequestMetadata,
-              'idempotency_key'
-            ]
-          }
-        }
-      ]
+      schemaBundles: contracts.schemaBundles.map((bundle) =>
+        bundle.file === schemaBundle.file
+          ? {
+              ...schemaBundle,
+              commonEnvelope: {
+                ...schemaBundle.commonEnvelope,
+                requiredRequestMetadata: [
+                  ...schemaBundle.commonEnvelope.requiredRequestMetadata,
+                  'idempotency_key'
+                ]
+              }
+            }
+          : bundle
+      )
     });
 
     expect(result.ok).toBe(false);
@@ -905,6 +954,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    productLinkHandoff: parseProductLinkHandoffContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'product-link.yaml'
+        ),
+        'utf8'
+      )
+    ),
     schemaBundles: [
       parseApiSchemaBundleContract(
         readFileSync(
@@ -931,6 +992,19 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/core-api/auth-session.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'product-link.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/product-link.yaml'
       ),
       parseApiSchemaBundleContract(
         readFileSync(

@@ -7,6 +7,7 @@ import {
   parseCalculatorCatalogContract,
   parseCalculatorConformanceContract,
   parseErrorEnvelopeContract,
+  parseProductLinkHandoffContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
   parseWebhookContract
@@ -50,6 +51,9 @@ describe('api export plan', () => {
       'core.auth.sessions.refresh',
       'core.auth.sessions.revoke_current',
       'core.auth.sessions.get_current',
+      'core.auth.product_link_challenges.create',
+      'core.auth.product_link_challenges.complete',
+      'core.auth.product_link_challenges.exchange',
       'core.auth.recovery_requests.create',
       'core.auth.passkey_challenges.create',
       'core.auth.passkey_assertions.verify',
@@ -265,6 +269,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    productLinkHandoff: parseProductLinkHandoffContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'product-link.yaml'
+        ),
+        'utf8'
+      )
+    ),
     calculatorCatalog: parseCalculatorCatalogContract(
       readFileSync(
         join(process.cwd(), 'contracts', 'calculators', 'catalog.yaml'),
@@ -278,6 +294,19 @@ function loadCommittedContracts(): ApiContracts {
       )
     ),
     schemaBundles: [
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'product-link.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/product-link.yaml'
+      ),
       parseApiSchemaBundleContract(
         readFileSync(
           join(

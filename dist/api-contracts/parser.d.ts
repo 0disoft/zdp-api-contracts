@@ -1,4 +1,4 @@
-import type { ApiCatalogContract, ApiContracts, ApiSchemaBundleContract, CalculatorCatalogContract, CalculatorConformanceContract, ErrorEnvelopeContract, RouteContract, SdkGenerationInputContract, WebhookContract } from './types.js';
+import type { ApiCatalogContract, ApiContracts, ApiSchemaBundleContract, CalculatorCatalogContract, CalculatorConformanceContract, ErrorEnvelopeContract, ProductLinkHandoffContract, RouteContract, SdkGenerationInputContract, WebhookContract } from './types.js';
 interface ContractLoadFailure {
     readonly name: string;
     readonly file: string;
@@ -16,6 +16,7 @@ export declare class ApiContractLoadError extends Error {
  * risk: data_consistency
  */
 export declare function loadApiContracts(root?: string): Promise<ApiContracts>;
+export declare function parseProductLinkHandoffContract(source: string): ProductLinkHandoffContract;
 export declare function parseRouteContract(source: string): RouteContract;
 export declare function parseErrorEnvelopeContract(source: string): ErrorEnvelopeContract;
 export declare function parseWebhookContract(source: string): WebhookContract;

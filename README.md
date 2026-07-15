@@ -15,6 +15,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 | error envelope | `docs/contracts/error-envelope.md` |
 | SDK generation input | `docs/contracts/sdk-generation.md` |
 | calculator contract | `docs/contracts/calculator-contract.md` |
+| 데스크톱 제품 계정 연결 | `docs/contracts/desktop-product-link.md` |
 | package surface | `docs/ops/package-surface.md` |
 
 ## 현재 범위
@@ -28,6 +29,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - SDK 생성 입력의 소유 경계
 - OpenAPI/SDK/docs/webhook schema export dry-run plan
 - auth/session route 승격에 필요한 session issue, refresh, logout/revocation, passkey challenge, OAuth callback 계약
+- 브라우저 승인을 session token 전달 없이 데스크톱 제품에 연결하는 single-use S256 product-link 계약
 - typed fetch client가 읽어야 할 error envelope, request/trace id, timeout, abort signal, mutation idempotency handoff
 - npm package metadata, MIT license, public export map, package file whitelist
 - 국가 공통 계산기 6종의 정의, reviewed 2종의 숫자·반올림 정책과 공통 적합성 벡터, 안정 오류와 계약·엔진 버전 handoff
@@ -65,7 +67,7 @@ API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelo
 - calculator catalog: 첫 국가 공통 6종, 값 종류·단위·오류 allowlist, 계약·엔진 버전, 화면 payload와 계산 함수 금지 경계
 - calculator conformance: reviewed 계산기의 ASCII decimal 입력, 한계, 반올림과 구현 중립 성공·오류 벡터
 
-첫 route catalog는 `core-api` auth/session 계약이다. 이 계약은 `/v1/auth/registrations`, `/v1/auth/sessions`, `/v1/auth/sessions/refresh`, `/v1/auth/sessions/current`의 GET·DELETE, `/v1/auth/recovery/requests`, `/v1/auth/passkey/challenges`, `/v1/auth/passkey/assertions`, `/v1/auth/oauth/callbacks/{provider}`의 method, schema ref, session effect, audit event, idempotency, credential policy를 고정한다. GET current-session은 제품 consumer가 transport credential을 payload로 복제하지 않고 actor·tenant·만료 상태를 검증하기 위한 읽기 계약이다. 이 경로들은 live endpoint가 아니라 `zdp-web-apps`와 제품 consumer의 auth route 승격 전제 조건이다.
+첫 route catalog는 `core-api` auth/session 계약이다. 이 계약은 `/v1/auth/registrations`, `/v1/auth/sessions`, `/v1/auth/sessions/refresh`, `/v1/auth/sessions/current`의 GET·DELETE, `/v1/auth/recovery/requests`, `/v1/auth/passkey/challenges`, `/v1/auth/passkey/assertions`, `/v1/auth/oauth/callbacks/{provider}`와 `/v1/auth/product-link-challenges`의 create·complete·exchange method, schema ref, session effect, audit event, idempotency, credential policy를 고정한다. GET current-session은 서버 제품 consumer용이고, 데스크톱 product-link는 브라우저 session credential을 복사하지 않는 별도 single-use handoff다. 이 경로들은 live endpoint가 아니라 `zdp-web-apps`, `zdp-auth-ui`, 설치형 제품 consumer의 auth route 승격 전제 조건이다.
 
 이렇게 해두면 제품 handler나 화면 payload가 API 계약 원천인 척 들어오는 일을 초반에 막을 수 있다. 또한 에러 응답에 provider secret이나 customer private payload가 섞이는 사고, 웹훅이 중복 처리 방지 없이 열리는 사고를 checker 단계에서 먼저 잡는다.
 

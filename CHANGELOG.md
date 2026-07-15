@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.11.0
+
+### Added
+
+- 브라우저의 ZDP 가입·로그인 결과를 session token 전달 없이 설치형 제품에 연결하는 product-link challenge create·complete·exchange 계약을 추가했다.
+- 10분 만료, 최소 5초 polling, S256 proof binding, single-use exchange, correlation-bound retry와 로컬 전용 모드 경계를 parser·validator·tests에 추가했다.
+
 ## 0.10.1
 
 ### Changed
