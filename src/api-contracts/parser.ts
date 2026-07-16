@@ -409,16 +409,23 @@ export function parseSdkGenerationInputContract(
 }
 
 export function parseApiCatalogContract(source: string): ApiCatalogContract {
-  const data = parseYamlObject(source, 'contracts/apis/catalog.yaml');
+  const file = 'contracts/apis/catalog.yaml';
+  const data = parseYamlObject(source, file);
+  assertOnlyKeys(data, ['api_catalog', 'routes'], file);
   const apiCatalog = requiredObject(
     data,
     'api_catalog',
-    'contracts/apis/catalog.yaml'
+    file
+  );
+  assertOnlyKeys(
+    apiCatalog,
+    ['status', 'route_definition_required_fields', 'forbidden_values'],
+    `${file}#api_catalog`
   );
   const routes = requiredRecordListAllowEmpty(
     data,
     'routes',
-    'contracts/apis/catalog.yaml'
+    file
   );
 
   return {

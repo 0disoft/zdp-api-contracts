@@ -31,6 +31,27 @@ describe('api contract checker', () => {
     expect(result.ok).toBe(true);
   });
 
+  it('rejects unknown fields at API catalog object boundaries', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'contracts', 'apis', 'catalog.yaml'),
+      'utf8'
+    );
+
+    expect(() =>
+      parseApiCatalogContract(`${source}\nroutez: []\n`)
+    ).toThrow('contracts/apis/catalog.yaml must not declare unknown field `routez`');
+    expect(() =>
+      parseApiCatalogContract(
+        source.replace(
+          '  status: route-catalog-contract-only',
+          '  status: route-catalog-contract-only\n  statuz: route-catalog-contract-only'
+        )
+      )
+    ).toThrow(
+      'contracts/apis/catalog.yaml#api_catalog must not declare unknown field `statuz`'
+    );
+  });
+
   it('keeps desktop product linking single-use and bound to S256 proof', () => {
     const contracts = loadCommittedContracts();
     const productLinkSchemas = contracts.schemaBundles.find(
@@ -749,6 +770,30 @@ describe('api contract checker', () => {
     expect(result.ok).toBe(false);
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
       'API_CATALOG_ROUTE_CREDENTIAL_POLICY_INVALID'
+    );
+  });
+
+  it('fails when secret material policy adds unsafe suffix text', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: contracts.schemaBundles.map((bundle) => ({
+        ...bundle,
+        schemas: bundle.schemas.map((schema) =>
+          schema.secretMaterialPolicy === 'verifier_input_only_never_echo'
+            ? {
+                ...schema,
+                secretMaterialPolicy:
+                  'verifier_input_only_never_echo_but_log_plaintext'
+              }
+            : schema
+        )
+      }))
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_SCHEMA_SECRET_MATERIAL_POLICY_INVALID'
     );
   });
 

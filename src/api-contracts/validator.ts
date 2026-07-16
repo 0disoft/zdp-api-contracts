@@ -338,6 +338,14 @@ const ALLOWED_CREDENTIAL_POLICIES = [
   'no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload'
 ] as const;
 
+const ALLOWED_SECRET_MATERIAL_POLICIES = [
+  'verifier_input_only_never_echo',
+  'session_rotation_proof_only_never_echo',
+  'browser_assertion_only_never_echo',
+  'provider_callback_code_only_never_store_plaintext',
+  'proof_verifier_input_only_never_echo_or_persist_plaintext'
+] as const;
+
 const REQUIRED_CREDENTIAL_POLICY_PARTS = [
   'no_refresh_token_plaintext',
   'no_provider_secret',
@@ -2264,7 +2272,7 @@ function parseSchemaRef(ref: string): ParsedSchemaRef | null {
 }
 
 function isSecretMaterialPolicySafe(policy: string): boolean {
-  return policy.includes('never_echo') || policy.includes('never_store_plaintext');
+  return includesValue(ALLOWED_SECRET_MATERIAL_POLICIES, policy);
 }
 
 function includesValue<T extends string | number>(

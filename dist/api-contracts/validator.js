@@ -289,6 +289,13 @@ const REQUIRED_MUTATION_IDEMPOTENCY_POLICY = 'required_idempotency_key';
 const ALLOWED_CREDENTIAL_POLICIES = [
     'no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload'
 ];
+const ALLOWED_SECRET_MATERIAL_POLICIES = [
+    'verifier_input_only_never_echo',
+    'session_rotation_proof_only_never_echo',
+    'browser_assertion_only_never_echo',
+    'provider_callback_code_only_never_store_plaintext',
+    'proof_verifier_input_only_never_echo_or_persist_plaintext'
+];
 const REQUIRED_CREDENTIAL_POLICY_PARTS = [
     'no_refresh_token_plaintext',
     'no_provider_secret',
@@ -1551,7 +1558,7 @@ function parseSchemaRef(ref) {
     return { file, schemaId };
 }
 function isSecretMaterialPolicySafe(policy) {
-    return policy.includes('never_echo') || policy.includes('never_store_plaintext');
+    return includesValue(ALLOWED_SECRET_MATERIAL_POLICIES, policy);
 }
 function includesValue(values, value) {
     return values.includes(value);

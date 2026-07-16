@@ -40,3 +40,9 @@ jobs:
 
       - name: Check
         run: bun run check
+
+      - name: Check export plan
+        run: bun run export:plan
+
+      - name: Smoke packed package
+        run: bun run smoke:package

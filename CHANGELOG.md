@@ -1,5 +1,17 @@
 # CHANGELOG.md
 
+## 0.12.1
+
+### Fixed
+
+- API catalog parser가 최상위와 `api_catalog` 객체의 알 수 없는 필드를 거부하도록 경계를 닫았다.
+- secret material policy가 안전한 문구를 부분 문자열로 포함하는 것만으로 통과하지 않고, 허용된 정책 식별자와 정확히 일치하도록 강화했다.
+
+### Changed
+
+- package smoke가 설치된 tarball의 root, `api-contracts`, `api-export-plan`, contract subpath를 모두 소비한다.
+- CI가 계약 검사에 더해 export plan과 packed-package smoke를 실행한다.
+
 ## 0.12.0
 
 ### Added

@@ -35,7 +35,10 @@ await writeFile(
 await writeFile(
   join(consumerRoot, 'smoke.mjs'),
   `import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { parseCalculatorConformanceContract } from 'zdp-api-contracts';
+import { loadApiContracts, validateApiContracts } from 'zdp-api-contracts/api-contracts';
+import { buildApiExportPlan } from 'zdp-api-contracts/api-export-plan';
 
 const contractUrl = import.meta.resolve(
   'zdp-api-contracts/contracts/calculators/conformance.yaml'
@@ -44,6 +47,23 @@ const source = await readFile(new URL(contractUrl), 'utf8');
 const contract = parseCalculatorConformanceContract(source);
 if (contract.contractVersion !== '1.0.0' || contract.cases.length < 1) {
   throw new Error('Calculator conformance contract was not consumable.');
+}
+
+const installedPackageRoot = fileURLToPath(new URL('../../', contractUrl));
+const contracts = await loadApiContracts(installedPackageRoot);
+const validation = validateApiContracts(contracts);
+if (!validation.ok) {
+  throw new Error('API contract validator subpath was not consumable.');
+}
+
+const exportPlan = buildApiExportPlan(contracts);
+if (
+  !exportPlan.ok ||
+  exportPlan.plan === null ||
+  exportPlan.plan.writesArtifacts !== false ||
+  exportPlan.plan.publishesSchemas !== false
+) {
+  throw new Error('API export plan subpath was not consumable.');
 }
 console.log('zdp-api-contracts tarball smoke passed.');
 `,
