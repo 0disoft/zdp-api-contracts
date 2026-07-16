@@ -122,7 +122,7 @@ routes:
     success_statuses:
       - 204
     request_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthSessionRevokeCurrentRequest
-    response_schema_ref: contracts/apis/core-api/auth-session.yaml#AuthSessionRevokeCurrentResponse
+    response_schema_ref: null
     auth_required: true
     permission_check: core.identity.session.revoke_self
     audit_event: core.identity.session.revoked

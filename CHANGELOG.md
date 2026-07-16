@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.13.0
+
+### Changed
+
+- `204 No Content` route가 `response_schema_ref: null`을 명시하고 body-bearing 성공 상태와 섞이지 않도록 계약을 닫았다.
+- typed fetch export plan이 `noContentSuccessStatuses`와 route별 `responseBodyMode`를 제공해 SDK가 `204` 응답에서 JSON body를 읽지 않도록 했다.
+
 ## 0.12.1
 
 ### Fixed

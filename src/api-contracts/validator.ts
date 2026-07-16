@@ -127,6 +127,7 @@ const REQUIRED_ROUTE_FIELDS = [
 const ALLOWED_ROUTE_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 
 const ALLOWED_SUCCESS_STATUSES = [200, 201, 202, 204] as const;
+const NO_CONTENT_SUCCESS_STATUSES = [204] as const;
 
 const CANONICAL_FORBIDDEN_VALUES = [
   'raw_customer_payload',
@@ -269,7 +270,8 @@ const REQUIRED_SDK_CLIENT_RUNTIME_METADATA = [
   'trace_id_propagation',
   'timeout_ms_option',
   'abort_signal_option',
-  'idempotency_key_required_for_mutations'
+  'idempotency_key_required_for_mutations',
+  'no_content_response_body_handling'
 ] as const;
 
 const REQUIRED_SDK_WEBHOOK_METADATA = [
@@ -1263,6 +1265,36 @@ function validateRouteContract(
     }
   }
 
+  for (const status of NO_CONTENT_SUCCESS_STATUSES) {
+    if (!contracts.route.noContentSuccessStatuses.includes(status)) {
+      diagnostics.push({
+        code: 'API_ROUTE_NO_CONTENT_SUCCESS_STATUS_MISSING',
+        file: 'contracts/route-contract.yaml',
+        path: 'route_contract.no_content_success_statuses',
+        message: `Route contract must classify success status \`${status}\` as bodyless.`
+      });
+    }
+  }
+
+  for (const status of contracts.route.noContentSuccessStatuses) {
+    if (!includesValue(NO_CONTENT_SUCCESS_STATUSES, status)) {
+      diagnostics.push({
+        code: 'API_ROUTE_NO_CONTENT_SUCCESS_STATUS_INVALID',
+        file: 'contracts/route-contract.yaml',
+        path: 'route_contract.no_content_success_statuses',
+        message: `Route contract must not classify status \`${status}\` as bodyless.`
+      });
+    }
+    if (!contracts.route.allowedSuccessStatuses.includes(status)) {
+      diagnostics.push({
+        code: 'API_ROUTE_NO_CONTENT_SUCCESS_STATUS_NOT_ALLOWED',
+        file: 'contracts/route-contract.yaml',
+        path: 'route_contract.no_content_success_statuses',
+        message: `Bodyless success status \`${status}\` must also be allowed.`
+      });
+    }
+  }
+
   for (const shape of FORBIDDEN_ROUTE_SHAPES) {
     if (!contracts.route.forbiddenShapes.includes(shape)) {
       diagnostics.push({
@@ -1647,15 +1679,18 @@ function validateRouteDefinition(
     diagnostics
   });
 
-  const responseSchema = validateRouteSchemaRef({
-    route,
-    routePath,
-    ref: route.responseSchemaRef,
-    field: 'response_schema_ref',
-    expectedKind: 'response',
-    schemaBundlesByFile,
-    diagnostics
-  });
+  const responseSchema =
+    route.responseSchemaRef === null
+      ? null
+      : validateRouteSchemaRef({
+          route,
+          routePath,
+          ref: route.responseSchemaRef,
+          field: 'response_schema_ref',
+          expectedKind: 'response',
+          schemaBundlesByFile,
+          diagnostics
+        });
 
   if (!route.requestIdRequired) {
     diagnostics.push({
@@ -1774,6 +1809,13 @@ function validateRouteDefinition(
     }
   }
 
+  validateRouteResponseBodyContract({
+    route,
+    routePath,
+    noContentSuccessStatuses: contracts.route.noContentSuccessStatuses,
+    diagnostics
+  });
+
   for (const requiredErrorCode of SESSION_EFFECT_REQUIRED_ERROR_CODES[
     route.sessionEffect
   ] ?? []) {
@@ -1794,6 +1836,47 @@ function validateRouteDefinition(
       requestSchema: requestSchema.schema,
       responseSchema: responseSchema.schema,
       diagnostics
+    });
+  }
+}
+
+function validateRouteResponseBodyContract(input: {
+  readonly route: ApiRouteDefinition;
+  readonly routePath: string;
+  readonly noContentSuccessStatuses: readonly number[];
+  readonly diagnostics: ApiContractDiagnostic[];
+}): void {
+  const hasNoContentStatus = input.route.successStatuses.some((status) =>
+    input.noContentSuccessStatuses.includes(status)
+  );
+  const hasBodyStatus = input.route.successStatuses.some(
+    (status) => !input.noContentSuccessStatuses.includes(status)
+  );
+
+  if (hasNoContentStatus && hasBodyStatus) {
+    input.diagnostics.push({
+      code: 'API_CATALOG_ROUTE_SUCCESS_BODY_MODE_AMBIGUOUS',
+      file: 'contracts/apis/catalog.yaml',
+      path: `${input.routePath}.success_statuses`,
+      message: `API route \`${input.route.operationId}\` must not mix bodyless and body-bearing success statuses while using one response_schema_ref.`
+    });
+  }
+
+  if (hasNoContentStatus && input.route.responseSchemaRef !== null) {
+    input.diagnostics.push({
+      code: 'API_CATALOG_ROUTE_NO_CONTENT_SCHEMA_FORBIDDEN',
+      file: 'contracts/apis/catalog.yaml',
+      path: `${input.routePath}.response_schema_ref`,
+      message: `API route \`${input.route.operationId}\` uses a bodyless success status and must set response_schema_ref to null.`
+    });
+  }
+
+  if (!hasNoContentStatus && input.route.responseSchemaRef === null) {
+    input.diagnostics.push({
+      code: 'API_CATALOG_ROUTE_RESPONSE_SCHEMA_REQUIRED',
+      file: 'contracts/apis/catalog.yaml',
+      path: `${input.routePath}.response_schema_ref`,
+      message: `API route \`${input.route.operationId}\` uses a body-bearing success status and must declare response_schema_ref.`
     });
   }
 }
@@ -1953,7 +2036,9 @@ function validateSchemaBundles(
   const referencedFiles = new Set(
     contracts.apiCatalog.routes.flatMap((route) => [
       parseSchemaRef(route.requestSchemaRef)?.file,
-      parseSchemaRef(route.responseSchemaRef)?.file
+      route.responseSchemaRef === null
+        ? undefined
+        : parseSchemaRef(route.responseSchemaRef)?.file
     ])
   );
 

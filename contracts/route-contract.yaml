@@ -28,6 +28,8 @@ route_contract:
     - 201
     - 202
     - 204
+  no_content_success_statuses:
+    - 204
   forbidden_shapes:
     - raw_customer_payload
     - raw_provider_error

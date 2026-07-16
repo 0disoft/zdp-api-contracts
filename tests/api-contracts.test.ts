@@ -323,6 +323,16 @@ describe('api contract checker', () => {
       sessionEffect: 'none'
     });
     expect(
+      authRoutes.find(
+        (route) => route.operationId === 'core.auth.sessions.revoke_current'
+      )
+    ).toMatchObject({
+      method: 'DELETE',
+      successStatuses: [204],
+      responseSchemaRef: null,
+      sessionEffect: 'revoke'
+    });
+    expect(
       contracts.apiCatalog.routes.find(
         (route) => route.operationId === 'core.referral.uses.create'
       )
@@ -539,6 +549,91 @@ describe('api contract checker', () => {
     expect(result.ok).toBe(false);
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
       'API_ROUTE_ALLOWED_SUCCESS_STATUS_INVALID'
+    );
+  });
+
+  it('enforces explicit bodyless contracts for 204 responses', () => {
+    const contracts = loadCommittedContracts();
+    const revokeRoute = routeAt(contracts, 3);
+    const bodyRoute = routeAt(contracts, 1);
+
+    expect(contracts.route.noContentSuccessStatuses).toEqual([204]);
+
+    const missingNoContentClassification = validateApiContracts({
+      ...contracts,
+      route: {
+        ...contracts.route,
+        noContentSuccessStatuses: []
+      }
+    });
+    expect(
+      missingNoContentClassification.diagnostics.map(
+        (diagnostic) => diagnostic.code
+      )
+    ).toContain('API_ROUTE_NO_CONTENT_SUCCESS_STATUS_MISSING');
+
+    const schemaOnNoContent = validateApiContracts({
+      ...contracts,
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: [
+          ...contracts.apiCatalog.routes.slice(0, 3),
+          {
+            ...revokeRoute,
+            responseSchemaRef:
+              'contracts/apis/core-api/auth-session.yaml#AuthSessionRefreshResponse'
+          },
+          ...contracts.apiCatalog.routes.slice(4)
+        ]
+      }
+    });
+    expect(
+      schemaOnNoContent.diagnostics.map((diagnostic) => diagnostic.code)
+    ).toContain('API_CATALOG_ROUTE_NO_CONTENT_SCHEMA_FORBIDDEN');
+
+    const missingBodySchema = validateApiContracts({
+      ...contracts,
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: [
+          contracts.apiCatalog.routes[0]!,
+          { ...bodyRoute, responseSchemaRef: null },
+          ...contracts.apiCatalog.routes.slice(2)
+        ]
+      }
+    });
+    expect(
+      missingBodySchema.diagnostics.map((diagnostic) => diagnostic.code)
+    ).toContain('API_CATALOG_ROUTE_RESPONSE_SCHEMA_REQUIRED');
+
+    const mixedBodyModes = validateApiContracts({
+      ...contracts,
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: [
+          ...contracts.apiCatalog.routes.slice(0, 3),
+          { ...revokeRoute, successStatuses: [200, 204] },
+          ...contracts.apiCatalog.routes.slice(4)
+        ]
+      }
+    });
+    expect(
+      mixedBodyModes.diagnostics.map((diagnostic) => diagnostic.code)
+    ).toContain('API_CATALOG_ROUTE_SUCCESS_BODY_MODE_AMBIGUOUS');
+  });
+
+  it('requires an explicit nullable response schema field in route YAML', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'contracts', 'apis', 'catalog.yaml'),
+      'utf8'
+    );
+    const withoutNoContentSchema = source.replace(
+      '    response_schema_ref: null\n',
+      ''
+    );
+
+    expect(() => parseApiCatalogContract(withoutNoContentSchema)).toThrow(
+      'must declare nullable string field `response_schema_ref`'
     );
   });
 

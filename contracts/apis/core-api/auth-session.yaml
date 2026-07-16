@@ -74,12 +74,6 @@ schema_bundle:
       carries_secret_material: false
       required_fields:
         - session_ref
-    - id: AuthSessionRevokeCurrentResponse
-      kind: response
-      carries_secret_material: false
-      session_effect: revoke
-      required_fields:
-        - revoked
     - id: AuthRecoveryRequestCreateRequest
       kind: request
       carries_secret_material: false

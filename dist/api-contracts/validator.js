@@ -101,6 +101,7 @@ const REQUIRED_ROUTE_FIELDS = [
 ];
 const ALLOWED_ROUTE_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 const ALLOWED_SUCCESS_STATUSES = [200, 201, 202, 204];
+const NO_CONTENT_SUCCESS_STATUSES = [204];
 const CANONICAL_FORBIDDEN_VALUES = [
     'raw_customer_payload',
     'raw_provider_error',
@@ -230,7 +231,8 @@ const REQUIRED_SDK_CLIENT_RUNTIME_METADATA = [
     'trace_id_propagation',
     'timeout_ms_option',
     'abort_signal_option',
-    'idempotency_key_required_for_mutations'
+    'idempotency_key_required_for_mutations',
+    'no_content_response_body_handling'
 ];
 const REQUIRED_SDK_WEBHOOK_METADATA = [
     'event_id',
@@ -745,6 +747,34 @@ function validateRouteContract(contracts, diagnostics) {
             });
         }
     }
+    for (const status of NO_CONTENT_SUCCESS_STATUSES) {
+        if (!contracts.route.noContentSuccessStatuses.includes(status)) {
+            diagnostics.push({
+                code: 'API_ROUTE_NO_CONTENT_SUCCESS_STATUS_MISSING',
+                file: 'contracts/route-contract.yaml',
+                path: 'route_contract.no_content_success_statuses',
+                message: `Route contract must classify success status \`${status}\` as bodyless.`
+            });
+        }
+    }
+    for (const status of contracts.route.noContentSuccessStatuses) {
+        if (!includesValue(NO_CONTENT_SUCCESS_STATUSES, status)) {
+            diagnostics.push({
+                code: 'API_ROUTE_NO_CONTENT_SUCCESS_STATUS_INVALID',
+                file: 'contracts/route-contract.yaml',
+                path: 'route_contract.no_content_success_statuses',
+                message: `Route contract must not classify status \`${status}\` as bodyless.`
+            });
+        }
+        if (!contracts.route.allowedSuccessStatuses.includes(status)) {
+            diagnostics.push({
+                code: 'API_ROUTE_NO_CONTENT_SUCCESS_STATUS_NOT_ALLOWED',
+                file: 'contracts/route-contract.yaml',
+                path: 'route_contract.no_content_success_statuses',
+                message: `Bodyless success status \`${status}\` must also be allowed.`
+            });
+        }
+    }
     for (const shape of FORBIDDEN_ROUTE_SHAPES) {
         if (!contracts.route.forbiddenShapes.includes(shape)) {
             diagnostics.push({
@@ -1056,15 +1086,17 @@ function validateRouteDefinition(route, index, contracts, schemaBundlesByFile, d
         schemaBundlesByFile,
         diagnostics
     });
-    const responseSchema = validateRouteSchemaRef({
-        route,
-        routePath,
-        ref: route.responseSchemaRef,
-        field: 'response_schema_ref',
-        expectedKind: 'response',
-        schemaBundlesByFile,
-        diagnostics
-    });
+    const responseSchema = route.responseSchemaRef === null
+        ? null
+        : validateRouteSchemaRef({
+            route,
+            routePath,
+            ref: route.responseSchemaRef,
+            field: 'response_schema_ref',
+            expectedKind: 'response',
+            schemaBundlesByFile,
+            diagnostics
+        });
     if (!route.requestIdRequired) {
         diagnostics.push({
             code: 'API_CATALOG_ROUTE_REQUEST_ID_NOT_REQUIRED',
@@ -1164,6 +1196,12 @@ function validateRouteDefinition(route, index, contracts, schemaBundlesByFile, d
             });
         }
     }
+    validateRouteResponseBodyContract({
+        route,
+        routePath,
+        noContentSuccessStatuses: contracts.route.noContentSuccessStatuses,
+        diagnostics
+    });
     for (const requiredErrorCode of SESSION_EFFECT_REQUIRED_ERROR_CODES[route.sessionEffect] ?? []) {
         if (!route.errorCodes.includes(requiredErrorCode)) {
             diagnostics.push({
@@ -1181,6 +1219,34 @@ function validateRouteDefinition(route, index, contracts, schemaBundlesByFile, d
             requestSchema: requestSchema.schema,
             responseSchema: responseSchema.schema,
             diagnostics
+        });
+    }
+}
+function validateRouteResponseBodyContract(input) {
+    const hasNoContentStatus = input.route.successStatuses.some((status) => input.noContentSuccessStatuses.includes(status));
+    const hasBodyStatus = input.route.successStatuses.some((status) => !input.noContentSuccessStatuses.includes(status));
+    if (hasNoContentStatus && hasBodyStatus) {
+        input.diagnostics.push({
+            code: 'API_CATALOG_ROUTE_SUCCESS_BODY_MODE_AMBIGUOUS',
+            file: 'contracts/apis/catalog.yaml',
+            path: `${input.routePath}.success_statuses`,
+            message: `API route \`${input.route.operationId}\` must not mix bodyless and body-bearing success statuses while using one response_schema_ref.`
+        });
+    }
+    if (hasNoContentStatus && input.route.responseSchemaRef !== null) {
+        input.diagnostics.push({
+            code: 'API_CATALOG_ROUTE_NO_CONTENT_SCHEMA_FORBIDDEN',
+            file: 'contracts/apis/catalog.yaml',
+            path: `${input.routePath}.response_schema_ref`,
+            message: `API route \`${input.route.operationId}\` uses a bodyless success status and must set response_schema_ref to null.`
+        });
+    }
+    if (!hasNoContentStatus && input.route.responseSchemaRef === null) {
+        input.diagnostics.push({
+            code: 'API_CATALOG_ROUTE_RESPONSE_SCHEMA_REQUIRED',
+            file: 'contracts/apis/catalog.yaml',
+            path: `${input.routePath}.response_schema_ref`,
+            message: `API route \`${input.route.operationId}\` uses a body-bearing success status and must declare response_schema_ref.`
         });
     }
 }
@@ -1292,7 +1358,9 @@ function validateSchemaBundles(contracts, schemaBundlesByFile, diagnostics) {
     }
     const referencedFiles = new Set(contracts.apiCatalog.routes.flatMap((route) => [
         parseSchemaRef(route.requestSchemaRef)?.file,
-        parseSchemaRef(route.responseSchemaRef)?.file
+        route.responseSchemaRef === null
+            ? undefined
+            : parseSchemaRef(route.responseSchemaRef)?.file
     ]));
     for (const file of referencedFiles) {
         if (file && !schemaBundlesByFile.has(file)) {

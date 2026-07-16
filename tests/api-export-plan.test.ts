@@ -40,8 +40,10 @@ describe('api export plan', () => {
         'trace_id_propagation',
         'timeout_ms_option',
         'abort_signal_option',
-        'idempotency_key_required_for_mutations'
+        'idempotency_key_required_for_mutations',
+        'no_content_response_body_handling'
       ],
+      noContentSuccessStatuses: [204],
       mutatingMethodsRequiringIdempotency: ['POST', 'PUT', 'PATCH', 'DELETE'],
       requiredMutationIdempotencyPolicy: 'required_idempotency_key'
     });
@@ -89,6 +91,13 @@ describe('api export plan', () => {
           'contracts/apis/core-api/auth-session-consumer.yaml#AuthSessionCurrentGetRequest',
         responseSchemaRef:
           'contracts/apis/core-api/auth-session-consumer.yaml#AuthSessionCurrentGetResponse'
+      },
+      'core.auth.sessions.revoke_current': {
+        method: 'DELETE',
+        path: '/v1/auth/sessions/current',
+        successStatuses: [204],
+        responseSchemaRef: null,
+        responseBodyMode: 'none'
       },
       'money.referral_rewards.status.get': {
         method: 'GET',
@@ -141,8 +150,18 @@ describe('api export plan', () => {
     ]);
     for (const operation of Object.values(plan.typedFetchOperationMap)) {
       expect(plan.schemaModelMap[operation.requestSchemaRef]).toBeDefined();
-      expect(plan.schemaModelMap[operation.responseSchemaRef]).toBeDefined();
+      if (operation.responseSchemaRef === null) {
+        expect(operation.responseBodyMode).toBe('none');
+      } else {
+        expect(operation.responseBodyMode).toBe('schema');
+        expect(plan.schemaModelMap[operation.responseSchemaRef]).toBeDefined();
+      }
     }
+    expect(
+      plan.schemaModelMap[
+        'contracts/apis/core-api/auth-session.yaml#AuthSessionRevokeCurrentResponse'
+      ]
+    ).toBeUndefined();
     expect(plan.outputs.map((output) => output.kind)).toEqual([
       'openapi',
       'sdk_generation_input',

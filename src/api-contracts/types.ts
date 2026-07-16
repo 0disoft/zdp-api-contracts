@@ -132,6 +132,7 @@ export interface RouteContract {
   readonly requiredPerRoute: readonly string[];
   readonly allowedMethods: readonly string[];
   readonly allowedSuccessStatuses: readonly number[];
+  readonly noContentSuccessStatuses: readonly number[];
   readonly forbiddenShapes: readonly string[];
   readonly allowedSessionEffects: readonly string[];
 }
@@ -178,7 +179,7 @@ export interface ApiRouteDefinition {
   readonly path: string;
   readonly successStatuses: readonly number[];
   readonly requestSchemaRef: string;
-  readonly responseSchemaRef: string;
+  readonly responseSchemaRef: string | null;
   readonly authRequired: boolean;
   readonly permissionCheck: string;
   readonly auditEvent: string;
@@ -246,6 +247,7 @@ export interface ApiExportPlan {
   readonly sdkTargets: readonly string[];
   readonly traceFields: readonly string[];
   readonly clientRuntimeMetadata: readonly string[];
+  readonly noContentSuccessStatuses: readonly number[];
   readonly operationIds: readonly string[];
   readonly typedFetchOperationMap: Readonly<Record<string, ApiTypedFetchOperation>>;
   readonly schemaModelMap: Readonly<Record<string, ApiSchemaModel>>;
@@ -265,7 +267,8 @@ export interface ApiTypedFetchOperation {
   readonly path: string;
   readonly successStatuses: readonly number[];
   readonly requestSchemaRef: string;
-  readonly responseSchemaRef: string;
+  readonly responseSchemaRef: string | null;
+  readonly responseBodyMode: 'schema' | 'none';
   readonly authRequired: boolean;
   readonly idempotency: string;
   readonly requestIdRequired: boolean;

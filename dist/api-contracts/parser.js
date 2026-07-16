@@ -115,6 +115,7 @@ export function parseRouteContract(source) {
         requiredPerRoute: requiredStringList(routeContract, 'required_per_route', 'contracts/route-contract.yaml#route_contract'),
         allowedMethods: requiredStringList(routeContract, 'allowed_methods', 'contracts/route-contract.yaml#route_contract'),
         allowedSuccessStatuses: requiredNumberList(routeContract, 'allowed_success_statuses', 'contracts/route-contract.yaml#route_contract'),
+        noContentSuccessStatuses: requiredNumberList(routeContract, 'no_content_success_statuses', 'contracts/route-contract.yaml#route_contract'),
         forbiddenShapes: requiredStringList(routeContract, 'forbidden_shapes', 'contracts/route-contract.yaml#route_contract'),
         allowedSessionEffects: requiredStringList(routeContract, 'allowed_session_effects', 'contracts/route-contract.yaml#route_contract')
     };
@@ -269,7 +270,9 @@ function schemaBundleFilesFromCatalog(catalog) {
         ...REQUIRED_CORE_API_SCHEMA_BUNDLE_FILES,
         ...catalog.routes.flatMap((route) => [
             schemaBundleFileFromRef(route.requestSchemaRef),
-            schemaBundleFileFromRef(route.responseSchemaRef)
+            ...(route.responseSchemaRef === null
+                ? []
+                : [schemaBundleFileFromRef(route.responseSchemaRef)])
         ])
     ]);
 }
@@ -300,7 +303,7 @@ function parseApiRouteDefinition(route, index) {
         path: requiredString(route, 'path', context),
         successStatuses: requiredNumberList(route, 'success_statuses', context),
         requestSchemaRef: requiredString(route, 'request_schema_ref', context),
-        responseSchemaRef: requiredString(route, 'response_schema_ref', context),
+        responseSchemaRef: requiredNullableString(route, 'response_schema_ref', context),
         authRequired: requiredBoolean(route, 'auth_required', context),
         permissionCheck: requiredString(route, 'permission_check', context),
         auditEvent: requiredString(route, 'audit_event', context),
@@ -510,6 +513,19 @@ function requiredString(data, key, context) {
     const value = data[key];
     if (typeof value !== 'string' || value.trim().length === 0) {
         throw new Error(`${context} must declare string field \`${key}\`.`);
+    }
+    return value;
+}
+function requiredNullableString(data, key, context) {
+    if (!Object.hasOwn(data, key)) {
+        throw new Error(`${context} must declare nullable string field \`${key}\`.`);
+    }
+    const value = data[key];
+    if (value === null) {
+        return null;
+    }
+    if (typeof value !== 'string' || value.trim().length === 0) {
+        throw new Error(`${context} must declare nullable string field \`${key}\`.`);
     }
     return value;
 }

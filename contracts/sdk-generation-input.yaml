@@ -57,6 +57,7 @@ sdk_generation_input:
     - timeout_ms_option
     - abort_signal_option
     - idempotency_key_required_for_mutations
+    - no_content_response_body_handling
   required_webhook_metadata:
     - event_id
     - event_type

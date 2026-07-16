@@ -139,6 +139,9 @@ export function buildApiExportPlan(
     clientRuntimeMetadata: [
       ...contracts.sdkGenerationInput.requiredClientRuntimeMetadata
     ],
+    noContentSuccessStatuses: [
+      ...contracts.route.noContentSuccessStatuses
+    ],
     operationIds: contracts.apiCatalog.routes.map((route) => route.operationId),
     typedFetchOperationMap: buildTypedFetchOperationMap(
       contracts.apiCatalog.routes
@@ -170,6 +173,7 @@ function buildTypedFetchOperationMap(
       successStatuses: [...route.successStatuses],
       requestSchemaRef: route.requestSchemaRef,
       responseSchemaRef: route.responseSchemaRef,
+      responseBodyMode: route.responseSchemaRef === null ? 'none' : 'schema',
       authRequired: route.authRequired,
       idempotency: route.idempotency,
       requestIdRequired: route.requestIdRequired,
