@@ -1268,7 +1268,8 @@ function validateSecretMaterialDoesNotEcho(input) {
         return;
     }
     for (const secretField of input.requestSchema.secretFields) {
-        if (input.responseSchema.requiredFields.includes(secretField)) {
+        if (input.responseSchema.requiredFields.includes(secretField) ||
+            input.responseSchema.optionalFields.includes(secretField)) {
             input.diagnostics.push({
                 code: 'API_CATALOG_ROUTE_SECRET_FIELD_ECHOED',
                 file: 'contracts/apis/catalog.yaml',
@@ -1408,6 +1409,24 @@ function validateSchemaDefinition(schemaBundle, schema, index, diagnostics) {
                 file: schemaBundle.file,
                 path: `${path}.required_fields`,
                 message: `Schema \`${schema.id}\` required field \`${field}\` must be snake_case.`
+            });
+        }
+    }
+    for (const field of schema.optionalFields) {
+        if (!SCHEMA_FIELD_PATTERN.test(field)) {
+            diagnostics.push({
+                code: 'API_SCHEMA_OPTIONAL_FIELD_INVALID',
+                file: schemaBundle.file,
+                path: `${path}.optional_fields`,
+                message: `Schema \`${schema.id}\` optional field \`${field}\` must be snake_case.`
+            });
+        }
+        if (schema.requiredFields.includes(field)) {
+            diagnostics.push({
+                code: 'API_SCHEMA_FIELD_DECLARATION_OVERLAP',
+                file: schemaBundle.file,
+                path: `${path}.optional_fields`,
+                message: `Schema \`${schema.id}\` field \`${field}\` must not be both required and optional.`
             });
         }
     }

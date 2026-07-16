@@ -32,6 +32,8 @@ pending -> approved -> consumed
 
 성공 응답은 `link_receipt_ref`, `subject_ref`, 선택적 `workspace_ref`, `consent_receipt_ref`, `verified_at`만 제품에 전달한다. 이 reference는 로그인 ID, 이메일, 전화번호, 닉네임이나 session token으로 해석할 수 없는 opaque value다.
 
+`workspace_ref`는 `ProductLinkChallengeExchangeResponse.optional_fields`에 선언한다. account-only 연결은 이 값을 생략할 수 있고, SDK는 선택 필드라는 사실을 required field와 분리해 보존해야 한다.
+
 계정 연결은 데이터 동기화 승인이 아니다. Talos의 저장소, 프롬프트, 모델 응답, 터미널 출력, diff, memory, Vault는 별도 sync 계약과 명시적 사용자 동의 없이는 ZDP로 전송하지 않는다.
 
 ## 로컬 전용 모드

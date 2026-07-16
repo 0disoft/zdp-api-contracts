@@ -319,6 +319,7 @@ function parseApiSchemaDefinition(schema, context) {
         secretMaterialPolicy: optionalString(schema, 'secret_material_policy', context),
         sessionEffect: optionalString(schema, 'session_effect', context),
         requiredFields: requiredStringListAllowEmpty(schema, 'required_fields', context),
+        optionalFields: optionalStringList(schema, 'optional_fields', context),
         secretFields: optionalStringList(schema, 'secret_fields', context)
     };
 }

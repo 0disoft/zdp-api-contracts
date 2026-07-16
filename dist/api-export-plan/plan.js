@@ -166,6 +166,7 @@ function buildSchemaModel(bundle, schema) {
         kind: requireSchemaModelKind(schema),
         carriesSecretMaterial: schema.carriesSecretMaterial,
         requiredFields: [...schema.requiredFields],
+        optionalFields: [...schema.optionalFields],
         secretFields: [...schema.secretFields],
         sessionEffect: schema.sessionEffect
     };

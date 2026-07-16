@@ -33,6 +33,12 @@ describe('api contract checker', () => {
 
   it('keeps desktop product linking single-use and bound to S256 proof', () => {
     const contracts = loadCommittedContracts();
+    const productLinkSchemas = contracts.schemaBundles.find(
+      (bundle) => bundle.file === 'contracts/apis/core-api/product-link.yaml'
+    );
+    const exchangeResponse = productLinkSchemas?.schemas.find(
+      (schema) => schema.id === 'ProductLinkChallengeExchangeResponse'
+    );
 
     expect(contracts.productLinkHandoff.proofMethod).toBe('S256');
     expect(contracts.productLinkHandoff.challengeTtlSeconds).toBe(600);
@@ -44,6 +50,7 @@ describe('api contract checker', () => {
       'link_receipt_ref',
       'verified_at'
     ]);
+    expect(exchangeResponse?.optionalFields).toEqual(['workspace_ref']);
     expect(
       contracts.apiCatalog.routes
         .filter((route) => route.resource === 'product_link_challenge')
@@ -53,6 +60,36 @@ describe('api contract checker', () => {
       'core.auth.product_link_challenges.complete',
       'core.auth.product_link_challenges.exchange'
     ]);
+  });
+
+  it('rejects schema fields declared as both required and optional', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: contracts.schemaBundles.map((bundle) =>
+        bundle.file === 'contracts/apis/core-api/product-link.yaml'
+          ? {
+              ...bundle,
+              schemas: bundle.schemas.map((schema) =>
+                schema.id === 'ProductLinkChallengeExchangeResponse'
+                  ? {
+                      ...schema,
+                      optionalFields: [
+                        ...schema.optionalFields,
+                        'link_receipt_ref'
+                      ]
+                    }
+                  : schema
+              )
+            }
+          : bundle
+      )
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_SCHEMA_FIELD_DECLARATION_OVERLAP'
+    );
   });
 
   it('rejects reusable desktop product-link exchange', () => {

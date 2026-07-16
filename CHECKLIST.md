@@ -38,6 +38,7 @@
 - 활성 target은 `generation_targets`, 후보 target은 `allowed_generation_targets`로 나눈다.
 - SDK runtime implementation, token storage, final authorization decision, provider credential storage는 downstream owner 경계로 남긴다.
 - typed fetch operation map은 route catalog에서 method, path, success status, auth, idempotency, schema ref, error code를 읽어야 한다.
+- schema model handoff는 required field와 optional field를 분리하고 같은 field의 중복 선언을 거부해야 한다.
 
 ## Export Plan
 

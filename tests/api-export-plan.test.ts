@@ -109,8 +109,20 @@ describe('api export plan', () => {
         kind: 'request',
         carriesSecretMaterial: true,
         requiredFields: ['login_identifier', 'verifier'],
+        optionalFields: [],
         secretFields: ['verifier'],
         sessionEffect: null
+      },
+      'contracts/apis/core-api/product-link.yaml#ProductLinkChallengeExchangeResponse': {
+        kind: 'response',
+        requiredFields: [
+          'link_receipt_ref',
+          'subject_ref',
+          'consent_receipt_ref',
+          'verified_at'
+        ],
+        optionalFields: ['workspace_ref'],
+        sessionEffect: 'none'
       },
       'contracts/apis/money-api/referral-reward.yaml#ReferralRewardStatusGetResponse': {
         schemaId: 'ReferralRewardStatusGetResponse',

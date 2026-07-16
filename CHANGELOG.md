@@ -1,5 +1,16 @@
 # CHANGELOG.md
 
+## 0.12.0
+
+### Added
+
+- API schema model handoff에 `optionalFields`를 추가해 required field와 선택 field를 SDK가 구분할 수 있게 했다.
+- product-link exchange 응답의 선택적 `workspace_ref`를 machine-readable schema metadata로 노출했다.
+
+### Changed
+
+- 같은 schema field를 required와 optional에 동시에 선언하면 계약 검증이 실패한다.
+
 ## 0.11.0
 
 ### Added

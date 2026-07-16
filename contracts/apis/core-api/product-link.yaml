@@ -133,3 +133,5 @@ schema_bundle:
         - subject_ref
         - consent_receipt_ref
         - verified_at
+      optional_fields:
+        - workspace_ref

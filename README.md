@@ -30,6 +30,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - OpenAPI/SDK/docs/webhook schema export dry-run plan
 - auth/session route 승격에 필요한 session issue, refresh, logout/revocation, passkey challenge, OAuth callback 계약
 - 브라우저 승인을 session token 전달 없이 데스크톱 제품에 연결하는 single-use S256 product-link 계약
+- schema model handoff가 required field와 optional field를 분리해 SDK가 선택적 reference를 잃지 않게 하는 계약
 - typed fetch client가 읽어야 할 error envelope, request/trace id, timeout, abort signal, mutation idempotency handoff
 - npm package metadata, MIT license, public export map, package file whitelist
 - 국가 공통 계산기 6종의 정의, reviewed 2종의 숫자·반올림 정책과 공통 적합성 벡터, 안정 오류와 계약·엔진 버전 handoff
