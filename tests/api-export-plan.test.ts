@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  parseAccessDecisionContract,
   parseApiCatalogContract,
   parseApiSchemaBundleContract,
   parseCalculatorCatalogContract,
@@ -55,6 +56,7 @@ describe('api export plan', () => {
       'core.auth.sessions.refresh',
       'core.auth.sessions.revoke_current',
       'core.auth.sessions.get_current',
+      'core.access.authorization_decisions.create',
       'core.auth.product_link_challenges.create',
       'core.auth.product_link_challenges.complete',
       'core.auth.product_link_challenges.exchange',
@@ -93,6 +95,22 @@ describe('api export plan', () => {
           'contracts/apis/core-api/auth-session-consumer.yaml#AuthSessionCurrentGetRequest',
         responseSchemaRef:
           'contracts/apis/core-api/auth-session-consumer.yaml#AuthSessionCurrentGetResponse'
+      },
+      'core.access.authorization_decisions.create': {
+        method: 'POST',
+        path: '/v1/access/authorization-decisions',
+        successStatuses: [201],
+        authRequired: true,
+        idempotency: 'required_idempotency_key',
+        requestSchemaRef:
+          'contracts/apis/core-api/access-decision.yaml#AccessAuthorizationDecisionCreateRequest',
+        responseSchemaRef:
+          'contracts/apis/core-api/access-decision.yaml#AccessAuthorizationDecisionCreateResponse',
+        errorCodes: expect.arrayContaining([
+          'authentication_failed',
+          'policy_unavailable',
+          'idempotency_conflict'
+        ])
       },
       'core.auth.sessions.revoke_current': {
         method: 'DELETE',
@@ -133,6 +151,19 @@ describe('api export plan', () => {
           'verified_at'
         ],
         optionalFields: ['workspace_ref'],
+        sessionEffect: 'none'
+      },
+      'contracts/apis/core-api/access-decision.yaml#AccessAuthorizationDecisionCreateResponse': {
+        ownerBoundary: 'access',
+        kind: 'response',
+        requiredFields: expect.arrayContaining([
+          'decision_ref',
+          'decision',
+          'policy_version',
+          'data_revision',
+          'decision_expires_at',
+          'obligations'
+        ]),
         sessionEffect: 'none'
       },
       'contracts/apis/money-api/referral-reward.yaml#ReferralRewardStatusGetResponse': {
@@ -305,6 +336,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    accessDecision: parseAccessDecisionContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'access-decision.yaml'
+        ),
+        'utf8'
+      )
+    ),
     productLinkHandoff: parseProductLinkHandoffContract(
       readFileSync(
         join(
@@ -342,6 +385,19 @@ function loadCommittedContracts(): ApiContracts {
       )
     ),
     schemaBundles: [
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'access-decision.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/access-decision.yaml'
+      ),
       parseApiSchemaBundleContract(
         readFileSync(
           join(

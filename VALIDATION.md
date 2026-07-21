@@ -19,6 +19,7 @@ agent-facing 문서에는 raw package command를 실행 권한처럼 적지 않�
 - route metadata source: `contracts/route-contract.yaml`와 `contracts/apis/catalog.yaml`
 - core auth/session route source: `contracts/apis/core-api/auth-session.yaml`
 - sensitive-action authorization source: `contracts/apis/core-api/sensitive-action-authorization.yaml`
+- Core access-decision source: `contracts/apis/core-api/access-decision.yaml`
 - standard error source: `contracts/error-envelope.yaml`
 - webhook source: `contracts/webhook-contract.yaml`
 - SDK handoff source: `contracts/sdk-generation-input.yaml`
@@ -50,6 +51,7 @@ agent-facing 문서에는 raw package command를 실행 권한처럼 적지 않�
 - SDK generation input이 generated SDK source나 final authorization decision을 소유하지 않는지 확인한다.
 - schema model export가 required field와 optional field를 분리하고 product-link의 선택적 `workspace_ref`를 보존하는지 확인한다.
 - sensitive-action authorization이 opaque receipt, exact binding, issuer expiry/revocation, audience durable single-use 소비를 유지하고 live route나 제품 resource 관계 검증을 주장하지 않는지 확인한다.
+- access-decision이 current-session을 identity-only로 유지하고, exact product/action/resource/scope binding, deny 기본값, policy/data revision, expiry, obligations와 non-bearer decision ref를 잃지 않는지 확인한다.
 - export plan이 generated artifact를 쓰거나 schema publish를 주장하지 않는지 확인한다.
 - package export map과 `files` whitelist가 README의 package surface 설명과 어긋나지 않는지 확인한다.
 - tarball을 빈 Node 소비자에 설치했을 때 root와 공개 subpath가 Bun 전역이나 저장소 source layout에 기대지 않는지 확인한다.

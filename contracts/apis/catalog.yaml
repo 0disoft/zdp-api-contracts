@@ -165,6 +165,35 @@ routes:
       - session_expired
       - session_compromised
       - account_restricted
+  - operation_id: core.access.authorization_decisions.create
+    service_id: core-api
+    resource: authorization_decision
+    action: create
+    method: POST
+    path: /v1/access/authorization-decisions
+    success_statuses:
+      - 201
+    request_schema_ref: contracts/apis/core-api/access-decision.yaml#AccessAuthorizationDecisionCreateRequest
+    response_schema_ref: contracts/apis/core-api/access-decision.yaml#AccessAuthorizationDecisionCreateResponse
+    auth_required: true
+    permission_check: core.access.authorization_decision.evaluate_authenticated
+    audit_event: core.access.authorization_decision.recorded
+    idempotency: required_idempotency_key
+    owner_boundary: access
+    tenant_boundary: core_resolved_scope
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - session_revoked
+      - session_expired
+      - account_restricted
+      - policy_unavailable
+      - rate_limited
+      - idempotency_conflict
   - operation_id: core.auth.product_link_challenges.create
     service_id: core-api
     resource: product_link_challenge

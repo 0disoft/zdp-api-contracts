@@ -1,5 +1,16 @@
 # CHANGELOG.md
 
+## 0.14.0
+
+### Added
+
+- verified current session과 정확한 product/action/resource/scope를 묶어 allow/deny, reason, policy/data revision, expiry, obligations와 non-bearer `decision_ref`를 반환하는 Core access-decision 계약을 추가했다.
+- access-decision route와 schema bundle을 API catalog, SDK generation input, typed parser·validator·export plan에 연결했다.
+
+### Changed
+
+- current-session은 identity-only 응답으로 유지하고 consent receipt, client-supplied role·tenant 또는 `decision_ref`를 최종 authorization으로 재해석하지 못하도록 계약을 닫았다.
+
 ## 0.13.1
 
 ### Changed

@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse } from 'yaml';
 import type {
+  AccessDecisionContract,
   ApiCatalogContract,
   ApiContracts,
   ApiRouteDefinition,
@@ -91,6 +92,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     apiCatalog,
     calculatorCatalog,
     calculatorConformance,
+    accessDecision,
     productLinkHandoff,
     sensitiveActionAuthorization
   ] =
@@ -139,6 +141,12 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
       ),
       loadContract(
         contractsRoot,
+        'access-decision',
+        join('apis', 'core-api', 'access-decision.yaml'),
+        parseAccessDecisionContract
+      ),
+      loadContract(
+        contractsRoot,
         'product-link-handoff',
         join('apis', 'core-api', 'product-link.yaml'),
         parseProductLinkHandoffContract
@@ -159,6 +167,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     apiCatalog,
     calculatorCatalog,
     calculatorConformance,
+    accessDecision,
     productLinkHandoff,
     sensitiveActionAuthorization
   ] as const;
@@ -176,6 +185,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
   const loadedCalculatorConformance = requireLoadedContract(
     calculatorConformance
   );
+  const loadedAccessDecision = requireLoadedContract(accessDecision);
   const loadedProductLinkHandoff = requireLoadedContract(productLinkHandoff);
   const loadedSensitiveActionAuthorization = requireLoadedContract(
     sensitiveActionAuthorization
@@ -204,6 +214,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     schemaBundles: schemaBundleResults.map(
       (result) => requireLoadedContract(result).value
     ),
+    accessDecision: loadedAccessDecision.value,
     productLinkHandoff: loadedProductLinkHandoff.value,
     sensitiveActionAuthorization: loadedSensitiveActionAuthorization.value,
     calculatorCatalog: loadedCalculatorCatalog.value,
@@ -347,6 +358,89 @@ function parseSensitiveActionAuthorizationTransition(
     from: requiredString(transition, 'from', context),
     event: requiredString(transition, 'event', context),
     to: requiredString(transition, 'to', context)
+  };
+}
+
+export function parseAccessDecisionContract(
+  source: string
+): AccessDecisionContract {
+  const file = 'contracts/apis/core-api/access-decision.yaml';
+  const data = parseYamlObject(source, file);
+  assertOnlyKeys(data, ['access_decision', 'schema_bundle'], file);
+  const contract = requiredObject(data, 'access_decision', file);
+  const context = `${file}#access_decision`;
+  assertOnlyKeys(
+    contract,
+    [
+      'schema_version',
+      'status',
+      'owner_boundary',
+      'operation_id',
+      'route_path',
+      'decision_values',
+      'required_request_bindings',
+      'required_response_bindings',
+      'trusted_authority_sources',
+      'decision_binding',
+      'denial_policy',
+      'reason_code_policy',
+      'evidence_ref_policy',
+      'expiry_policy',
+      'obligations_policy',
+      'idempotency_policy',
+      'consumer_mapping_policy',
+      'forbidden_request_authority_fields',
+      'forbidden_consumer_uses',
+      'forbidden_values'
+    ],
+    context
+  );
+
+  return {
+    schemaVersion: requiredNumber(contract, 'schema_version', context),
+    status: requiredString(contract, 'status', context),
+    ownerBoundary: requiredString(contract, 'owner_boundary', context),
+    operationId: requiredString(contract, 'operation_id', context),
+    routePath: requiredString(contract, 'route_path', context),
+    decisionValues: requiredStringList(contract, 'decision_values', context),
+    requiredRequestBindings: requiredStringList(
+      contract,
+      'required_request_bindings',
+      context
+    ),
+    requiredResponseBindings: requiredStringList(
+      contract,
+      'required_response_bindings',
+      context
+    ),
+    trustedAuthoritySources: requiredStringList(
+      contract,
+      'trusted_authority_sources',
+      context
+    ),
+    decisionBinding: requiredString(contract, 'decision_binding', context),
+    denialPolicy: requiredString(contract, 'denial_policy', context),
+    reasonCodePolicy: requiredString(contract, 'reason_code_policy', context),
+    evidenceRefPolicy: requiredString(contract, 'evidence_ref_policy', context),
+    expiryPolicy: requiredString(contract, 'expiry_policy', context),
+    obligationsPolicy: requiredString(contract, 'obligations_policy', context),
+    idempotencyPolicy: requiredString(contract, 'idempotency_policy', context),
+    consumerMappingPolicy: requiredString(
+      contract,
+      'consumer_mapping_policy',
+      context
+    ),
+    forbiddenRequestAuthorityFields: requiredStringList(
+      contract,
+      'forbidden_request_authority_fields',
+      context
+    ),
+    forbiddenConsumerUses: requiredStringList(
+      contract,
+      'forbidden_consumer_uses',
+      context
+    ),
+    forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
   };
 }
 

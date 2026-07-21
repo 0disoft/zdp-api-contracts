@@ -6,6 +6,7 @@ sdk_generation_input:
     - contracts/webhook-contract.yaml
     - contracts/sdk-generation-input.yaml
     - contracts/apis/catalog.yaml
+    - contracts/apis/core-api/access-decision.yaml
     - contracts/apis/core-api/auth-session-consumer.yaml
     - contracts/apis/core-api/auth-session.yaml
     - contracts/apis/core-api/product-link.yaml

@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import {
   ApiContractLoadError,
   loadApiContracts,
+  parseAccessDecisionContract,
   parseApiCatalogContract,
   parseApiSchemaBundleContract,
   parseCalculatorCatalogContract,
@@ -30,6 +31,139 @@ describe('api contract checker', () => {
 
     expect(result.diagnostics).toEqual([]);
     expect(result.ok).toBe(true);
+  });
+
+  it('keeps Core access decisions exact, fail-closed, and separate from current-session identity', () => {
+    const contracts = loadCommittedContracts();
+    const route = contracts.apiCatalog.routes.find(
+      (candidate) =>
+        candidate.operationId === 'core.access.authorization_decisions.create'
+    );
+    const accessBundle = schemaBundleByFile(
+      contracts,
+      'contracts/apis/core-api/access-decision.yaml'
+    );
+    const requestSchema = accessBundle.schemas.find(
+      (schema) => schema.id === 'AccessAuthorizationDecisionCreateRequest'
+    );
+    const responseSchema = accessBundle.schemas.find(
+      (schema) => schema.id === 'AccessAuthorizationDecisionCreateResponse'
+    );
+    const currentSessionResponse = schemaBundleByFile(
+      contracts,
+      'contracts/apis/core-api/auth-session-consumer.yaml'
+    ).schemas.find((schema) => schema.id === 'AuthSessionCurrentGetResponse');
+
+    expect(contracts.accessDecision).toMatchObject({
+      status: 'contract-only',
+      ownerBoundary: 'access',
+      operationId: 'core.access.authorization_decisions.create',
+      routePath: '/v1/access/authorization-decisions',
+      decisionValues: ['allow', 'deny'],
+      denialPolicy:
+        'explicit_deny_no_match_missing_stale_unknown_or_dependency_failure_never_allows',
+      reasonCodePolicy:
+        'stable_safe_non_enumerating_code_without_raw_policy_or_relationship_details',
+      evidenceRefPolicy: 'opaque_non_secret_non_bearer_audit_reference'
+    });
+    expect(route).toMatchObject({
+      method: 'POST',
+      successStatuses: [201],
+      authRequired: true,
+      ownerBoundary: 'access',
+      tenantBoundary: 'core_resolved_scope',
+      idempotency: 'required_idempotency_key',
+      sessionEffect: 'none'
+    });
+    expect(requestSchema?.requiredFields).toEqual(
+      contracts.accessDecision.requiredRequestBindings
+    );
+    expect(responseSchema?.requiredFields).toEqual(
+      contracts.accessDecision.requiredResponseBindings
+    );
+    expect(currentSessionResponse?.requiredFields).toEqual([
+      'session_ref',
+      'actor_ref',
+      'tenant_ref',
+      'expires_at'
+    ]);
+  });
+
+  it('rejects request-supplied authority and access fields in current-session identity', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: contracts.schemaBundles.map((bundle) => {
+        if (bundle.file === 'contracts/apis/core-api/access-decision.yaml') {
+          return {
+            ...bundle,
+            schemas: bundle.schemas.map((schema) =>
+              schema.id === 'AccessAuthorizationDecisionCreateRequest'
+                ? { ...schema, optionalFields: ['subject_ref'] }
+                : schema
+            )
+          };
+        }
+        if (
+          bundle.file ===
+          'contracts/apis/core-api/auth-session-consumer.yaml'
+        ) {
+          return {
+            ...bundle,
+            schemas: bundle.schemas.map((schema) =>
+              schema.id === 'AuthSessionCurrentGetResponse'
+                ? {
+                    ...schema,
+                    requiredFields: [...schema.requiredFields, 'decision_ref']
+                  }
+                : schema
+            )
+          };
+        }
+        return bundle;
+      })
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        'API_ACCESS_DECISION_REQUEST_TRUSTS_AUTHORITY_FIELD',
+        'API_ACCESS_DECISION_CURRENT_SESSION_CONFLATION'
+      ])
+    );
+  });
+
+  it('rejects access-decision contracts that weaken deny or evidence semantics', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      accessDecision: {
+        ...contracts.accessDecision,
+        decisionValues: ['allow', 'deny', 'unknown'],
+        denialPolicy: 'dependency_failure_allows',
+        evidenceRefPolicy: 'reusable_bearer_token',
+        reasonCodePolicy: 'raw_policy_dump'
+      },
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: contracts.apiCatalog.routes.map((route) =>
+          route.operationId === 'core.access.authorization_decisions.create'
+            ? { ...route, errorCodes: [...route.errorCodes, 'access_denied'] }
+            : route
+        )
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        'API_ACCESS_DECISION_DENIAL_POLICY_INVALID',
+        'API_ACCESS_DECISION_EVIDENCE_POLICY_INVALID',
+        'API_ACCESS_DECISION_REASON_CODE_POLICY_INVALID',
+        'API_ACCESS_DECISION_VALUES_INVALID',
+        'API_ACCESS_DECISION_DENY_AS_TRANSPORT_ERROR'
+      ])
+    );
   });
 
   it('rejects unknown fields at API catalog object boundaries', () => {
@@ -360,6 +494,7 @@ describe('api contract checker', () => {
       'core.auth.sessions.refresh',
       'core.auth.sessions.revoke_current',
       'core.auth.sessions.get_current',
+      'core.access.authorization_decisions.create',
       'core.auth.product_link_challenges.create',
       'core.auth.product_link_challenges.complete',
       'core.auth.product_link_challenges.exchange',
@@ -848,6 +983,7 @@ describe('api contract checker', () => {
     const contracts = await loadApiContracts(process.cwd());
 
     expect(contracts.schemaBundles.map((bundle) => bundle.file)).toEqual([
+      'contracts/apis/core-api/access-decision.yaml',
       'contracts/apis/core-api/auth-session-consumer.yaml',
       'contracts/apis/core-api/auth-session.yaml',
       'contracts/apis/core-api/product-link.yaml',
@@ -855,24 +991,48 @@ describe('api contract checker', () => {
       'contracts/apis/core-api/sensitive-action-authorization.yaml',
       'contracts/apis/money-api/referral-reward.yaml'
     ]);
-    expect(contracts.schemaBundles[0]?.schemas.map((schema) => schema.id)).toContain(
-      'AuthSessionCurrentGetRequest'
-    );
-    expect(contracts.schemaBundles[1]?.schemas.map((schema) => schema.id)).toContain(
-      'AuthSessionCreateRequest'
-    );
-    expect(contracts.schemaBundles[2]?.schemas.map((schema) => schema.id)).toContain(
-      'ProductLinkChallengeExchangeResponse'
-    );
-    expect(contracts.schemaBundles[3]?.schemas.map((schema) => schema.id)).toContain(
-      'ReferralUseCreateRequest'
-    );
-    expect(contracts.schemaBundles[4]?.schemas.map((schema) => schema.id)).toContain(
-      'SensitiveActionAuthorizationReceiptVerifyResponse'
-    );
-    expect(contracts.schemaBundles[5]?.schemas.map((schema) => schema.id)).toContain(
-      'ReferralRewardStatusGetResponse'
-    );
+    expect(
+      schemaBundleByFile(
+        contracts,
+        'contracts/apis/core-api/access-decision.yaml'
+      ).schemas.map((schema) => schema.id)
+    ).toContain('AccessAuthorizationDecisionCreateResponse');
+    expect(
+      schemaBundleByFile(
+        contracts,
+        'contracts/apis/core-api/auth-session-consumer.yaml'
+      ).schemas.map((schema) => schema.id)
+    ).toContain('AuthSessionCurrentGetRequest');
+    expect(
+      schemaBundleByFile(
+        contracts,
+        'contracts/apis/core-api/auth-session.yaml'
+      ).schemas.map((schema) => schema.id)
+    ).toContain('AuthSessionCreateRequest');
+    expect(
+      schemaBundleByFile(
+        contracts,
+        'contracts/apis/core-api/product-link.yaml'
+      ).schemas.map((schema) => schema.id)
+    ).toContain('ProductLinkChallengeExchangeResponse');
+    expect(
+      schemaBundleByFile(
+        contracts,
+        'contracts/apis/core-api/referral.yaml'
+      ).schemas.map((schema) => schema.id)
+    ).toContain('ReferralUseCreateRequest');
+    expect(
+      schemaBundleByFile(
+        contracts,
+        'contracts/apis/core-api/sensitive-action-authorization.yaml'
+      ).schemas.map((schema) => schema.id)
+    ).toContain('SensitiveActionAuthorizationReceiptVerifyResponse');
+    expect(
+      schemaBundleByFile(
+        contracts,
+        'contracts/apis/money-api/referral-reward.yaml'
+      ).schemas.map((schema) => schema.id)
+    ).toContain('ReferralRewardStatusGetResponse');
   });
 
   it('fails when a catalog route references a missing schema id', () => {
@@ -1176,6 +1336,19 @@ function schemaBundleAt(
   return schemaBundle;
 }
 
+function schemaBundleByFile(
+  contracts: ApiContracts,
+  file: string
+): ApiSchemaBundleContract {
+  const schemaBundle = contracts.schemaBundles.find(
+    (candidate) => candidate.file === file
+  );
+  if (!schemaBundle) {
+    throw new Error(`Expected committed schema bundle \`${file}\`.`);
+  }
+  return schemaBundle;
+}
+
 function calculatorAt(
   contracts: ApiContracts,
   index: number
@@ -1207,6 +1380,18 @@ function loadCommittedContracts(): ApiContracts {
     apiCatalog: parseApiCatalogContract(
       readFileSync(
         join(process.cwd(), 'contracts', 'apis', 'catalog.yaml'),
+        'utf8'
+      )
+    ),
+    accessDecision: parseAccessDecisionContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'access-decision.yaml'
+        ),
         'utf8'
       )
     ),
@@ -1306,6 +1491,19 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/money-api/referral-reward.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'access-decision.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/access-decision.yaml'
       )
     ],
     calculatorCatalog: parseCalculatorCatalogContract(

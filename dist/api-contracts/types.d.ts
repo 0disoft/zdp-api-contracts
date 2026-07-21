@@ -5,6 +5,7 @@ export interface ApiContracts {
     readonly sdkGenerationInput: SdkGenerationInputContract;
     readonly apiCatalog: ApiCatalogContract;
     readonly schemaBundles: readonly ApiSchemaBundleContract[];
+    readonly accessDecision: AccessDecisionContract;
     readonly productLinkHandoff: ProductLinkHandoffContract;
     readonly sensitiveActionAuthorization: SensitiveActionAuthorizationContract;
     readonly calculatorCatalog: CalculatorCatalogContract;
@@ -41,6 +42,28 @@ export interface SensitiveActionAuthorizationTransition {
     readonly from: string;
     readonly event: string;
     readonly to: string;
+}
+export interface AccessDecisionContract {
+    readonly schemaVersion: number;
+    readonly status: string;
+    readonly ownerBoundary: string;
+    readonly operationId: string;
+    readonly routePath: string;
+    readonly decisionValues: readonly string[];
+    readonly requiredRequestBindings: readonly string[];
+    readonly requiredResponseBindings: readonly string[];
+    readonly trustedAuthoritySources: readonly string[];
+    readonly decisionBinding: string;
+    readonly denialPolicy: string;
+    readonly reasonCodePolicy: string;
+    readonly evidenceRefPolicy: string;
+    readonly expiryPolicy: string;
+    readonly obligationsPolicy: string;
+    readonly idempotencyPolicy: string;
+    readonly consumerMappingPolicy: string;
+    readonly forbiddenRequestAuthorityFields: readonly string[];
+    readonly forbiddenConsumerUses: readonly string[];
+    readonly forbiddenValues: readonly string[];
 }
 export interface ProductLinkHandoffContract {
     readonly schemaVersion: number;

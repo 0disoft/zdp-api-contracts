@@ -14,6 +14,7 @@
 - export dry-run plan for OpenAPI, SDK, webhook schema, and docs
 - typed fetch client handoff metadata
 - authorization, audit, idempotency, metering hook declaration
+- Core 접근 판정의 request/response binding, deny 기본값, expiry와 비-bearer evidence 의미
 - 국가 공통 계산기의 정의, 표준 입력·결과 metadata, 안정 오류 코드와 계약·엔진 버전 handoff
 
 소유하지 않는다:
@@ -25,6 +26,7 @@
 - provider-specific API client
 - refresh token storage
 - final authorization decision
+- access policy evaluation 또는 decision persistence 구현
 - 실제 public endpoint 운영
 - generated OpenAPI, generated SDK, or published docs artifacts
 - 계산 공식과 실행 엔진

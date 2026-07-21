@@ -25,7 +25,7 @@ export class ApiContractLoadError extends Error {
  */
 export async function loadApiContracts(root = process.cwd()) {
     const contractsRoot = join(root, 'contracts');
-    const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog, calculatorCatalog, calculatorConformance, productLinkHandoff, sensitiveActionAuthorization] = await Promise.all([
+    const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog, calculatorCatalog, calculatorConformance, accessDecision, productLinkHandoff, sensitiveActionAuthorization] = await Promise.all([
         loadContract(contractsRoot, 'route', 'route-contract.yaml', parseRouteContract),
         loadContract(contractsRoot, 'error-envelope', 'error-envelope.yaml', parseErrorEnvelopeContract),
         loadContract(contractsRoot, 'webhook', 'webhook-contract.yaml', parseWebhookContract),
@@ -33,6 +33,7 @@ export async function loadApiContracts(root = process.cwd()) {
         loadContract(contractsRoot, 'api-catalog', join('apis', 'catalog.yaml'), parseApiCatalogContract),
         loadContract(contractsRoot, 'calculator-catalog', join('calculators', 'catalog.yaml'), parseCalculatorCatalogContract),
         loadContract(contractsRoot, 'calculator-conformance', join('calculators', 'conformance.yaml'), parseCalculatorConformanceContract),
+        loadContract(contractsRoot, 'access-decision', join('apis', 'core-api', 'access-decision.yaml'), parseAccessDecisionContract),
         loadContract(contractsRoot, 'product-link-handoff', join('apis', 'core-api', 'product-link.yaml'), parseProductLinkHandoffContract),
         loadContract(contractsRoot, 'sensitive-action-authorization', join('apis', 'core-api', 'sensitive-action-authorization.yaml'), parseSensitiveActionAuthorizationContract)
     ]);
@@ -44,6 +45,7 @@ export async function loadApiContracts(root = process.cwd()) {
         apiCatalog,
         calculatorCatalog,
         calculatorConformance,
+        accessDecision,
         productLinkHandoff,
         sensitiveActionAuthorization
     ];
@@ -58,6 +60,7 @@ export async function loadApiContracts(root = process.cwd()) {
     const loadedApiCatalog = requireLoadedContract(apiCatalog);
     const loadedCalculatorCatalog = requireLoadedContract(calculatorCatalog);
     const loadedCalculatorConformance = requireLoadedContract(calculatorConformance);
+    const loadedAccessDecision = requireLoadedContract(accessDecision);
     const loadedProductLinkHandoff = requireLoadedContract(productLinkHandoff);
     const loadedSensitiveActionAuthorization = requireLoadedContract(sensitiveActionAuthorization);
     const schemaBundleResults = await Promise.all(schemaBundleFilesFromCatalog(loadedApiCatalog.value).map((file) => loadContract(contractsRoot, `schema-bundle:${file}`, schemaBundleRelativeFile(file), (source) => parseApiSchemaBundleContract(source, file))));
@@ -72,6 +75,7 @@ export async function loadApiContracts(root = process.cwd()) {
         sdkGenerationInput: loadedSdkGenerationInput.value,
         apiCatalog: loadedApiCatalog.value,
         schemaBundles: schemaBundleResults.map((result) => requireLoadedContract(result).value),
+        accessDecision: loadedAccessDecision.value,
         productLinkHandoff: loadedProductLinkHandoff.value,
         sensitiveActionAuthorization: loadedSensitiveActionAuthorization.value,
         calculatorCatalog: loadedCalculatorCatalog.value,
@@ -144,6 +148,57 @@ function parseSensitiveActionAuthorizationTransition(transition, context) {
         from: requiredString(transition, 'from', context),
         event: requiredString(transition, 'event', context),
         to: requiredString(transition, 'to', context)
+    };
+}
+export function parseAccessDecisionContract(source) {
+    const file = 'contracts/apis/core-api/access-decision.yaml';
+    const data = parseYamlObject(source, file);
+    assertOnlyKeys(data, ['access_decision', 'schema_bundle'], file);
+    const contract = requiredObject(data, 'access_decision', file);
+    const context = `${file}#access_decision`;
+    assertOnlyKeys(contract, [
+        'schema_version',
+        'status',
+        'owner_boundary',
+        'operation_id',
+        'route_path',
+        'decision_values',
+        'required_request_bindings',
+        'required_response_bindings',
+        'trusted_authority_sources',
+        'decision_binding',
+        'denial_policy',
+        'reason_code_policy',
+        'evidence_ref_policy',
+        'expiry_policy',
+        'obligations_policy',
+        'idempotency_policy',
+        'consumer_mapping_policy',
+        'forbidden_request_authority_fields',
+        'forbidden_consumer_uses',
+        'forbidden_values'
+    ], context);
+    return {
+        schemaVersion: requiredNumber(contract, 'schema_version', context),
+        status: requiredString(contract, 'status', context),
+        ownerBoundary: requiredString(contract, 'owner_boundary', context),
+        operationId: requiredString(contract, 'operation_id', context),
+        routePath: requiredString(contract, 'route_path', context),
+        decisionValues: requiredStringList(contract, 'decision_values', context),
+        requiredRequestBindings: requiredStringList(contract, 'required_request_bindings', context),
+        requiredResponseBindings: requiredStringList(contract, 'required_response_bindings', context),
+        trustedAuthoritySources: requiredStringList(contract, 'trusted_authority_sources', context),
+        decisionBinding: requiredString(contract, 'decision_binding', context),
+        denialPolicy: requiredString(contract, 'denial_policy', context),
+        reasonCodePolicy: requiredString(contract, 'reason_code_policy', context),
+        evidenceRefPolicy: requiredString(contract, 'evidence_ref_policy', context),
+        expiryPolicy: requiredString(contract, 'expiry_policy', context),
+        obligationsPolicy: requiredString(contract, 'obligations_policy', context),
+        idempotencyPolicy: requiredString(contract, 'idempotency_policy', context),
+        consumerMappingPolicy: requiredString(contract, 'consumer_mapping_policy', context),
+        forbiddenRequestAuthorityFields: requiredStringList(contract, 'forbidden_request_authority_fields', context),
+        forbiddenConsumerUses: requiredStringList(contract, 'forbidden_consumer_uses', context),
+        forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
     };
 }
 export function parseProductLinkHandoffContract(source) {

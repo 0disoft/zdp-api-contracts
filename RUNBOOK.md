@@ -17,6 +17,7 @@ This repository owns API contract sources only. It must not become the live API 
 - Keep route `method` and `success_statuses` inside the allowlists declared by `contracts/route-contract.yaml`.
 - Keep auth/session routes carrying `owner_boundary`, `tenant_boundary`, `request_id_required`, `trace_id_required`, `session_effect`, and `credential_policy` before web app auth routes are promoted.
 - Keep `contracts/apis/core-api/sensitive-action-authorization.yaml` contract-only and unreferenced by the route catalog until Core issue/verify lifecycle, audience domain guards, durable single-use consumption, and product promotion review are implemented. Never reinterpret recovery intake or product-link receipts as sensitive-action authority.
+- Keep `contracts/apis/core-api/access-decision.yaml` contract-only until Core can verify the current session, resolve current relationships, pin policy and data revisions, append the decision atomically, replay idempotently, and prove denial behavior. Never add access fields to the current-session response or reinterpret a consent receipt as final authorization.
 - Add a new SDK language to `allowed_generation_targets` before enabling it in `generation_targets`.
 - Do not run raw package, generator, server, OpenAPI, AsyncAPI, SDK, publish, or provider commands as agent verification unless the root command contract exposes them as eligible mustflow intents.
 

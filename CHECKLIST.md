@@ -19,6 +19,7 @@
 - mutation route는 idempotency handoff가 빠지지 않아야 한다.
 - session 관련 route는 `session_effect`를 명시한다.
 - credential 관련 route는 raw secret이나 provider payload를 싣지 않는다.
+- access-decision route는 current-session identity와 final authorization을 분리하고 request-supplied subject/session/tenant/role/decision을 권한 근거로 받지 않는다.
 
 ## Error Envelope
 

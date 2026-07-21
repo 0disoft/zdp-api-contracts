@@ -1,0 +1,135 @@
+access_decision:
+  schema_version: 1
+  status: contract-only
+  owner_boundary: access
+  operation_id: core.access.authorization_decisions.create
+  route_path: /v1/access/authorization-decisions
+  decision_values:
+    - allow
+    - deny
+  required_request_bindings:
+    - product_ref
+    - action
+    - resource_type
+    - resource_ref
+    - requested_scope_type
+    - requested_scope_ref
+  required_response_bindings:
+    - decision_ref
+    - decision
+    - reason_code
+    - policy_version
+    - data_revision
+    - subject_ref
+    - session_ref
+    - product_ref
+    - action
+    - resource_type
+    - resource_ref
+    - scope_type
+    - scope_ref
+    - decided_at
+    - decision_expires_at
+    - session_expires_at
+    - obligations
+  trusted_authority_sources:
+    - subject_and_session_from_verified_current_session
+    - scope_from_current_core_relationships
+    - policy_and_data_revision_from_core_access
+    - product_and_action_from_closed_core_catalog
+    - consent_is_input_fact_not_final_authorization
+  decision_binding: exact_subject_session_product_action_resource_scope_policy_version_data_revision_and_normalized_request
+  denial_policy: explicit_deny_no_match_missing_stale_unknown_or_dependency_failure_never_allows
+  reason_code_policy: stable_safe_non_enumerating_code_without_raw_policy_or_relationship_details
+  evidence_ref_policy: opaque_non_secret_non_bearer_audit_reference
+  expiry_policy: decision_expiry_must_not_exceed_session_policy_or_authority_fact_expiry
+  obligations_policy: normalized_bounded_identifiers_enforced_at_the_product_effect_boundary
+  idempotency_policy: same_key_same_normalized_binding_replays_different_binding_conflicts
+  consumer_mapping_policy: only_allow_maps_to_platform_access_granted_and_every_other_result_fails_closed
+  forbidden_request_authority_fields:
+    - subject_ref
+    - session_ref
+    - tenant_ref
+    - role
+    - permission
+    - decision
+    - decision_ref
+    - policy_version
+    - data_revision
+    - obligations
+    - consent_receipt_ref
+  forbidden_consumer_uses:
+    - decision_ref_as_bearer_credential
+    - client_or_sdk_final_authorization
+    - reuse_for_different_product_action_resource_or_scope
+    - consent_receipt_as_authorization_decision
+    - current_session_identity_as_product_authorization
+  forbidden_values:
+    - password
+    - authorization_header
+    - cookie_header
+    - access_token
+    - refresh_token_plaintext
+    - provider_secret
+    - raw_provider_error
+    - raw_customer_payload
+    - raw_policy_document
+    - raw_relationship_payload
+
+schema_bundle:
+  service_id: core-api
+  owner_boundary: access
+  status: contract-only
+  purpose: create a server-evaluated authorization decision bound to the verified current session and exact product action resource and scope without moving final authorization into a product or SDK
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+      - idempotency_key
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - raw_policy_document
+      - raw_relationship_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: AccessAuthorizationDecisionCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - product_ref
+        - action
+        - resource_type
+        - resource_ref
+        - requested_scope_type
+        - requested_scope_ref
+    - id: AccessAuthorizationDecisionCreateResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - decision_ref
+        - decision
+        - reason_code
+        - policy_version
+        - data_revision
+        - subject_ref
+        - session_ref
+        - product_ref
+        - action
+        - resource_type
+        - resource_ref
+        - scope_type
+        - scope_ref
+        - decided_at
+        - decision_expires_at
+        - session_expires_at
+        - obligations

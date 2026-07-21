@@ -15,7 +15,8 @@
 | calculator contract | `contracts/calculator-contract.md` |
 | 데스크톱 제품 계정 연결 | `contracts/desktop-product-link.md` |
 | 민감 행위 authorization receipt | `contracts/sensitive-action-authorization.md` |
+| Core 접근 판정 | `contracts/access-decision.md` |
 
 ## Boundary
 
-이 저장소는 API 계약 skeleton, route metadata, error envelope, webhook handoff, SDK generation input, export plan, 데스크톱 제품 계정 연결과 교차 제품 계산기 정의 계약을 소유한다. live API endpoint, backend handler, generated SDK source, 계산 함수, product screen payload는 소유하지 않는다.
+이 저장소는 API 계약 skeleton, route metadata, error envelope, webhook handoff, SDK generation input, export plan, Core 접근 판정, 데스크톱 제품 계정 연결과 교차 제품 계산기 정의 계약을 소유한다. live API endpoint, backend handler, 최종 authorization 구현, generated SDK source, 계산 함수, product screen payload는 소유하지 않는다.
