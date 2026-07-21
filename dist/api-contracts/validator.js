@@ -1,3 +1,4 @@
+import { CANONICAL_FORBIDDEN_VALUES } from './forbidden-values.js';
 const REQUIRED_CALCULATOR_DEFINITION_FIELDS = [
     'id',
     'lifecycle_status',
@@ -102,16 +103,6 @@ const REQUIRED_ROUTE_FIELDS = [
 const ALLOWED_ROUTE_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 const ALLOWED_SUCCESS_STATUSES = [200, 201, 202, 204];
 const NO_CONTENT_SUCCESS_STATUSES = [204];
-const CANONICAL_FORBIDDEN_VALUES = [
-    'raw_customer_payload',
-    'raw_provider_error',
-    'provider_secret',
-    'authorization_header',
-    'cookie_header',
-    'refresh_token_plaintext',
-    'stack_trace',
-    'screen_component_payload'
-];
 const PRODUCT_LINK_FILE = 'contracts/apis/core-api/product-link.yaml';
 const PRODUCT_LINK_STATES = [
     'pending',

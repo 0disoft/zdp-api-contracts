@@ -10,8 +10,10 @@ import {
   parseProductLinkHandoffContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
+  parseSensitiveActionAuthorizationContract,
   parseWebhookContract
 } from '../src/api-contracts/parser';
+import { CANONICAL_FORBIDDEN_VALUES } from '../src/api-contracts/forbidden-values';
 import type { ApiContracts } from '../src/api-contracts/types';
 import { buildApiExportPlan } from '../src/api-export-plan/plan';
 
@@ -183,9 +185,12 @@ describe('api export plan', () => {
       plan.outputs.find((output) => output.kind === 'openapi')
         ?.sourceContracts
     ).toContain('contracts/apis/core-api/auth-session.yaml');
-    expect(
-      plan.outputs.find((output) => output.kind === 'docs_contract')?.forbiddenValues
-    ).toContain('authorization_header');
+    const docsContract = plan.outputs.find(
+      (output) => output.kind === 'docs_contract'
+    );
+    for (const forbiddenValue of CANONICAL_FORBIDDEN_VALUES) {
+      expect(docsContract?.forbiddenValues).toContain(forbiddenValue);
+    }
     expect(
       plan.outputs.find((output) => output.kind === 'docs_contract')
         ?.requiredMetadata
@@ -312,6 +317,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    sensitiveActionAuthorization: parseSensitiveActionAuthorizationContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'sensitive-action-authorization.yaml'
+        ),
+        'utf8'
+      )
+    ),
     calculatorCatalog: parseCalculatorCatalogContract(
       readFileSync(
         join(process.cwd(), 'contracts', 'calculators', 'catalog.yaml'),
@@ -370,6 +387,19 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/core-api/referral.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'sensitive-action-authorization.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/sensitive-action-authorization.yaml'
       ),
       parseApiSchemaBundleContract(
         readFileSync(

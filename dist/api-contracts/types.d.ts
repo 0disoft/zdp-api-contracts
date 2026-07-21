@@ -6,8 +6,41 @@ export interface ApiContracts {
     readonly apiCatalog: ApiCatalogContract;
     readonly schemaBundles: readonly ApiSchemaBundleContract[];
     readonly productLinkHandoff: ProductLinkHandoffContract;
+    readonly sensitiveActionAuthorization: SensitiveActionAuthorizationContract;
     readonly calculatorCatalog: CalculatorCatalogContract;
     readonly calculatorConformance: CalculatorConformanceContract;
+}
+export interface SensitiveActionAuthorizationContract {
+    readonly schemaVersion: number;
+    readonly status: string;
+    readonly receiptFormat: string;
+    readonly ownerBoundaries: SensitiveActionAuthorizationOwnerBoundaries;
+    readonly issuerLifecycle: SensitiveActionAuthorizationLifecycle;
+    readonly audienceConsumptionLifecycle: SensitiveActionAuthorizationLifecycle;
+    readonly requiredBindings: readonly string[];
+    readonly requiredAssuranceFields: readonly string[];
+    readonly requiredPlatformDecisionFields: readonly string[];
+    readonly requiredConsumerControls: readonly string[];
+    readonly verificationResultValues: readonly string[];
+    readonly expiryPolicy: string;
+    readonly routeStatus: string;
+    readonly forbiddenClaims: readonly string[];
+    readonly forbiddenValues: readonly string[];
+}
+export interface SensitiveActionAuthorizationOwnerBoundaries {
+    readonly assurance: string;
+    readonly platformDecision: string;
+    readonly audienceDomainGuardAndConsumption: string;
+}
+export interface SensitiveActionAuthorizationLifecycle {
+    readonly states: readonly string[];
+    readonly terminalStates: readonly string[];
+    readonly transitions: readonly SensitiveActionAuthorizationTransition[];
+}
+export interface SensitiveActionAuthorizationTransition {
+    readonly from: string;
+    readonly event: string;
+    readonly to: string;
 }
 export interface ProductLinkHandoffContract {
     readonly schemaVersion: number;

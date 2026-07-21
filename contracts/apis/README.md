@@ -6,4 +6,8 @@
 
 첫 active catalog는 `core-api` auth/session route 계약이다. 이 계약은 실제 로그인 서버 구현이 아니라 `zdp-web-apps`가 auth route를 열기 전에 필요한 session effect, passkey challenge, OAuth callback, credential policy, request/trace propagation 경계를 고정한다.
 
+`core-api/sensitive-action-authorization.yaml`은 route catalog에 연결되지 않은 contract-only schema
+family다. Opaque receipt의 exact binding과 issuer/audience 상태를 고정하지만 issue, completion,
+verify endpoint 또는 제품별 권한 handler를 활성화하지 않는다.
+
 생성된 OpenAPI, SDK source, published docs artifact는 이 디렉터리에 넣지 않는다.

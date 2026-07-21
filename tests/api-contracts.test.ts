@@ -13,6 +13,7 @@ import {
   parseProductLinkHandoffContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
+  parseSensitiveActionAuthorizationContract,
   parseWebhookContract
 } from '../src/api-contracts/parser';
 import { validateApiContracts } from '../src/api-contracts/validator';
@@ -81,6 +82,80 @@ describe('api contract checker', () => {
       'core.auth.product_link_challenges.complete',
       'core.auth.product_link_challenges.exchange'
     ]);
+  });
+
+  it('keeps sensitive-action authorization composite and audience-consumed', () => {
+    const contracts = loadCommittedContracts();
+    const authorization = contracts.sensitiveActionAuthorization;
+    const receiptBundle = contracts.schemaBundles.find(
+      (bundle) =>
+        bundle.file ===
+        'contracts/apis/core-api/sensitive-action-authorization.yaml'
+    );
+    const receipt = receiptBundle?.schemas.find(
+      (schema) => schema.id === 'SensitiveActionAuthorizationReceipt'
+    );
+
+    expect(authorization.status).toBe('contract-only-no-live-route');
+    expect(authorization.receiptFormat).toBe('opaque_reference');
+    expect(authorization.ownerBoundaries).toEqual({
+      assurance: 'identity',
+      platformDecision: 'access',
+      audienceDomainGuardAndConsumption: 'audience_product'
+    });
+    expect(authorization.issuerLifecycle.states).toEqual([
+      'active',
+      'expired',
+      'revoked'
+    ]);
+    expect(authorization.issuerLifecycle.terminalStates).toEqual([
+      'expired',
+      'revoked'
+    ]);
+    expect(authorization.audienceConsumptionLifecycle.transitions).toEqual([
+      {
+        from: 'unused',
+        event: 'domain_transaction_committed',
+        to: 'consumed'
+      }
+    ]);
+    expect(authorization.routeStatus).toBe('no_route_defined');
+    expect(authorization.requiredConsumerControls).toContain(
+      'domain_mutation_receipt_consumption_idempotency_and_audit_one_transaction'
+    );
+    expect(receipt?.requiredFields).toContain('session_generation_ref');
+    expect(receipt?.requiredFields).toContain('decision_revision');
+    expect(
+      contracts.apiCatalog.routes.some((route) =>
+        route.requestSchemaRef?.startsWith(
+          'contracts/apis/core-api/sensitive-action-authorization.yaml#'
+        )
+      )
+    ).toBe(false);
+  });
+
+  it('rejects unknown sensitive-action authorization fields', () => {
+    const source = readFileSync(
+      join(
+        process.cwd(),
+        'contracts',
+        'apis',
+        'core-api',
+        'sensitive-action-authorization.yaml'
+      ),
+      'utf8'
+    );
+
+    expect(() =>
+      parseSensitiveActionAuthorizationContract(
+        source.replace(
+          '  route_status: no_route_defined',
+          '  route_status: no_route_defined\n  route_statuz: no_route_defined'
+        )
+      )
+    ).toThrow(
+      'contracts/apis/core-api/sensitive-action-authorization.yaml#sensitive_action_authorization must not declare unknown field `route_statuz`'
+    );
   });
 
   it('rejects schema fields declared as both required and optional', () => {
@@ -777,6 +852,7 @@ describe('api contract checker', () => {
       'contracts/apis/core-api/auth-session.yaml',
       'contracts/apis/core-api/product-link.yaml',
       'contracts/apis/core-api/referral.yaml',
+      'contracts/apis/core-api/sensitive-action-authorization.yaml',
       'contracts/apis/money-api/referral-reward.yaml'
     ]);
     expect(contracts.schemaBundles[0]?.schemas.map((schema) => schema.id)).toContain(
@@ -792,6 +868,9 @@ describe('api contract checker', () => {
       'ReferralUseCreateRequest'
     );
     expect(contracts.schemaBundles[4]?.schemas.map((schema) => schema.id)).toContain(
+      'SensitiveActionAuthorizationReceiptVerifyResponse'
+    );
+    expect(contracts.schemaBundles[5]?.schemas.map((schema) => schema.id)).toContain(
       'ReferralRewardStatusGetResponse'
     );
   });
@@ -999,7 +1078,7 @@ describe('api contract checker', () => {
 
   it('fails when a non-idempotent route schema requires idempotency metadata', () => {
     const contracts = loadCommittedContracts();
-    const schemaBundle = schemaBundleAt(contracts, 4);
+    const schemaBundle = schemaBundleAt(contracts, 5);
     const result = validateApiContracts({
       ...contracts,
       schemaBundles: contracts.schemaBundles.map((bundle) =>
@@ -1143,6 +1222,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    sensitiveActionAuthorization: parseSensitiveActionAuthorizationContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'sensitive-action-authorization.yaml'
+        ),
+        'utf8'
+      )
+    ),
     schemaBundles: [
       parseApiSchemaBundleContract(
         readFileSync(
@@ -1189,6 +1280,19 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/core-api/referral.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'sensitive-action-authorization.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/sensitive-action-authorization.yaml'
       ),
       parseApiSchemaBundleContract(
         readFileSync(

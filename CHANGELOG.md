@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.13.1
+
+### Changed
+
+- API validator와 export plan이 동일한 canonical forbidden-value 정책을 공유하도록 정본을 통합하고 전체 금지값의 export plan 전파를 회귀 테스트로 고정했다.
+
 ## 0.13.0
 
 ### Changed

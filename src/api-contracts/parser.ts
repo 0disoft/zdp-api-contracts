@@ -21,11 +21,15 @@ import type {
   ProductLinkTransition,
   RouteContract,
   SdkGenerationInputContract,
+  SensitiveActionAuthorizationContract,
+  SensitiveActionAuthorizationLifecycle,
+  SensitiveActionAuthorizationTransition,
   WebhookContract
 } from './types.js';
 
 const REQUIRED_CORE_API_SCHEMA_BUNDLE_FILES = [
-  'contracts/apis/core-api/auth-session.yaml'
+  'contracts/apis/core-api/auth-session.yaml',
+  'contracts/apis/core-api/sensitive-action-authorization.yaml'
 ] as const;
 
 interface ContractLoadFailure {
@@ -87,7 +91,8 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     apiCatalog,
     calculatorCatalog,
     calculatorConformance,
-    productLinkHandoff
+    productLinkHandoff,
+    sensitiveActionAuthorization
   ] =
     await Promise.all([
       loadContract(
@@ -137,6 +142,12 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
         'product-link-handoff',
         join('apis', 'core-api', 'product-link.yaml'),
         parseProductLinkHandoffContract
+      ),
+      loadContract(
+        contractsRoot,
+        'sensitive-action-authorization',
+        join('apis', 'core-api', 'sensitive-action-authorization.yaml'),
+        parseSensitiveActionAuthorizationContract
       )
     ]);
 
@@ -148,7 +159,8 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     apiCatalog,
     calculatorCatalog,
     calculatorConformance,
-    productLinkHandoff
+    productLinkHandoff,
+    sensitiveActionAuthorization
   ] as const;
   const failures = results.filter(isContractLoadFailure);
   if (failures.length > 0) {
@@ -165,6 +177,9 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     calculatorConformance
   );
   const loadedProductLinkHandoff = requireLoadedContract(productLinkHandoff);
+  const loadedSensitiveActionAuthorization = requireLoadedContract(
+    sensitiveActionAuthorization
+  );
   const schemaBundleResults = await Promise.all(
     schemaBundleFilesFromCatalog(loadedApiCatalog.value).map((file) =>
       loadContract(
@@ -190,8 +205,148 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
       (result) => requireLoadedContract(result).value
     ),
     productLinkHandoff: loadedProductLinkHandoff.value,
+    sensitiveActionAuthorization: loadedSensitiveActionAuthorization.value,
     calculatorCatalog: loadedCalculatorCatalog.value,
     calculatorConformance: loadedCalculatorConformance.value
+  };
+}
+
+export function parseSensitiveActionAuthorizationContract(
+  source: string
+): SensitiveActionAuthorizationContract {
+  const file = 'contracts/apis/core-api/sensitive-action-authorization.yaml';
+  const data = parseYamlObject(source, file);
+  assertOnlyKeys(data, ['sensitive_action_authorization', 'schema_bundle'], file);
+  const context = `${file}#sensitive_action_authorization`;
+  const contract = requiredObject(data, 'sensitive_action_authorization', file);
+  assertOnlyKeys(
+    contract,
+    [
+      'schema_version',
+      'status',
+      'receipt_format',
+      'owner_boundaries',
+      'issuer_lifecycle',
+      'audience_consumption_lifecycle',
+      'required_bindings',
+      'required_assurance_fields',
+      'required_platform_decision_fields',
+      'required_consumer_controls',
+      'verification_result_values',
+      'expiry_policy',
+      'route_status',
+      'forbidden_claims',
+      'forbidden_values'
+    ],
+    context
+  );
+  const ownerBoundaries = requiredObject(
+    contract,
+    'owner_boundaries',
+    context
+  );
+  assertOnlyKeys(
+    ownerBoundaries,
+    [
+      'assurance',
+      'platform_decision',
+      'audience_domain_guard_and_consumption'
+    ],
+    `${context}.owner_boundaries`
+  );
+
+  return {
+    schemaVersion: requiredNumber(contract, 'schema_version', context),
+    status: requiredString(contract, 'status', context),
+    receiptFormat: requiredString(contract, 'receipt_format', context),
+    ownerBoundaries: {
+      assurance: requiredString(
+        ownerBoundaries,
+        'assurance',
+        `${context}.owner_boundaries`
+      ),
+      platformDecision: requiredString(
+        ownerBoundaries,
+        'platform_decision',
+        `${context}.owner_boundaries`
+      ),
+      audienceDomainGuardAndConsumption: requiredString(
+        ownerBoundaries,
+        'audience_domain_guard_and_consumption',
+        `${context}.owner_boundaries`
+      )
+    },
+    issuerLifecycle: parseSensitiveActionAuthorizationLifecycle(
+      requiredObject(contract, 'issuer_lifecycle', context),
+      `${context}.issuer_lifecycle`
+    ),
+    audienceConsumptionLifecycle: parseSensitiveActionAuthorizationLifecycle(
+      requiredObject(contract, 'audience_consumption_lifecycle', context),
+      `${context}.audience_consumption_lifecycle`
+    ),
+    requiredBindings: requiredStringList(contract, 'required_bindings', context),
+    requiredAssuranceFields: requiredStringList(
+      contract,
+      'required_assurance_fields',
+      context
+    ),
+    requiredPlatformDecisionFields: requiredStringList(
+      contract,
+      'required_platform_decision_fields',
+      context
+    ),
+    requiredConsumerControls: requiredStringList(
+      contract,
+      'required_consumer_controls',
+      context
+    ),
+    verificationResultValues: requiredStringList(
+      contract,
+      'verification_result_values',
+      context
+    ),
+    expiryPolicy: requiredString(contract, 'expiry_policy', context),
+    routeStatus: requiredString(contract, 'route_status', context),
+    forbiddenClaims: requiredStringList(contract, 'forbidden_claims', context),
+    forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
+  };
+}
+
+function parseSensitiveActionAuthorizationLifecycle(
+  lifecycle: Record<string, unknown>,
+  context: string
+): SensitiveActionAuthorizationLifecycle {
+  assertOnlyKeys(
+    lifecycle,
+    ['states', 'terminal_states', 'allowed_transitions'],
+    context
+  );
+  const transitions = requiredRecordListNonEmpty(
+    lifecycle,
+    'allowed_transitions',
+    context
+  );
+  return {
+    states: requiredStringList(lifecycle, 'states', context),
+    terminalStates: requiredStringList(lifecycle, 'terminal_states', context),
+    transitions: transitions.map((transition, index) =>
+      parseSensitiveActionAuthorizationTransition(
+        transition,
+        `${context}.allowed_transitions[${index}]`
+      )
+    )
+  };
+}
+
+function parseSensitiveActionAuthorizationTransition(
+  transition: Record<string, unknown>,
+  context: string
+): SensitiveActionAuthorizationTransition {
+  assertOnlyKeys(transition, ['from', 'event', 'to'], context);
+  return {
+    from: requiredString(transition, 'from', context),
+    event: requiredString(transition, 'event', context),
+    to: requiredString(transition, 'to', context)
   };
 }
 

@@ -16,6 +16,7 @@ This repository owns API contract sources only. It must not become the live API 
 - Add concrete service routes to `contracts/apis/catalog.yaml`, not to generated OpenAPI or SDK output.
 - Keep route `method` and `success_statuses` inside the allowlists declared by `contracts/route-contract.yaml`.
 - Keep auth/session routes carrying `owner_boundary`, `tenant_boundary`, `request_id_required`, `trace_id_required`, `session_effect`, and `credential_policy` before web app auth routes are promoted.
+- Keep `contracts/apis/core-api/sensitive-action-authorization.yaml` contract-only and unreferenced by the route catalog until Core issue/verify lifecycle, audience domain guards, durable single-use consumption, and product promotion review are implemented. Never reinterpret recovery intake or product-link receipts as sensitive-action authority.
 - Add a new SDK language to `allowed_generation_targets` before enabling it in `generation_targets`.
 - Do not run raw package, generator, server, OpenAPI, AsyncAPI, SDK, publish, or provider commands as agent verification unless the root command contract exposes them as eligible mustflow intents.
 

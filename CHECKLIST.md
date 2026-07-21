@@ -8,6 +8,7 @@
 - 제품 화면 payload, provider-specific SDK shape, 임시 handler shape를 공통 API 계약으로 승격하지 않는다.
 - 실제 customer data, token, webhook secret, authorization header, cookie header, refresh token plaintext 예시를 넣지 않는다.
 - 권한, 감사, 멱등성, tenant boundary, request id, trace id는 prose에 숨기지 말고 계약 필드에 둔다.
+- 민감 행위 receipt는 identity assurance, Core access 결정과 audience 제품 domain guard를 구분하고 exact product/action/resource, expiry, policy revision, session generation과 durable single-use 소비를 계약에 둔다.
 - 계약 변경 후 `VALIDATION.md`의 source drift와 forbidden value checks를 확인한다.
 
 ## Route Contract

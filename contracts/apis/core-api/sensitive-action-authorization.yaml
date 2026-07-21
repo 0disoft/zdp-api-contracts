@@ -1,0 +1,165 @@
+sensitive_action_authorization:
+  schema_version: 1
+  status: contract-only-no-live-route
+  receipt_format: opaque_reference
+  owner_boundaries:
+    assurance: identity
+    platform_decision: access
+    audience_domain_guard_and_consumption: audience_product
+  issuer_lifecycle:
+    states:
+      - active
+      - expired
+      - revoked
+    terminal_states:
+      - expired
+      - revoked
+    allowed_transitions:
+      - from: active
+        event: freshness_window_elapsed
+        to: expired
+      - from: active
+        event: authorization_invalidated
+        to: revoked
+  audience_consumption_lifecycle:
+    states:
+      - unused
+      - consumed
+    terminal_states:
+      - consumed
+    allowed_transitions:
+      - from: unused
+        event: domain_transaction_committed
+        to: consumed
+  required_bindings:
+    - receipt_ref
+    - authorization_request_ref
+    - issuer_ref
+    - subject_ref
+    - tenant_ref
+    - audience_product_ref
+    - action_ref
+    - resource_ref
+  required_assurance_fields:
+    - assurance_method_ref
+    - verified_at
+    - expires_at
+    - session_generation_ref
+  required_platform_decision_fields:
+    - policy_ref
+    - policy_version
+    - decision_revision
+    - issued_at
+    - audit_event_ref
+  required_consumer_controls:
+    - server_to_server_verification
+    - exact_binding_match
+    - current_product_domain_guard
+    - durable_unique_receipt_ref
+    - domain_mutation_receipt_consumption_idempotency_and_audit_one_transaction
+    - same_idempotency_same_binding_stored_replay
+    - changed_binding_or_receipt_reuse_conflict
+    - failed_domain_transaction_does_not_consume_receipt
+  verification_result_values:
+    - valid
+    - invalid
+    - expired
+    - revoked
+    - binding_mismatch
+    - policy_stale
+    - session_generation_stale
+  expiry_policy: explicit_expires_at_not_later_than_assurance_freshness_window_no_default
+  route_status: no_route_defined
+  forbidden_claims:
+    - receipt_alone_authorizes_product_mutation
+    - core_verified_product_resource_relationship
+    - audience_guard_alone_satisfies_step_up
+    - distributed_core_and_product_transaction_is_atomic
+    - live_route_ready
+  forbidden_values:
+    - password
+    - passkey_assertion
+    - authorization_header
+    - cookie_header
+    - access_token
+    - refresh_token_plaintext
+    - session_secret_plaintext
+    - raw_contact_method
+    - raw_product_payload
+    - raw_personal_data
+
+schema_bundle:
+  service_id: core-api
+  owner_boundary: access
+  status: contract-only
+  purpose: define opaque sensitive-action authorization receipt and verification payloads before issue or verify routes exist
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+      - idempotency_key
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - raw_customer_payload
+      - raw_provider_error
+      - provider_secret
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: SensitiveActionAuthorizationReceipt
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - receipt_ref
+        - authorization_request_ref
+        - issuer_ref
+        - subject_ref
+        - tenant_ref
+        - audience_product_ref
+        - action_ref
+        - resource_ref
+        - assurance_method_ref
+        - verified_at
+        - expires_at
+        - session_generation_ref
+        - policy_ref
+        - policy_version
+        - decision_revision
+        - issued_at
+        - audit_event_ref
+    - id: SensitiveActionAuthorizationReceiptVerifyRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - receipt_ref
+        - audience_product_ref
+        - action_ref
+        - resource_ref
+    - id: SensitiveActionAuthorizationReceiptVerifyResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - receipt_ref
+        - issuer_state
+        - verification_result
+        - subject_ref
+        - tenant_ref
+        - audience_product_ref
+        - action_ref
+        - resource_ref
+        - assurance_method_ref
+        - verified_at
+        - expires_at
+        - session_generation_ref
+        - policy_ref
+        - policy_version
+        - decision_revision
+        - issued_at
+        - audit_event_ref

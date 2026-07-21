@@ -10,6 +10,7 @@ sdk_generation_input:
     - contracts/apis/core-api/auth-session.yaml
     - contracts/apis/core-api/product-link.yaml
     - contracts/apis/core-api/referral.yaml
+    - contracts/apis/core-api/sensitive-action-authorization.yaml
     - contracts/apis/money-api/referral-reward.yaml
   generation_targets:
     - typescript

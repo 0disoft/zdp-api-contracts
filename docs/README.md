@@ -14,6 +14,7 @@
 | package surface | `ops/package-surface.md` |
 | calculator contract | `contracts/calculator-contract.md` |
 | 데스크톱 제품 계정 연결 | `contracts/desktop-product-link.md` |
+| 민감 행위 authorization receipt | `contracts/sensitive-action-authorization.md` |
 
 ## Boundary
 

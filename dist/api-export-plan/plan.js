@@ -1,4 +1,5 @@
 import { validateApiContracts } from '../api-contracts/validator.js';
+import { CANONICAL_FORBIDDEN_VALUES } from '../api-contracts/forbidden-values.js';
 const ROUTE_CONTRACT_FILE = 'contracts/route-contract.yaml';
 const ERROR_ENVELOPE_FILE = 'contracts/error-envelope.yaml';
 const WEBHOOK_CONTRACT_FILE = 'contracts/webhook-contract.yaml';
@@ -269,16 +270,7 @@ function validateExportPlanInputs(contracts) {
         }),
         ...validateRequiredEntries({
             actual: contracts.sdkGenerationInput.forbiddenValues,
-            required: [
-                'raw_customer_payload',
-                'raw_provider_error',
-                'provider_secret',
-                'authorization_header',
-                'cookie_header',
-                'refresh_token_plaintext',
-                'stack_trace',
-                'screen_component_payload'
-            ],
+            required: CANONICAL_FORBIDDEN_VALUES,
             code: 'API_EXPORT_PLAN_FORBIDDEN_VALUE_MISSING',
             file: SDK_GENERATION_INPUT_FILE,
             path: 'sdk_generation_input.forbidden_values',
