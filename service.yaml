@@ -262,6 +262,7 @@ automation:
     provider: github-actions
     workflow_names:
       - CI
+      - Publish npm package
     required_status_checks: []
     missing_reason: null
     private_dependency_token_required: false
@@ -275,9 +276,9 @@ automation:
     required_status_checks: []
     admin_bypass_policy: manual owner review required before public API promotion or branch protection
   release_helper:
-    enabled: false
+    enabled: true
     version_source_of_truth: package.json
-    changelog_policy: manual changelog until API contract release automation is adopted
+    changelog_policy: maintain the CHANGELOG.md release section before creating the matching semver tag
   auto_merge:
     enabled: false
     required_checks: []
