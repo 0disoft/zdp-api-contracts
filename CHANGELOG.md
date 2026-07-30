@@ -1,5 +1,15 @@
 # CHANGELOG.md
 
+## 0.16.1
+
+### Added
+
+- npm 공개 직후 정확한 버전을 빈 소비자 프로젝트에 설치해 public export와 contract subpath를 실행하고 registry signature 및 provenance attestation을 검증하는 smoke를 추가했다.
+
+### Changed
+
+- Trusted Publisher release workflow가 registry metadata 확인만으로 끝나지 않고 공개 설치와 `npm audit signatures`까지 통과해야 완료되도록 강화했다.
+
 ## 0.16.0
 
 ### Added

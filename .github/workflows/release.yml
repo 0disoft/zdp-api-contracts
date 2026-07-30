@@ -134,3 +134,6 @@ jobs:
 
           echo "::error::npm did not expose ${package_name}@${package_version} after ${max_attempts} attempts."
           exit 1
+
+      - name: Verify published consumer and provenance
+        run: bun run smoke:published

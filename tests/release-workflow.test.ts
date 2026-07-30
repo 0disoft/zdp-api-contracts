@@ -130,6 +130,24 @@ describe('npm trusted publishing workflow', () => {
     expect(result.run).toContain('published_integrity');
     expect(result.run).toContain('max_attempts=12');
   });
+
+  it('installs the published package and verifies registry signatures and provenance', () => {
+    const steps = loadWorkflow().jobs?.publish?.steps ?? [];
+    const publishedSmoke = stepByName(
+      steps,
+      'Verify published consumer and provenance'
+    );
+    const script = readFileSync(
+      join(process.cwd(), 'scripts', 'smoke-published-package.ts'),
+      'utf8'
+    );
+
+    expect(publishedSmoke.run).toBe('bun run smoke:published');
+    expect(script).toContain("'--save-exact'");
+    expect(script).toContain("['audit', 'signatures']");
+    expect(script).toContain("'zdp-api-contracts/api-contracts'");
+    expect(script).toContain("'zdp-api-contracts/api-export-plan'");
+  });
 });
 
 function loadWorkflow(): ReleaseWorkflow {
