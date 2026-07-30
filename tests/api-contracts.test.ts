@@ -11,6 +11,9 @@ import {
   parseCalculatorCatalogContract,
   parseCalculatorConformanceContract,
   parseErrorEnvelopeContract,
+  parseOidcClientRegistryContract,
+  parseOidcProductSessionContract,
+  parseOidcProviderRuntimeContract,
   parseProductLinkHandoffContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
@@ -31,6 +34,145 @@ describe('api contract checker', () => {
 
     expect(result.diagnostics).toEqual([]);
     expect(result.ok).toBe(true);
+  });
+
+  it('keeps product web sign-in on the proposed OIDC BFF handoff boundary', () => {
+    const contracts = loadCommittedContracts();
+    const registration = schemaBundleByFile(
+      contracts,
+      'contracts/apis/core-api/auth-session.yaml'
+    ).schemas.find((schema) => schema.id === 'AuthRegistrationCreateRequest');
+
+    expect(registration).toMatchObject({
+      carriesSecretMaterial: true,
+      secretMaterialPolicy: 'password_verifier_input_only_never_echo',
+      requiredFields: ['login_id', 'password', 'terms_consent_ref'],
+      optionalFields: ['locale'],
+      secretFields: ['password']
+    });
+    expect(contracts.oidcProductSession).toMatchObject({
+      status: 'proposed-contract',
+      protocolProfile: 'openid_connect_authorization_code_flow',
+      oauthSecurityBaseline: 'oauth_2_0_security_bcp_rfc9700',
+      oauth21Status: 'draft_profile_not_final_rfc',
+      pkceMethod: 'S256',
+      exactRedirectUriMatchRequired: true,
+      wildcardRedirectUriForbidden: true,
+      arbitraryReturnToForbidden: true,
+      authorizationCodeSingleUse: true,
+      productSessionOwner: 'product_bff_binding_only',
+      centralSessionOwner: 'core_identity',
+      authorizationOwner: 'core_access_per_protected_action',
+      authenticationIsAuthorization: false
+    });
+    expect(contracts.oidcClientRegistry).toMatchObject({
+      status: 'proposed-contract',
+      authority: 'core_identity',
+      environment: 'staging',
+      entries: [
+        {
+          clientId: 'zdp-web-public-staging',
+          productRef: 'web-public-home',
+          status: 'disabled',
+          clientType: 'confidential',
+          tokenEndpointAuthMethod: 'private_key_jwt',
+          runtimeBoundary: 'product_bff_required_static_site_forbidden'
+        }
+      ]
+    });
+    expect(contracts.oidcProviderRuntime).toMatchObject({
+      status: 'proposed-contract',
+      pilotEnvironment: 'staging',
+      issuer: 'https://account.staging.8ailors.xyz',
+      authorizationCodeTtlSeconds: 60,
+      authorizationCodeSingleUse: true,
+      accessTokenTtlSeconds: 300,
+      idTokenTtlSeconds: 300,
+      refreshTokenPolicy: 'not_issued_in_first_staging_pilot',
+      clientAssertionTtlSeconds: 60,
+      clientAssertionJtiSingleUse: true,
+      signingAlgorithm: 'RS256',
+      revocationMaxStalenessSeconds: 60
+    });
+  });
+
+  it('rejects OIDC handoff drift toward arbitrary redirects or global product access', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      oidcProductSession: {
+        ...contracts.oidcProductSession,
+        arbitraryReturnToForbidden: false,
+        authenticationIsAuthorization: true,
+        requiredClientRegistryFields: ['client_id']
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        'API_OIDC_REDIRECT_OR_CODE_POLICY_INVALID',
+        'API_OIDC_SESSION_OR_AUTHORIZATION_BOUNDARY_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_FIELD_MISSING'
+      ])
+    );
+  });
+
+  it('rejects activation of the static public site as an OIDC callback runtime', () => {
+    const contracts = loadCommittedContracts();
+    const client = contracts.oidcClientRegistry.entries[0];
+    if (client === undefined) {
+      throw new Error('Expected the first staging OIDC client fixture.');
+    }
+    const result = validateApiContracts({
+      ...contracts,
+      oidcClientRegistry: {
+        ...contracts.oidcClientRegistry,
+        entries: [
+          {
+            ...client,
+            status: 'active',
+            exactRedirectUris: ['https://*.staging.8ailors.xyz/auth/callback'],
+            runtimeBoundary: 'static_site_callback_handler'
+          }
+        ]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        'API_OIDC_CLIENT_REGISTRY_FIXTURE_IDENTITY_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_REDIRECT_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_RUNTIME_BOUNDARY_INVALID'
+      ])
+    );
+  });
+
+  it('rejects long-lived or replayable first-pilot OIDC credentials', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      oidcProviderRuntime: {
+        ...contracts.oidcProviderRuntime,
+        authorizationCodeTtlSeconds: 600,
+        authorizationCodeSingleUse: false,
+        refreshTokenPolicy: 'issued_to_browser',
+        clientAssertionJtiSingleUse: false,
+        productSessionAbsoluteMaxSeconds:
+          contracts.oidcProviderRuntime.centralSessionAbsoluteSeconds + 1
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        'API_OIDC_PROVIDER_RUNTIME_CODE_POLICY_INVALID',
+        'API_OIDC_PROVIDER_RUNTIME_TOKEN_POLICY_INVALID',
+        'API_OIDC_PROVIDER_RUNTIME_CLIENT_ASSERTION_INVALID',
+        'API_OIDC_PROVIDER_RUNTIME_SESSION_POLICY_INVALID'
+      ])
+    );
   });
 
   it('keeps Core access decisions exact, fail-closed, and separate from current-session identity', () => {
@@ -1415,6 +1557,42 @@ function loadCommittedContracts(): ApiContracts {
           'apis',
           'core-api',
           'sensitive-action-authorization.yaml'
+        ),
+        'utf8'
+      )
+    ),
+    oidcProductSession: parseOidcProductSessionContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'oidc-product-session.yaml'
+        ),
+        'utf8'
+      )
+    ),
+    oidcClientRegistry: parseOidcClientRegistryContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'oidc-client-registry.yaml'
+        ),
+        'utf8'
+      )
+    ),
+    oidcProviderRuntime: parseOidcProviderRuntimeContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'oidc-provider-runtime.yaml'
         ),
         'utf8'
       )

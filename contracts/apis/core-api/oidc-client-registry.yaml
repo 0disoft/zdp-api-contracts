@@ -1,0 +1,44 @@
+oidc_client_registry:
+  schema_version: 1
+  status: proposed-contract
+  owner_boundary: identity
+  authority: core_identity
+  environment: staging
+  entries:
+    - client_id: zdp-web-public-staging
+      product_ref: web-public-home
+      environment: staging
+      exact_redirect_uris:
+        - https://web-public.staging.8ailors.xyz/auth/callback
+      exact_post_logout_redirect_uris:
+        - https://web-public.staging.8ailors.xyz/
+      allowed_scope_refs:
+        - openid
+        - profile
+      allowed_audience_refs:
+        - zdp-web-public
+      client_type: confidential
+      token_endpoint_auth_method: private_key_jwt
+      jwks_ref: client-keyset://zdp-web-public-staging
+      status: disabled
+      session_policy_ref: oidc-provider-runtime-v1-product-session
+      revocation_policy_ref: oidc-provider-runtime-v1-revocation
+      runtime_boundary: product_bff_required_static_site_forbidden
+      callback_handler_ref: zdp-web-public-bff-candidate
+      activation_requirements:
+        - product_bff_deployed_in_staging
+        - staging_hostname_bound_and_tls_verified
+        - private_key_jwt_key_registered_without_plaintext_secret
+        - exact_callback_and_logout_smoke_passed
+        - central_session_revocation_smoke_passed
+        - core_access_denial_smoke_passed
+  forbidden_values:
+    - client_secret_plaintext
+    - private_key_material
+    - authorization_code
+    - access_token
+    - id_token
+    - refresh_token_plaintext
+    - cookie_header
+    - authorization_header
+    - raw_customer_payload

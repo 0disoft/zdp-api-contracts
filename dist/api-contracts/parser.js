@@ -25,7 +25,7 @@ export class ApiContractLoadError extends Error {
  */
 export async function loadApiContracts(root = process.cwd()) {
     const contractsRoot = join(root, 'contracts');
-    const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog, calculatorCatalog, calculatorConformance, accessDecision, productLinkHandoff, sensitiveActionAuthorization] = await Promise.all([
+    const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog, calculatorCatalog, calculatorConformance, accessDecision, productLinkHandoff, sensitiveActionAuthorization, oidcProductSession, oidcClientRegistry, oidcProviderRuntime] = await Promise.all([
         loadContract(contractsRoot, 'route', 'route-contract.yaml', parseRouteContract),
         loadContract(contractsRoot, 'error-envelope', 'error-envelope.yaml', parseErrorEnvelopeContract),
         loadContract(contractsRoot, 'webhook', 'webhook-contract.yaml', parseWebhookContract),
@@ -35,7 +35,10 @@ export async function loadApiContracts(root = process.cwd()) {
         loadContract(contractsRoot, 'calculator-conformance', join('calculators', 'conformance.yaml'), parseCalculatorConformanceContract),
         loadContract(contractsRoot, 'access-decision', join('apis', 'core-api', 'access-decision.yaml'), parseAccessDecisionContract),
         loadContract(contractsRoot, 'product-link-handoff', join('apis', 'core-api', 'product-link.yaml'), parseProductLinkHandoffContract),
-        loadContract(contractsRoot, 'sensitive-action-authorization', join('apis', 'core-api', 'sensitive-action-authorization.yaml'), parseSensitiveActionAuthorizationContract)
+        loadContract(contractsRoot, 'sensitive-action-authorization', join('apis', 'core-api', 'sensitive-action-authorization.yaml'), parseSensitiveActionAuthorizationContract),
+        loadContract(contractsRoot, 'oidc-product-session', join('apis', 'core-api', 'oidc-product-session.yaml'), parseOidcProductSessionContract),
+        loadContract(contractsRoot, 'oidc-client-registry', join('apis', 'core-api', 'oidc-client-registry.yaml'), parseOidcClientRegistryContract),
+        loadContract(contractsRoot, 'oidc-provider-runtime', join('apis', 'core-api', 'oidc-provider-runtime.yaml'), parseOidcProviderRuntimeContract)
     ]);
     const results = [
         route,
@@ -47,7 +50,10 @@ export async function loadApiContracts(root = process.cwd()) {
         calculatorConformance,
         accessDecision,
         productLinkHandoff,
-        sensitiveActionAuthorization
+        sensitiveActionAuthorization,
+        oidcProductSession,
+        oidcClientRegistry,
+        oidcProviderRuntime
     ];
     const failures = results.filter(isContractLoadFailure);
     if (failures.length > 0) {
@@ -63,6 +69,9 @@ export async function loadApiContracts(root = process.cwd()) {
     const loadedAccessDecision = requireLoadedContract(accessDecision);
     const loadedProductLinkHandoff = requireLoadedContract(productLinkHandoff);
     const loadedSensitiveActionAuthorization = requireLoadedContract(sensitiveActionAuthorization);
+    const loadedOidcProductSession = requireLoadedContract(oidcProductSession);
+    const loadedOidcClientRegistry = requireLoadedContract(oidcClientRegistry);
+    const loadedOidcProviderRuntime = requireLoadedContract(oidcProviderRuntime);
     const schemaBundleResults = await Promise.all(schemaBundleFilesFromCatalog(loadedApiCatalog.value).map((file) => loadContract(contractsRoot, `schema-bundle:${file}`, schemaBundleRelativeFile(file), (source) => parseApiSchemaBundleContract(source, file))));
     const schemaBundleFailures = schemaBundleResults.filter(isContractLoadFailure);
     if (schemaBundleFailures.length > 0) {
@@ -78,8 +87,227 @@ export async function loadApiContracts(root = process.cwd()) {
         accessDecision: loadedAccessDecision.value,
         productLinkHandoff: loadedProductLinkHandoff.value,
         sensitiveActionAuthorization: loadedSensitiveActionAuthorization.value,
+        oidcProductSession: loadedOidcProductSession.value,
+        oidcClientRegistry: loadedOidcClientRegistry.value,
+        oidcProviderRuntime: loadedOidcProviderRuntime.value,
         calculatorCatalog: loadedCalculatorCatalog.value,
         calculatorConformance: loadedCalculatorConformance.value
+    };
+}
+export function parseOidcProductSessionContract(source) {
+    const file = 'contracts/apis/core-api/oidc-product-session.yaml';
+    const data = parseYamlObject(source, file);
+    assertOnlyKeys(data, ['oidc_product_session'], file);
+    const context = `${file}#oidc_product_session`;
+    const contract = requiredObject(data, 'oidc_product_session', file);
+    assertOnlyKeys(contract, [
+        'schema_version',
+        'status',
+        'owner_boundary',
+        'protocol_profile',
+        'oauth_security_baseline',
+        'oauth_2_1_status',
+        'response_type',
+        'pkce_method',
+        'staging_issuer',
+        'production_issuer',
+        'required_authorization_bindings',
+        'required_token_exchange_bindings',
+        'required_client_registry_fields',
+        'required_access_decision_bindings',
+        'invalidation_events',
+        'exact_redirect_uri_match_required',
+        'wildcard_redirect_uri_forbidden',
+        'arbitrary_return_to_forbidden',
+        'authorization_code_single_use',
+        'authorization_code_ttl_policy',
+        'token_endpoint_caller',
+        'browser_token_exposure_policy',
+        'product_cookie_policy',
+        'product_session_owner',
+        'central_session_owner',
+        'authorization_owner',
+        'authentication_is_authorization',
+        'client_registry_policy',
+        'forbidden_consumer_uses',
+        'forbidden_values'
+    ], context);
+    return {
+        schemaVersion: requiredNumber(contract, 'schema_version', context),
+        status: requiredString(contract, 'status', context),
+        ownerBoundary: requiredString(contract, 'owner_boundary', context),
+        protocolProfile: requiredString(contract, 'protocol_profile', context),
+        oauthSecurityBaseline: requiredString(contract, 'oauth_security_baseline', context),
+        oauth21Status: requiredString(contract, 'oauth_2_1_status', context),
+        responseType: requiredString(contract, 'response_type', context),
+        pkceMethod: requiredString(contract, 'pkce_method', context),
+        stagingIssuer: requiredString(contract, 'staging_issuer', context),
+        productionIssuer: requiredString(contract, 'production_issuer', context),
+        requiredAuthorizationBindings: requiredStringList(contract, 'required_authorization_bindings', context),
+        requiredTokenExchangeBindings: requiredStringList(contract, 'required_token_exchange_bindings', context),
+        requiredClientRegistryFields: requiredStringList(contract, 'required_client_registry_fields', context),
+        requiredAccessDecisionBindings: requiredStringList(contract, 'required_access_decision_bindings', context),
+        invalidationEvents: requiredStringList(contract, 'invalidation_events', context),
+        exactRedirectUriMatchRequired: requiredBoolean(contract, 'exact_redirect_uri_match_required', context),
+        wildcardRedirectUriForbidden: requiredBoolean(contract, 'wildcard_redirect_uri_forbidden', context),
+        arbitraryReturnToForbidden: requiredBoolean(contract, 'arbitrary_return_to_forbidden', context),
+        authorizationCodeSingleUse: requiredBoolean(contract, 'authorization_code_single_use', context),
+        authorizationCodeTtlPolicy: requiredString(contract, 'authorization_code_ttl_policy', context),
+        tokenEndpointCaller: requiredString(contract, 'token_endpoint_caller', context),
+        browserTokenExposurePolicy: requiredString(contract, 'browser_token_exposure_policy', context),
+        productCookiePolicy: requiredString(contract, 'product_cookie_policy', context),
+        productSessionOwner: requiredString(contract, 'product_session_owner', context),
+        centralSessionOwner: requiredString(contract, 'central_session_owner', context),
+        authorizationOwner: requiredString(contract, 'authorization_owner', context),
+        authenticationIsAuthorization: requiredBoolean(contract, 'authentication_is_authorization', context),
+        clientRegistryPolicy: requiredString(contract, 'client_registry_policy', context),
+        forbiddenConsumerUses: requiredStringList(contract, 'forbidden_consumer_uses', context),
+        forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
+    };
+}
+export function parseOidcClientRegistryContract(source) {
+    const file = 'contracts/apis/core-api/oidc-client-registry.yaml';
+    const data = parseYamlObject(source, file);
+    assertOnlyKeys(data, ['oidc_client_registry'], file);
+    const context = `${file}#oidc_client_registry`;
+    const contract = requiredObject(data, 'oidc_client_registry', file);
+    assertOnlyKeys(contract, [
+        'schema_version',
+        'status',
+        'owner_boundary',
+        'authority',
+        'environment',
+        'entries',
+        'forbidden_values'
+    ], context);
+    const entries = requiredRecordListNonEmpty(contract, 'entries', context);
+    return {
+        schemaVersion: requiredNumber(contract, 'schema_version', context),
+        status: requiredString(contract, 'status', context),
+        ownerBoundary: requiredString(contract, 'owner_boundary', context),
+        authority: requiredString(contract, 'authority', context),
+        environment: requiredString(contract, 'environment', context),
+        entries: entries.map((entry, index) => parseOidcClientRegistryEntry(entry, `${context}.entries[${index}]`)),
+        forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
+    };
+}
+function parseOidcClientRegistryEntry(entry, context) {
+    assertOnlyKeys(entry, [
+        'client_id',
+        'product_ref',
+        'environment',
+        'exact_redirect_uris',
+        'exact_post_logout_redirect_uris',
+        'allowed_scope_refs',
+        'allowed_audience_refs',
+        'client_type',
+        'token_endpoint_auth_method',
+        'jwks_ref',
+        'status',
+        'session_policy_ref',
+        'revocation_policy_ref',
+        'runtime_boundary',
+        'callback_handler_ref',
+        'activation_requirements'
+    ], context);
+    return {
+        clientId: requiredString(entry, 'client_id', context),
+        productRef: requiredString(entry, 'product_ref', context),
+        environment: requiredString(entry, 'environment', context),
+        exactRedirectUris: requiredStringList(entry, 'exact_redirect_uris', context),
+        exactPostLogoutRedirectUris: requiredStringList(entry, 'exact_post_logout_redirect_uris', context),
+        allowedScopeRefs: requiredStringList(entry, 'allowed_scope_refs', context),
+        allowedAudienceRefs: requiredStringList(entry, 'allowed_audience_refs', context),
+        clientType: requiredString(entry, 'client_type', context),
+        tokenEndpointAuthMethod: requiredString(entry, 'token_endpoint_auth_method', context),
+        jwksRef: requiredString(entry, 'jwks_ref', context),
+        status: requiredString(entry, 'status', context),
+        sessionPolicyRef: requiredString(entry, 'session_policy_ref', context),
+        revocationPolicyRef: requiredString(entry, 'revocation_policy_ref', context),
+        runtimeBoundary: requiredString(entry, 'runtime_boundary', context),
+        callbackHandlerRef: requiredString(entry, 'callback_handler_ref', context),
+        activationRequirements: requiredStringList(entry, 'activation_requirements', context)
+    };
+}
+export function parseOidcProviderRuntimeContract(source) {
+    const file = 'contracts/apis/core-api/oidc-provider-runtime.yaml';
+    const data = parseYamlObject(source, file);
+    assertOnlyKeys(data, ['oidc_provider_runtime'], file);
+    const context = `${file}#oidc_provider_runtime`;
+    const contract = requiredObject(data, 'oidc_provider_runtime', file);
+    assertOnlyKeys(contract, [
+        'schema_version',
+        'status',
+        'owner_boundary',
+        'pilot_environment',
+        'issuer',
+        'discovery_path',
+        'authorization_path',
+        'token_path',
+        'jwks_path',
+        'revocation_path',
+        'end_session_path',
+        'authorization_code_ttl_seconds',
+        'authorization_code_single_use',
+        'authorization_code_storage_policy',
+        'authorization_code_required_bindings',
+        'access_token_ttl_seconds',
+        'id_token_ttl_seconds',
+        'refresh_token_policy',
+        'client_assertion_algorithm',
+        'client_assertion_ttl_seconds',
+        'client_assertion_jti_single_use',
+        'client_assertion_binding_policy',
+        'signing_algorithm',
+        'signing_key_rotation_days',
+        'retired_key_verification_seconds',
+        'jwks_cache_max_age_seconds',
+        'central_session_idle_seconds',
+        'central_session_absolute_seconds',
+        'product_session_idle_max_seconds',
+        'product_session_absolute_max_seconds',
+        'sensitive_action_fresh_seconds',
+        'revocation_max_staleness_seconds',
+        'product_session_revalidation_policy',
+        'required_denial_reasons',
+        'forbidden_values'
+    ], context);
+    return {
+        schemaVersion: requiredNumber(contract, 'schema_version', context),
+        status: requiredString(contract, 'status', context),
+        ownerBoundary: requiredString(contract, 'owner_boundary', context),
+        pilotEnvironment: requiredString(contract, 'pilot_environment', context),
+        issuer: requiredString(contract, 'issuer', context),
+        discoveryPath: requiredString(contract, 'discovery_path', context),
+        authorizationPath: requiredString(contract, 'authorization_path', context),
+        tokenPath: requiredString(contract, 'token_path', context),
+        jwksPath: requiredString(contract, 'jwks_path', context),
+        revocationPath: requiredString(contract, 'revocation_path', context),
+        endSessionPath: requiredString(contract, 'end_session_path', context),
+        authorizationCodeTtlSeconds: requiredNumber(contract, 'authorization_code_ttl_seconds', context),
+        authorizationCodeSingleUse: requiredBoolean(contract, 'authorization_code_single_use', context),
+        authorizationCodeStoragePolicy: requiredString(contract, 'authorization_code_storage_policy', context),
+        authorizationCodeRequiredBindings: requiredStringList(contract, 'authorization_code_required_bindings', context),
+        accessTokenTtlSeconds: requiredNumber(contract, 'access_token_ttl_seconds', context),
+        idTokenTtlSeconds: requiredNumber(contract, 'id_token_ttl_seconds', context),
+        refreshTokenPolicy: requiredString(contract, 'refresh_token_policy', context),
+        clientAssertionAlgorithm: requiredString(contract, 'client_assertion_algorithm', context),
+        clientAssertionTtlSeconds: requiredNumber(contract, 'client_assertion_ttl_seconds', context),
+        clientAssertionJtiSingleUse: requiredBoolean(contract, 'client_assertion_jti_single_use', context),
+        clientAssertionBindingPolicy: requiredString(contract, 'client_assertion_binding_policy', context),
+        signingAlgorithm: requiredString(contract, 'signing_algorithm', context),
+        signingKeyRotationDays: requiredNumber(contract, 'signing_key_rotation_days', context),
+        retiredKeyVerificationSeconds: requiredNumber(contract, 'retired_key_verification_seconds', context),
+        jwksCacheMaxAgeSeconds: requiredNumber(contract, 'jwks_cache_max_age_seconds', context),
+        centralSessionIdleSeconds: requiredNumber(contract, 'central_session_idle_seconds', context),
+        centralSessionAbsoluteSeconds: requiredNumber(contract, 'central_session_absolute_seconds', context),
+        productSessionIdleMaxSeconds: requiredNumber(contract, 'product_session_idle_max_seconds', context),
+        productSessionAbsoluteMaxSeconds: requiredNumber(contract, 'product_session_absolute_max_seconds', context),
+        sensitiveActionFreshSeconds: requiredNumber(contract, 'sensitive_action_fresh_seconds', context),
+        revocationMaxStalenessSeconds: requiredNumber(contract, 'revocation_max_staleness_seconds', context),
+        productSessionRevalidationPolicy: requiredString(contract, 'product_session_revalidation_policy', context),
+        requiredDenialReasons: requiredStringList(contract, 'required_denial_reasons', context),
+        forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
     };
 }
 export function parseSensitiveActionAuthorizationContract(source) {

@@ -181,6 +181,138 @@ const CURRENT_SESSION_FORBIDDEN_ACCESS_FIELDS = [
     'policy_version',
     'obligations'
 ];
+const OIDC_PRODUCT_SESSION_FILE = 'contracts/apis/core-api/oidc-product-session.yaml';
+const OIDC_CLIENT_REGISTRY_FILE = 'contracts/apis/core-api/oidc-client-registry.yaml';
+const OIDC_PROVIDER_RUNTIME_FILE = 'contracts/apis/core-api/oidc-provider-runtime.yaml';
+const OIDC_AUTHORIZATION_BINDINGS = [
+    'client_id',
+    'exact_redirect_uri',
+    'state',
+    'nonce',
+    'code_challenge',
+    'code_challenge_method',
+    'issuer',
+    'requested_scope_refs',
+    'requested_audience_refs'
+];
+const OIDC_TOKEN_EXCHANGE_BINDINGS = [
+    'client_id',
+    'authorization_code',
+    'code_verifier',
+    'exact_redirect_uri',
+    'issuer'
+];
+const OIDC_CLIENT_REGISTRY_FIELDS = [
+    'client_id',
+    'product_ref',
+    'environment',
+    'exact_redirect_uris',
+    'exact_post_logout_redirect_uris',
+    'allowed_scope_refs',
+    'allowed_audience_refs',
+    'client_type',
+    'token_endpoint_auth_method',
+    'jwks_ref',
+    'status',
+    'session_policy_ref',
+    'revocation_policy_ref'
+];
+const OIDC_ACCESS_DECISION_BINDINGS = [
+    'subject_ref',
+    'product_ref',
+    'tenant_ref',
+    'resource_type',
+    'resource_ref',
+    'action',
+    'policy_version'
+];
+const OIDC_INVALIDATION_EVENTS = [
+    'central_session_revoked',
+    'account_restricted',
+    'account_deleted',
+    'credential_compromised',
+    'product_client_disabled'
+];
+const OIDC_FORBIDDEN_CONSUMER_USES = [
+    'central_session_cookie_forwarded_to_product',
+    'cross_product_session_cookie_reuse',
+    'login_success_as_global_product_authorization',
+    'product_bff_as_credential_or_account_truth',
+    'arbitrary_return_to_redirect',
+    'wildcard_redirect_uri',
+    'unregistered_scope_or_audience',
+    'callback_uri_selected_from_request_without_registry_match'
+];
+const OIDC_FORBIDDEN_VALUES = [
+    'password',
+    'authorization_header',
+    'cookie_header',
+    'access_token',
+    'id_token',
+    'refresh_token_plaintext',
+    'client_secret_plaintext',
+    'code_verifier_plaintext_at_rest',
+    'authorization_code_plaintext_at_rest',
+    'provider_secret',
+    'raw_provider_error',
+    'raw_customer_payload'
+];
+const OIDC_CLIENT_ACTIVATION_REQUIREMENTS = [
+    'product_bff_deployed_in_staging',
+    'staging_hostname_bound_and_tls_verified',
+    'private_key_jwt_key_registered_without_plaintext_secret',
+    'exact_callback_and_logout_smoke_passed',
+    'central_session_revocation_smoke_passed',
+    'core_access_denial_smoke_passed'
+];
+const OIDC_CLIENT_REGISTRY_FORBIDDEN_VALUES = [
+    'client_secret_plaintext',
+    'private_key_material',
+    'authorization_code',
+    'access_token',
+    'id_token',
+    'refresh_token_plaintext',
+    'cookie_header',
+    'authorization_header',
+    'raw_customer_payload'
+];
+const OIDC_AUTHORIZATION_CODE_BINDINGS = [
+    'client_id',
+    'exact_redirect_uri',
+    'subject_ref',
+    'central_session_ref',
+    'nonce',
+    'code_challenge',
+    'code_challenge_method',
+    'granted_scope_refs',
+    'granted_audience_refs',
+    'issued_at',
+    'expires_at'
+];
+const OIDC_RUNTIME_DENIAL_REASONS = [
+    'authentication_required',
+    'session_expired',
+    'session_revoked',
+    'client_disabled',
+    'invalid_request',
+    'invalid_grant',
+    'access_denied',
+    'policy_unavailable'
+];
+const OIDC_PROVIDER_RUNTIME_FORBIDDEN_VALUES = [
+    'password',
+    'authorization_header',
+    'cookie_header',
+    'access_token',
+    'id_token',
+    'refresh_token_plaintext',
+    'client_secret_plaintext',
+    'private_key_material',
+    'authorization_code_plaintext_at_rest',
+    'code_verifier_plaintext_at_rest',
+    'raw_provider_error',
+    'raw_customer_payload'
+];
 const PRODUCT_LINK_FILE = 'contracts/apis/core-api/product-link.yaml';
 const PRODUCT_LINK_STATES = [
     'pending',
@@ -362,6 +494,7 @@ const ALLOWED_CREDENTIAL_POLICIES = [
 ];
 const ALLOWED_SECRET_MATERIAL_POLICIES = [
     'verifier_input_only_never_echo',
+    'password_verifier_input_only_never_echo',
     'session_rotation_proof_only_never_echo',
     'browser_assertion_only_never_echo',
     'provider_callback_code_only_never_store_plaintext',
@@ -428,6 +561,9 @@ export function validateApiContracts(contracts) {
     validateApiCatalogContract(contracts, schemaBundlesByFile, diagnostics);
     validateSchemaBundles(contracts, schemaBundlesByFile, diagnostics);
     validateAccessDecision(contracts, schemaBundlesByFile, diagnostics);
+    validateOidcProductSession(contracts, diagnostics);
+    validateOidcClientRegistry(contracts, diagnostics);
+    validateOidcProviderRuntime(contracts, diagnostics);
     validateProductLinkHandoff(contracts, diagnostics);
     validateCalculatorCatalog(contracts, diagnostics);
     validateCalculatorConformance(contracts, diagnostics);
@@ -435,6 +571,182 @@ export function validateApiContracts(contracts) {
         ok: diagnostics.length === 0,
         diagnostics
     };
+}
+function validateOidcProductSession(contracts, diagnostics) {
+    const contract = contracts.oidcProductSession;
+    const push = (code, path, message) => {
+        diagnostics.push({ code, file: OIDC_PRODUCT_SESSION_FILE, path, message });
+    };
+    if (contract.schemaVersion !== 1 ||
+        contract.status !== 'proposed-contract' ||
+        contract.ownerBoundary !== 'identity') {
+        push('API_OIDC_PRODUCT_SESSION_BOUNDARY_INVALID', 'oidc_product_session', 'OIDC product-session handoff must remain a proposed identity-owned contract.');
+    }
+    if (contract.protocolProfile !== 'openid_connect_authorization_code_flow' ||
+        contract.oauthSecurityBaseline !== 'oauth_2_0_security_bcp_rfc9700' ||
+        contract.oauth21Status !== 'draft_profile_not_final_rfc' ||
+        contract.responseType !== 'code' ||
+        contract.pkceMethod !== 'S256') {
+        push('API_OIDC_PRODUCT_SESSION_PROTOCOL_INVALID', 'oidc_product_session.protocol_profile', 'Product web sign-in must use OIDC Authorization Code Flow, RFC 9700 security guidance, and PKCE S256 without claiming OAuth 2.1 is a final RFC.');
+    }
+    if (contract.stagingIssuer !== 'https://account.staging.8ailors.xyz' ||
+        contract.productionIssuer !== 'https://account.8ailors.xyz') {
+        push('API_OIDC_PRODUCT_SESSION_ISSUER_INVALID', 'oidc_product_session.staging_issuer', 'Staging and production account issuers must remain separate and exact.');
+    }
+    validateRequiredOidcValues(contract.requiredAuthorizationBindings, OIDC_AUTHORIZATION_BINDINGS, 'API_OIDC_AUTHORIZATION_BINDING_MISSING', 'oidc_product_session.required_authorization_bindings', push);
+    validateRequiredOidcValues(contract.requiredTokenExchangeBindings, OIDC_TOKEN_EXCHANGE_BINDINGS, 'API_OIDC_TOKEN_EXCHANGE_BINDING_MISSING', 'oidc_product_session.required_token_exchange_bindings', push);
+    validateRequiredOidcValues(contract.requiredClientRegistryFields, OIDC_CLIENT_REGISTRY_FIELDS, 'API_OIDC_CLIENT_REGISTRY_FIELD_MISSING', 'oidc_product_session.required_client_registry_fields', push);
+    validateRequiredOidcValues(contract.requiredAccessDecisionBindings, OIDC_ACCESS_DECISION_BINDINGS, 'API_OIDC_ACCESS_DECISION_BINDING_MISSING', 'oidc_product_session.required_access_decision_bindings', push);
+    validateRequiredOidcValues(contract.invalidationEvents, OIDC_INVALIDATION_EVENTS, 'API_OIDC_INVALIDATION_EVENT_MISSING', 'oidc_product_session.invalidation_events', push);
+    validateRequiredOidcValues(contract.forbiddenConsumerUses, OIDC_FORBIDDEN_CONSUMER_USES, 'API_OIDC_FORBIDDEN_CONSUMER_USE_MISSING', 'oidc_product_session.forbidden_consumer_uses', push);
+    validateRequiredOidcValues(contract.forbiddenValues, OIDC_FORBIDDEN_VALUES, 'API_OIDC_FORBIDDEN_VALUE_MISSING', 'oidc_product_session.forbidden_values', push);
+    if (!contract.exactRedirectUriMatchRequired ||
+        !contract.wildcardRedirectUriForbidden ||
+        !contract.arbitraryReturnToForbidden ||
+        !contract.authorizationCodeSingleUse) {
+        push('API_OIDC_REDIRECT_OR_CODE_POLICY_INVALID', 'oidc_product_session.exact_redirect_uri_match_required', 'Redirect URIs must match the central registry exactly, wildcard and arbitrary return_to redirects must be forbidden, and authorization codes must be single use.');
+    }
+    if (contract.authorizationCodeTtlPolicy !==
+        'short_server_configured_ttl_recorded_in_the_reviewed_identity_policy' ||
+        contract.tokenEndpointCaller !== 'confidential_product_bff_only' ||
+        contract.browserTokenExposurePolicy !==
+            'no_access_refresh_or_id_token_in_url_local_storage_or_browser_readable_cookie') {
+        push('API_OIDC_TOKEN_HANDOFF_POLICY_INVALID', 'oidc_product_session.token_endpoint_caller', 'Authorization codes must have a reviewed short TTL, only a confidential product BFF may exchange them, and browser-readable token exposure is forbidden.');
+    }
+    if (contract.productCookiePolicy !==
+        'opaque_secure_http_only_same_site_product_host_only_binding' ||
+        contract.productSessionOwner !== 'product_bff_binding_only' ||
+        contract.centralSessionOwner !== 'core_identity' ||
+        contract.authorizationOwner !== 'core_access_per_protected_action' ||
+        contract.authenticationIsAuthorization) {
+        push('API_OIDC_SESSION_OR_AUTHORIZATION_BOUNDARY_INVALID', 'oidc_product_session.product_cookie_policy', 'The product BFF may own only its host-only session binding; Core identity owns central sessions and Core access authorizes every protected action.');
+    }
+    if (contract.clientRegistryPolicy !==
+        'reviewed_central_environment_scoped_registry_no_product_local_env_var_as_authority') {
+        push('API_OIDC_CLIENT_REGISTRY_POLICY_INVALID', 'oidc_product_session.client_registry_policy', 'OIDC client configuration must come from a reviewed environment-scoped central registry rather than product-local environment variables as authority.');
+    }
+}
+function validateOidcClientRegistry(contracts, diagnostics) {
+    const contract = contracts.oidcClientRegistry;
+    const push = (code, path, message) => {
+        diagnostics.push({ code, file: OIDC_CLIENT_REGISTRY_FILE, path, message });
+    };
+    if (contract.schemaVersion !== 1 ||
+        contract.status !== 'proposed-contract' ||
+        contract.ownerBoundary !== 'identity' ||
+        contract.authority !== 'core_identity' ||
+        contract.environment !== 'staging') {
+        push('API_OIDC_CLIENT_REGISTRY_BOUNDARY_INVALID', 'oidc_client_registry', 'The first OIDC client registry fixture must remain a proposed Core identity-owned staging contract.');
+    }
+    if (contract.entries.length !== 1) {
+        push('API_OIDC_CLIENT_REGISTRY_FIXTURE_COUNT_INVALID', 'oidc_client_registry.entries', 'The first staging fixture must contain exactly the disabled zdp-web-public client.');
+    }
+    const client = contract.entries[0];
+    if (client !== undefined) {
+        if (client.clientId !== 'zdp-web-public-staging' ||
+            client.productRef !== 'web-public-home' ||
+            client.environment !== 'staging' ||
+            client.status !== 'disabled') {
+            push('API_OIDC_CLIENT_REGISTRY_FIXTURE_IDENTITY_INVALID', 'oidc_client_registry.entries[0]', 'The first fixture must remain the disabled staging registration for web-public-home.');
+        }
+        if (!hasExactStringValues(client.exactRedirectUris, [
+            'https://web-public.staging.8ailors.xyz/auth/callback'
+        ]) ||
+            !hasExactStringValues(client.exactPostLogoutRedirectUris, [
+                'https://web-public.staging.8ailors.xyz/'
+            ]) ||
+            client.exactRedirectUris.some((uri) => uri.includes('*')) ||
+            client.exactPostLogoutRedirectUris.some((uri) => uri.includes('*'))) {
+            push('API_OIDC_CLIENT_REGISTRY_REDIRECT_INVALID', 'oidc_client_registry.entries[0].exact_redirect_uris', 'The staging client must use only its exact HTTPS callback and logout URI without wildcards.');
+        }
+        if (!hasExactStringValues(client.allowedScopeRefs, ['openid', 'profile']) ||
+            !hasExactStringValues(client.allowedAudienceRefs, ['zdp-web-public'])) {
+            push('API_OIDC_CLIENT_REGISTRY_GRANT_INVALID', 'oidc_client_registry.entries[0].allowed_scope_refs', 'The first client may request only openid/profile and the zdp-web-public audience.');
+        }
+        if (client.clientType !== 'confidential' ||
+            client.tokenEndpointAuthMethod !== 'private_key_jwt' ||
+            client.jwksRef !== 'client-keyset://zdp-web-public-staging') {
+            push('API_OIDC_CLIENT_REGISTRY_AUTH_METHOD_INVALID', 'oidc_client_registry.entries[0].token_endpoint_auth_method', 'The product BFF must authenticate as a confidential client with private_key_jwt and a logical keyset reference.');
+        }
+        if (client.sessionPolicyRef !==
+            'oidc-provider-runtime-v1-product-session' ||
+            client.revocationPolicyRef !== 'oidc-provider-runtime-v1-revocation' ||
+            client.runtimeBoundary !==
+                'product_bff_required_static_site_forbidden' ||
+            client.callbackHandlerRef !== 'zdp-web-public-bff-candidate') {
+            push('API_OIDC_CLIENT_REGISTRY_RUNTIME_BOUNDARY_INVALID', 'oidc_client_registry.entries[0].runtime_boundary', 'The static public site must not handle the callback; an explicit product BFF candidate owns the disabled runtime boundary.');
+        }
+        validateRequiredOidcValues(client.activationRequirements, OIDC_CLIENT_ACTIVATION_REQUIREMENTS, 'API_OIDC_CLIENT_REGISTRY_ACTIVATION_REQUIREMENT_MISSING', 'oidc_client_registry.entries[0].activation_requirements', push);
+    }
+    validateRequiredOidcValues(contract.forbiddenValues, OIDC_CLIENT_REGISTRY_FORBIDDEN_VALUES, 'API_OIDC_CLIENT_REGISTRY_FORBIDDEN_VALUE_MISSING', 'oidc_client_registry.forbidden_values', push);
+}
+function validateOidcProviderRuntime(contracts, diagnostics) {
+    const contract = contracts.oidcProviderRuntime;
+    const push = (code, path, message) => {
+        diagnostics.push({ code, file: OIDC_PROVIDER_RUNTIME_FILE, path, message });
+    };
+    if (contract.schemaVersion !== 1 ||
+        contract.status !== 'proposed-contract' ||
+        contract.ownerBoundary !== 'identity' ||
+        contract.pilotEnvironment !== 'staging' ||
+        contract.issuer !== 'https://account.staging.8ailors.xyz') {
+        push('API_OIDC_PROVIDER_RUNTIME_BOUNDARY_INVALID', 'oidc_provider_runtime', 'The first provider runtime profile must remain a proposed staging-only Core identity contract.');
+    }
+    if (contract.discoveryPath !== '/.well-known/openid-configuration' ||
+        contract.authorizationPath !== '/oauth2/authorize' ||
+        contract.tokenPath !== '/oauth2/token' ||
+        contract.jwksPath !== '/.well-known/jwks.json' ||
+        contract.revocationPath !== '/oauth2/revoke' ||
+        contract.endSessionPath !== '/oauth2/logout') {
+        push('API_OIDC_PROVIDER_RUNTIME_ENDPOINT_INVALID', 'oidc_provider_runtime.discovery_path', 'The staging runtime profile must keep one exact discovery, authorization, token, JWKS, revocation, and logout path set.');
+    }
+    if (contract.authorizationCodeTtlSeconds !== 60 ||
+        !contract.authorizationCodeSingleUse ||
+        contract.authorizationCodeStoragePolicy !==
+            'opaque_random_code_hash_only_atomic_consume') {
+        push('API_OIDC_PROVIDER_RUNTIME_CODE_POLICY_INVALID', 'oidc_provider_runtime.authorization_code_ttl_seconds', 'Authorization codes must expire after 60 seconds, be opaque, be stored only as a hash, and be consumed atomically once.');
+    }
+    validateRequiredOidcValues(contract.authorizationCodeRequiredBindings, OIDC_AUTHORIZATION_CODE_BINDINGS, 'API_OIDC_PROVIDER_RUNTIME_CODE_BINDING_MISSING', 'oidc_provider_runtime.authorization_code_required_bindings', push);
+    if (contract.accessTokenTtlSeconds !== 300 ||
+        contract.idTokenTtlSeconds !== 300 ||
+        contract.refreshTokenPolicy !== 'not_issued_in_first_staging_pilot') {
+        push('API_OIDC_PROVIDER_RUNTIME_TOKEN_POLICY_INVALID', 'oidc_provider_runtime.access_token_ttl_seconds', 'The first staging pilot must use five-minute access and ID tokens and must not issue refresh tokens.');
+    }
+    if (contract.clientAssertionAlgorithm !== 'RS256' ||
+        contract.clientAssertionTtlSeconds !== 60 ||
+        !contract.clientAssertionJtiSingleUse ||
+        contract.clientAssertionBindingPolicy !==
+            'iss_and_sub_equal_client_id_aud_exact_token_endpoint') {
+        push('API_OIDC_PROVIDER_RUNTIME_CLIENT_ASSERTION_INVALID', 'oidc_provider_runtime.client_assertion_algorithm', 'private_key_jwt assertions must use RS256, expire after 60 seconds, reject jti replay, bind iss/sub to client_id, and use the exact token endpoint as audience.');
+    }
+    if (contract.signingAlgorithm !== 'RS256' ||
+        contract.signingKeyRotationDays !== 30 ||
+        contract.retiredKeyVerificationSeconds !== 86400 ||
+        contract.jwksCacheMaxAgeSeconds !== 300) {
+        push('API_OIDC_PROVIDER_RUNTIME_KEY_POLICY_INVALID', 'oidc_provider_runtime.signing_algorithm', 'The proposed interoperable key profile is RS256, 30-day rotation, one-day retired-key verification, and five-minute JWKS caching.');
+    }
+    if (contract.centralSessionIdleSeconds !== 1209600 ||
+        contract.centralSessionAbsoluteSeconds !== 2592000 ||
+        contract.productSessionIdleMaxSeconds > contract.centralSessionIdleSeconds ||
+        contract.productSessionAbsoluteMaxSeconds >
+            contract.centralSessionAbsoluteSeconds ||
+        contract.sensitiveActionFreshSeconds !== 900 ||
+        contract.revocationMaxStalenessSeconds !== 60) {
+        push('API_OIDC_PROVIDER_RUNTIME_SESSION_POLICY_INVALID', 'oidc_provider_runtime.central_session_idle_seconds', 'Central sessions use 14-day idle and 30-day absolute limits; product bindings cannot outlive them, sensitive actions require a 15-minute fresh check, and revocation staleness is capped at 60 seconds.');
+    }
+    if (contract.productSessionRevalidationPolicy !==
+        'binding_must_not_outlive_central_session_and_core_access_rechecks_every_protected_action') {
+        push('API_OIDC_PROVIDER_RUNTIME_REVALIDATION_POLICY_INVALID', 'oidc_provider_runtime.product_session_revalidation_policy', 'Product bindings must not outlive central sessions and Core access must recheck every protected action.');
+    }
+    validateRequiredOidcValues(contract.requiredDenialReasons, OIDC_RUNTIME_DENIAL_REASONS, 'API_OIDC_PROVIDER_RUNTIME_DENIAL_REASON_MISSING', 'oidc_provider_runtime.required_denial_reasons', push);
+    validateRequiredOidcValues(contract.forbiddenValues, OIDC_PROVIDER_RUNTIME_FORBIDDEN_VALUES, 'API_OIDC_PROVIDER_RUNTIME_FORBIDDEN_VALUE_MISSING', 'oidc_provider_runtime.forbidden_values', push);
+}
+function validateRequiredOidcValues(actual, required, code, path, push) {
+    for (const value of required) {
+        if (!actual.includes(value)) {
+            push(code, path, `OIDC product-session contract must include \`${value}\`.`);
+        }
+    }
 }
 function validateAccessDecision(contracts, schemaBundlesByFile, diagnostics) {
     const contract = contracts.accessDecision;

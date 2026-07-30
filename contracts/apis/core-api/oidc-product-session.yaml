@@ -1,0 +1,90 @@
+oidc_product_session:
+  schema_version: 1
+  status: proposed-contract
+  owner_boundary: identity
+  protocol_profile: openid_connect_authorization_code_flow
+  oauth_security_baseline: oauth_2_0_security_bcp_rfc9700
+  oauth_2_1_status: draft_profile_not_final_rfc
+  response_type: code
+  pkce_method: S256
+  staging_issuer: https://account.staging.8ailors.xyz
+  production_issuer: https://account.8ailors.xyz
+  required_authorization_bindings:
+    - client_id
+    - exact_redirect_uri
+    - state
+    - nonce
+    - code_challenge
+    - code_challenge_method
+    - issuer
+    - requested_scope_refs
+    - requested_audience_refs
+  required_token_exchange_bindings:
+    - client_id
+    - authorization_code
+    - code_verifier
+    - exact_redirect_uri
+    - issuer
+  required_client_registry_fields:
+    - client_id
+    - product_ref
+    - environment
+    - exact_redirect_uris
+    - exact_post_logout_redirect_uris
+    - allowed_scope_refs
+    - allowed_audience_refs
+    - client_type
+    - token_endpoint_auth_method
+    - jwks_ref
+    - status
+    - session_policy_ref
+    - revocation_policy_ref
+  required_access_decision_bindings:
+    - subject_ref
+    - product_ref
+    - tenant_ref
+    - resource_type
+    - resource_ref
+    - action
+    - policy_version
+  invalidation_events:
+    - central_session_revoked
+    - account_restricted
+    - account_deleted
+    - credential_compromised
+    - product_client_disabled
+  exact_redirect_uri_match_required: true
+  wildcard_redirect_uri_forbidden: true
+  arbitrary_return_to_forbidden: true
+  authorization_code_single_use: true
+  authorization_code_ttl_policy: short_server_configured_ttl_recorded_in_the_reviewed_identity_policy
+  token_endpoint_caller: confidential_product_bff_only
+  browser_token_exposure_policy: no_access_refresh_or_id_token_in_url_local_storage_or_browser_readable_cookie
+  product_cookie_policy: opaque_secure_http_only_same_site_product_host_only_binding
+  product_session_owner: product_bff_binding_only
+  central_session_owner: core_identity
+  authorization_owner: core_access_per_protected_action
+  authentication_is_authorization: false
+  client_registry_policy: reviewed_central_environment_scoped_registry_no_product_local_env_var_as_authority
+  forbidden_consumer_uses:
+    - central_session_cookie_forwarded_to_product
+    - cross_product_session_cookie_reuse
+    - login_success_as_global_product_authorization
+    - product_bff_as_credential_or_account_truth
+    - arbitrary_return_to_redirect
+    - wildcard_redirect_uri
+    - unregistered_scope_or_audience
+    - callback_uri_selected_from_request_without_registry_match
+  forbidden_values:
+    - password
+    - authorization_header
+    - cookie_header
+    - access_token
+    - id_token
+    - refresh_token_plaintext
+    - client_secret_plaintext
+    - code_verifier_plaintext_at_rest
+    - authorization_code_plaintext_at_rest
+    - provider_secret
+    - raw_provider_error
+    - raw_customer_payload

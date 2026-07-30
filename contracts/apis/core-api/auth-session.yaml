@@ -23,11 +23,16 @@ schema_bundle:
   schemas:
     - id: AuthRegistrationCreateRequest
       kind: request
-      carries_secret_material: false
+      carries_secret_material: true
+      secret_material_policy: password_verifier_input_only_never_echo
       required_fields:
-        - email_or_external_identity
-        - locale
+        - login_id
+        - password
         - terms_consent_ref
+      optional_fields:
+        - locale
+      secret_fields:
+        - password
     - id: AuthRegistrationCreateResponse
       kind: response
       carries_secret_material: false

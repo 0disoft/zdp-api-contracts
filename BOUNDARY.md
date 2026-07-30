@@ -15,6 +15,8 @@
 - typed fetch client handoff metadata
 - authorization, audit, idempotency, metering hook declaration
 - Core 접근 판정의 request/response binding, deny 기본값, expiry와 비-bearer evidence 의미
+- 웹 제품 OIDC handoff와 중앙 client registry의 구현 중립 보안 계약
+- 첫 staging client fixture와 provider runtime TTL·key·revocation Proposed profile
 - 국가 공통 계산기의 정의, 표준 입력·결과 metadata, 안정 오류 코드와 계약·엔진 버전 handoff
 
 소유하지 않는다:
@@ -28,6 +30,8 @@
 - final authorization decision
 - access policy evaluation 또는 decision persistence 구현
 - 실제 public endpoint 운영
+- 제품 BFF 세션 저장 구현과 중앙 OIDC client registry 운영 구현
+- disabled client fixture의 실제 등록·활성화와 staging DNS·TLS 운영
 - generated OpenAPI, generated SDK, or published docs artifacts
 - 계산 공식과 실행 엔진
 - 로케일 파싱·표시 문자열

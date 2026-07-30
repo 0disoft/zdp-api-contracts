@@ -1,5 +1,17 @@
 # CHANGELOG.md
 
+## 0.15.0
+
+### Added
+
+- 웹 제품 BFF의 OIDC Authorization Code Flow, RFC 9700, PKCE S256, exact redirect URI와 중앙 client registry 경계를 `proposed-contract`로 추가했다.
+- 제품 host-only session binding과 중앙 session·credential 정본, Core Access의 작업별 권한 판단을 분리하는 검증을 추가했다.
+- disabled `zdp-web-public-staging` client fixture와 첫 provider runtime TTL·key·revocation Proposed profile을 추가했다.
+
+### Changed
+
+- 회원가입 요청을 현재 계정 정책과 맞춰 `login_id`, `password`, 필수 약관 동의로 정정하고 이메일을 가입 필수값에서 제거했다.
+
 ## 0.14.0
 
 ### Added

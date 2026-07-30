@@ -52,6 +52,8 @@ agent-facing 문서에는 raw package command를 실행 권한처럼 적지 않�
 - schema model export가 required field와 optional field를 분리하고 product-link의 선택적 `workspace_ref`를 보존하는지 확인한다.
 - sensitive-action authorization이 opaque receipt, exact binding, issuer expiry/revocation, audience durable single-use 소비를 유지하고 live route나 제품 resource 관계 검증을 주장하지 않는지 확인한다.
 - access-decision이 current-session을 identity-only로 유지하고, exact product/action/resource/scope binding, deny 기본값, policy/data revision, expiry, obligations와 non-bearer decision ref를 잃지 않는지 확인한다.
+- OIDC 제품 로그인 handoff가 Authorization Code Flow, RFC 9700, PKCE S256, exact redirect URI, 중앙 client registry, 제품 host-only session과 Core Access 재판단 경계를 유지하는지 확인한다.
+- 첫 staging client가 disabled BFF 경계와 exact callback에서 이탈하거나 provider runtime의 TTL·single-use·key rotation·revocation 상한이 느슨해지는지 확인한다.
 - export plan이 generated artifact를 쓰거나 schema publish를 주장하지 않는지 확인한다.
 - package export map과 `files` whitelist가 README의 package surface 설명과 어긋나지 않는지 확인한다.
 - tarball을 빈 Node 소비자에 설치했을 때 root와 공개 subpath가 Bun 전역이나 저장소 source layout에 기대지 않는지 확인한다.

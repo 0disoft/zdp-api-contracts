@@ -8,6 +8,9 @@ import {
   parseCalculatorCatalogContract,
   parseCalculatorConformanceContract,
   parseErrorEnvelopeContract,
+  parseOidcClientRegistryContract,
+  parseOidcProductSessionContract,
+  parseOidcProviderRuntimeContract,
   parseProductLinkHandoffContract,
   parseRouteContract,
   parseSdkGenerationInputContract,
@@ -368,6 +371,42 @@ function loadCommittedContracts(): ApiContracts {
           'apis',
           'core-api',
           'sensitive-action-authorization.yaml'
+        ),
+        'utf8'
+      )
+    ),
+    oidcProductSession: parseOidcProductSessionContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'oidc-product-session.yaml'
+        ),
+        'utf8'
+      )
+    ),
+    oidcClientRegistry: parseOidcClientRegistryContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'oidc-client-registry.yaml'
+        ),
+        'utf8'
+      )
+    ),
+    oidcProviderRuntime: parseOidcProviderRuntimeContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'oidc-provider-runtime.yaml'
         ),
         'utf8'
       )

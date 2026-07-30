@@ -8,8 +8,107 @@ export interface ApiContracts {
     readonly accessDecision: AccessDecisionContract;
     readonly productLinkHandoff: ProductLinkHandoffContract;
     readonly sensitiveActionAuthorization: SensitiveActionAuthorizationContract;
+    readonly oidcProductSession: OidcProductSessionContract;
+    readonly oidcClientRegistry: OidcClientRegistryContract;
+    readonly oidcProviderRuntime: OidcProviderRuntimeContract;
     readonly calculatorCatalog: CalculatorCatalogContract;
     readonly calculatorConformance: CalculatorConformanceContract;
+}
+export interface OidcProductSessionContract {
+    readonly schemaVersion: number;
+    readonly status: string;
+    readonly ownerBoundary: string;
+    readonly protocolProfile: string;
+    readonly oauthSecurityBaseline: string;
+    readonly oauth21Status: string;
+    readonly responseType: string;
+    readonly pkceMethod: string;
+    readonly stagingIssuer: string;
+    readonly productionIssuer: string;
+    readonly requiredAuthorizationBindings: readonly string[];
+    readonly requiredTokenExchangeBindings: readonly string[];
+    readonly requiredClientRegistryFields: readonly string[];
+    readonly requiredAccessDecisionBindings: readonly string[];
+    readonly invalidationEvents: readonly string[];
+    readonly exactRedirectUriMatchRequired: boolean;
+    readonly wildcardRedirectUriForbidden: boolean;
+    readonly arbitraryReturnToForbidden: boolean;
+    readonly authorizationCodeSingleUse: boolean;
+    readonly authorizationCodeTtlPolicy: string;
+    readonly tokenEndpointCaller: string;
+    readonly browserTokenExposurePolicy: string;
+    readonly productCookiePolicy: string;
+    readonly productSessionOwner: string;
+    readonly centralSessionOwner: string;
+    readonly authorizationOwner: string;
+    readonly authenticationIsAuthorization: boolean;
+    readonly clientRegistryPolicy: string;
+    readonly forbiddenConsumerUses: readonly string[];
+    readonly forbiddenValues: readonly string[];
+}
+export interface OidcClientRegistryContract {
+    readonly schemaVersion: number;
+    readonly status: string;
+    readonly ownerBoundary: string;
+    readonly authority: string;
+    readonly environment: string;
+    readonly entries: readonly OidcClientRegistryEntry[];
+    readonly forbiddenValues: readonly string[];
+}
+export interface OidcClientRegistryEntry {
+    readonly clientId: string;
+    readonly productRef: string;
+    readonly environment: string;
+    readonly exactRedirectUris: readonly string[];
+    readonly exactPostLogoutRedirectUris: readonly string[];
+    readonly allowedScopeRefs: readonly string[];
+    readonly allowedAudienceRefs: readonly string[];
+    readonly clientType: string;
+    readonly tokenEndpointAuthMethod: string;
+    readonly jwksRef: string;
+    readonly status: string;
+    readonly sessionPolicyRef: string;
+    readonly revocationPolicyRef: string;
+    readonly runtimeBoundary: string;
+    readonly callbackHandlerRef: string;
+    readonly activationRequirements: readonly string[];
+}
+export interface OidcProviderRuntimeContract {
+    readonly schemaVersion: number;
+    readonly status: string;
+    readonly ownerBoundary: string;
+    readonly pilotEnvironment: string;
+    readonly issuer: string;
+    readonly discoveryPath: string;
+    readonly authorizationPath: string;
+    readonly tokenPath: string;
+    readonly jwksPath: string;
+    readonly revocationPath: string;
+    readonly endSessionPath: string;
+    readonly authorizationCodeTtlSeconds: number;
+    readonly authorizationCodeSingleUse: boolean;
+    readonly authorizationCodeStoragePolicy: string;
+    readonly authorizationCodeRequiredBindings: readonly string[];
+    readonly accessTokenTtlSeconds: number;
+    readonly idTokenTtlSeconds: number;
+    readonly refreshTokenPolicy: string;
+    readonly clientAssertionAlgorithm: string;
+    readonly clientAssertionTtlSeconds: number;
+    readonly clientAssertionJtiSingleUse: boolean;
+    readonly clientAssertionBindingPolicy: string;
+    readonly signingAlgorithm: string;
+    readonly signingKeyRotationDays: number;
+    readonly retiredKeyVerificationSeconds: number;
+    readonly jwksCacheMaxAgeSeconds: number;
+    readonly centralSessionIdleSeconds: number;
+    readonly centralSessionAbsoluteSeconds: number;
+    readonly productSessionIdleMaxSeconds: number;
+    readonly productSessionAbsoluteMaxSeconds: number;
+    readonly sensitiveActionFreshSeconds: number;
+    readonly revocationMaxStalenessSeconds: number;
+    readonly productSessionRevalidationPolicy: string;
+    readonly requiredDenialReasons: readonly string[];
+    readonly forbiddenValues: readonly string[];
 }
 export interface SensitiveActionAuthorizationContract {
     readonly schemaVersion: number;

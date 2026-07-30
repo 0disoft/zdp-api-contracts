@@ -18,6 +18,8 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 | 데스크톱 제품 계정 연결 | `docs/contracts/desktop-product-link.md` |
 | 민감 행위 authorization receipt | `docs/contracts/sensitive-action-authorization.md` |
 | Core 접근 판정 | `docs/contracts/access-decision.md` |
+| 웹 제품 OIDC 로그인 handoff | `docs/contracts/oidc-product-session.md` |
+| OIDC client registry와 첫 staging runtime | `docs/contracts/oidc-client-registry-and-runtime.md` |
 | package surface | `docs/ops/package-surface.md` |
 
 ## 현재 범위
@@ -42,6 +44,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 ## 현재 제외
 
 - 실제 public API endpoint
+- OAuth 2.1을 최종 RFC라고 선언하거나 authorization/token endpoint의 live 경로를 확정하는 일
 - backend handler 구현
 - 실제 로그인 서버 구현
 - SDK 코드 생성 결과물
@@ -78,6 +81,17 @@ API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelo
 assurance와 플랫폼 정책 결정, audience 제품의 domain guard를 분리하고 opaque receipt의 exact
 binding, issuer expiry/revocation과 제품 transaction 안의 durable single-use 소비를 고정한다. Issue,
 completion, verify route와 live runtime은 별도 검토 전까지 정의하지 않는다.
+
+`oidc-product-session.yaml`은 웹 제품 BFF가 중앙 계정 issuer를 사용하는 권장 설계안을
+`proposed-contract`로 기록한다. OIDC Authorization Code Flow, RFC 9700 보안 기준, PKCE S256,
+정확히 등록된 redirect URI, 제품·환경별 중앙 client registry, 제품 host-only session binding과
+Core Access의 작업별 권한 판단을 분리한다. 이 계약은 OAuth 2.1을 최종 RFC라고 주장하지 않으며,
+live authorization/token endpoint, token TTL 숫자, client provisioning API 또는 production 활성화를
+확정하지 않는다.
+
+첫 staging client와 provider runtime 후보는 각각 `oidc-client-registry.yaml`과
+`oidc-provider-runtime.yaml`에 있다. `zdp-web-public-staging`은 정적 사이트가 callback을 처리할 수
+없으므로 BFF·DNS·key·callback·revocation·deny evidence가 채워질 때까지 `disabled`다.
 
 이렇게 해두면 제품 handler나 화면 payload가 API 계약 원천인 척 들어오는 일을 초반에 막을 수 있다. 또한 에러 응답에 provider secret이나 customer private payload가 섞이는 사고, 웹훅이 중복 처리 방지 없이 열리는 사고를 checker 단계에서 먼저 잡는다.
 
