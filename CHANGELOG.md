@@ -1,5 +1,16 @@
 # CHANGELOG.md
 
+## 0.16.2
+
+### Added
+
+- Trusted Publisher 릴리스가 branch CI, tag push, npm publish, 공개 smoke, GitHub Release 단계에서 실패했을 때 재실행 가능 여부와 새 patch 버전 필요 여부를 판단하는 복구 절차를 추가했다.
+- 공개 증거로 보존할 commit SHA, workflow run, npm integrity, provenance, GitHub Release 항목을 명시했다.
+
+### Changed
+
+- 이미 공개된 npm 버전의 재배포와 release tag 삭제·이동을 금지하고, `gitHead` 불일치는 즉시 incident로 중단하도록 운영 경계를 명확히 했다.
+
 ## 0.16.1
 
 ### Added
