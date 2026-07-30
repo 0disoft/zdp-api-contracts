@@ -66,17 +66,27 @@ describe('api contract checker', () => {
       authenticationIsAuthorization: false
     });
     expect(contracts.oidcClientRegistry).toMatchObject({
+      schemaVersion: 2,
       status: 'proposed-contract',
       authority: 'core_identity',
       environment: 'staging',
+      registryRevision: 1,
+      updatePolicy: 'compare_and_swap_registry_revision_and_audit_receipt',
+      lifecycle: {
+        states: ['disabled', 'active', 'suspended', 'retired'],
+        terminalStates: ['retired']
+      },
       entries: [
         {
           clientId: 'zdp-web-public-staging',
           productRef: 'web-public-home',
+          ownerRef: 'zdp-web-public',
+          entryRevision: 1,
           status: 'disabled',
           clientType: 'confidential',
           tokenEndpointAuthMethod: 'private_key_jwt',
-          runtimeBoundary: 'product_bff_required_static_site_forbidden'
+          runtimeBoundary: 'product_bff_required_static_site_forbidden',
+          activationEvidenceRefs: []
         }
       ]
     });
@@ -144,7 +154,102 @@ describe('api contract checker', () => {
       expect.arrayContaining([
         'API_OIDC_CLIENT_REGISTRY_FIXTURE_IDENTITY_INVALID',
         'API_OIDC_CLIENT_REGISTRY_REDIRECT_INVALID',
-        'API_OIDC_CLIENT_REGISTRY_RUNTIME_BOUNDARY_INVALID'
+        'API_OIDC_CLIENT_REGISTRY_RUNTIME_BOUNDARY_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_ACTIVATION_EVIDENCE_MISSING'
+      ])
+    );
+  });
+
+  it('rejects duplicate clients and cross-environment registry entries', () => {
+    const contracts = loadCommittedContracts();
+    const client = contracts.oidcClientRegistry.entries[0];
+    if (client === undefined) {
+      throw new Error('Expected the first staging OIDC client fixture.');
+    }
+    const result = validateApiContracts({
+      ...contracts,
+      oidcClientRegistry: {
+        ...contracts.oidcClientRegistry,
+        entries: [
+          client,
+          {
+            ...client,
+            environment: 'production',
+            entryRevision: 0
+          }
+        ]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        'API_OIDC_CLIENT_REGISTRY_CLIENT_ID_DUPLICATE',
+        'API_OIDC_CLIENT_REGISTRY_ENTRY_BOUNDARY_INVALID'
+      ])
+    );
+  });
+
+  it('rejects unsafe redirect and browser-token grant drift', () => {
+    const contracts = loadCommittedContracts();
+    const client = contracts.oidcClientRegistry.entries[0];
+    if (client === undefined) {
+      throw new Error('Expected the first staging OIDC client fixture.');
+    }
+    const result = validateApiContracts({
+      ...contracts,
+      oidcClientRegistry: {
+        ...contracts.oidcClientRegistry,
+        entries: [
+          {
+            ...client,
+            exactRedirectUris: [
+              'https://operator:secret@web-public.staging.8ailors.xyz/auth/callback#token'
+            ],
+            allowedGrantTypes: ['implicit'],
+            allowedResponseTypes: ['token'],
+            allowedPkceMethods: ['plain']
+          }
+        ]
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        'API_OIDC_CLIENT_REGISTRY_REDIRECT_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_GRANT_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_FIXTURE_CONFIGURATION_INVALID'
+      ])
+    );
+  });
+
+  it('rejects unreviewed registry lifecycle and authority drift', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      oidcClientRegistry: {
+        ...contracts.oidcClientRegistry,
+        registryRevision: 0,
+        updatePolicy: 'last_write_wins',
+        clientIdReusePolicy: 'reuse_after_retirement',
+        lifecycle: {
+          ...contracts.oidcClientRegistry.lifecycle,
+          states: ['active', 'deleted'],
+          transitions: []
+        },
+        requiredAuditEvents: ['oidc_client.activated']
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        'API_OIDC_CLIENT_REGISTRY_BOUNDARY_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_AUTHORITY_POLICY_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_LIFECYCLE_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_TRANSITION_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_AUDIT_EVENT_MISSING'
       ])
     );
   });

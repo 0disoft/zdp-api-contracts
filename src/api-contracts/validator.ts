@@ -237,17 +237,29 @@ const OIDC_TOKEN_EXCHANGE_BINDINGS = [
 const OIDC_CLIENT_REGISTRY_FIELDS = [
   'client_id',
   'product_ref',
+  'owner_ref',
   'environment',
+  'entry_revision',
+  'application_type',
   'exact_redirect_uris',
   'exact_post_logout_redirect_uris',
   'allowed_scope_refs',
   'allowed_audience_refs',
+  'allowed_grant_types',
+  'allowed_response_types',
+  'allowed_pkce_methods',
   'client_type',
   'token_endpoint_auth_method',
   'jwks_ref',
   'status',
+  'status_reason',
   'session_policy_ref',
-  'revocation_policy_ref'
+  'revocation_policy_ref',
+  'key_rotation_policy_ref',
+  'runtime_boundary',
+  'callback_handler_ref',
+  'activation_requirements',
+  'activation_evidence_refs'
 ] as const;
 const OIDC_ACCESS_DECISION_BINDINGS = [
   'subject_ref',
@@ -296,6 +308,47 @@ const OIDC_CLIENT_ACTIVATION_REQUIREMENTS = [
   'exact_callback_and_logout_smoke_passed',
   'central_session_revocation_smoke_passed',
   'core_access_denial_smoke_passed'
+] as const;
+const OIDC_CLIENT_REGISTRY_LIFECYCLE_STATES = [
+  'disabled',
+  'active',
+  'suspended',
+  'retired'
+] as const;
+const OIDC_CLIENT_REGISTRY_TRANSITIONS = [
+  'disabled:active:activation_requirements_and_review_receipt',
+  'active:suspended:security_or_operational_reason_and_revocation_receipt',
+  'suspended:active:remediation_evidence_and_reactivation_review_receipt',
+  'disabled:retired:retirement_reason_and_audit_receipt',
+  'suspended:retired:retirement_reason_and_audit_receipt'
+] as const;
+const OIDC_CLIENT_REGISTRY_IMMUTABLE_FIELDS = [
+  'client_id',
+  'product_ref',
+  'environment',
+  'client_type'
+] as const;
+const OIDC_CLIENT_REGISTRY_SECURITY_SENSITIVE_FIELDS = [
+  'exact_redirect_uris',
+  'exact_post_logout_redirect_uris',
+  'allowed_scope_refs',
+  'allowed_audience_refs',
+  'token_endpoint_auth_method',
+  'jwks_ref',
+  'session_policy_ref',
+  'revocation_policy_ref',
+  'runtime_boundary',
+  'callback_handler_ref'
+] as const;
+const OIDC_CLIENT_REGISTRY_AUDIT_EVENTS = [
+  'oidc_client.registered',
+  'oidc_client.activation_reviewed',
+  'oidc_client.activated',
+  'oidc_client.security_configuration_changed',
+  'oidc_client.suspended',
+  'oidc_client.reactivated',
+  'oidc_client.retired',
+  'oidc_client.keyset_rotated'
 ] as const;
 const OIDC_CLIENT_REGISTRY_FORBIDDEN_VALUES = [
   'client_secret_plaintext',
@@ -810,99 +863,227 @@ function validateOidcClientRegistry(
   };
 
   if (
-    contract.schemaVersion !== 1 ||
+    contract.schemaVersion !== 2 ||
     contract.status !== 'proposed-contract' ||
     contract.ownerBoundary !== 'identity' ||
     contract.authority !== 'core_identity' ||
-    contract.environment !== 'staging'
+    contract.environment !== 'staging' ||
+    !Number.isInteger(contract.registryRevision) ||
+    contract.registryRevision < 1
   ) {
     push(
       'API_OIDC_CLIENT_REGISTRY_BOUNDARY_INVALID',
       'oidc_client_registry',
-      'The first OIDC client registry fixture must remain a proposed Core identity-owned staging contract.'
+      'The OIDC client registry must remain a revisioned proposed Core identity-owned staging contract.'
     );
   }
 
-  if (contract.entries.length !== 1) {
+  if (
+    contract.sourceOfTruth !== 'reviewed_core_identity_registry' ||
+    contract.updatePolicy !==
+      'compare_and_swap_registry_revision_and_audit_receipt' ||
+    contract.environmentIsolation !==
+      'exact_environment_match_no_cross_environment_projection' ||
+    contract.clientIdReusePolicy !==
+      'retired_client_ids_are_tombstoned_and_never_reused'
+  ) {
     push(
-      'API_OIDC_CLIENT_REGISTRY_FIXTURE_COUNT_INVALID',
-      'oidc_client_registry.entries',
-      'The first staging fixture must contain exactly the disabled zdp-web-public client.'
+      'API_OIDC_CLIENT_REGISTRY_AUTHORITY_POLICY_INVALID',
+      'oidc_client_registry.update_policy',
+      'Registry changes must use reviewed Core identity authority, revision compare-and-swap, environment isolation, audit evidence, and non-reusable retired client IDs.'
     );
   }
 
-  const client = contract.entries[0];
-  if (client !== undefined) {
+  if (
+    !hasExactStringValues(
+      contract.lifecycle.states,
+      OIDC_CLIENT_REGISTRY_LIFECYCLE_STATES
+    ) ||
+    !hasExactStringValues(contract.lifecycle.terminalStates, ['retired'])
+  ) {
+    push(
+      'API_OIDC_CLIENT_REGISTRY_LIFECYCLE_INVALID',
+      'oidc_client_registry.lifecycle.states',
+      'OIDC clients must use disabled, active, suspended, and retired states with retired as the only terminal state.'
+    );
+  }
+  const transitions = contract.lifecycle.transitions.map(
+    (transition) =>
+      `${transition.from}:${transition.to}:${transition.requiredEvidence}`
+  );
+  if (!hasExactStringValues(transitions, OIDC_CLIENT_REGISTRY_TRANSITIONS)) {
+    push(
+      'API_OIDC_CLIENT_REGISTRY_TRANSITION_INVALID',
+      'oidc_client_registry.lifecycle.allowed_transitions',
+      'OIDC client activation, suspension, reactivation, and retirement must follow the reviewed evidence-bearing transition set.'
+    );
+  }
+  validateRequiredOidcValues(
+    contract.immutableFields,
+    OIDC_CLIENT_REGISTRY_IMMUTABLE_FIELDS,
+    'API_OIDC_CLIENT_REGISTRY_IMMUTABLE_FIELD_MISSING',
+    'oidc_client_registry.immutable_fields',
+    push
+  );
+  validateRequiredOidcValues(
+    contract.securitySensitiveFields,
+    OIDC_CLIENT_REGISTRY_SECURITY_SENSITIVE_FIELDS,
+    'API_OIDC_CLIENT_REGISTRY_SECURITY_FIELD_MISSING',
+    'oidc_client_registry.security_sensitive_fields',
+    push
+  );
+  validateRequiredOidcValues(
+    contract.requiredAuditEvents,
+    OIDC_CLIENT_REGISTRY_AUDIT_EVENTS,
+    'API_OIDC_CLIENT_REGISTRY_AUDIT_EVENT_MISSING',
+    'oidc_client_registry.required_audit_events',
+    push
+  );
+
+  const seenClientIds = new Map<string, number>();
+  contract.entries.forEach((client, index) => {
+    const path = `oidc_client_registry.entries[${index}]`;
+    const previousIndex = seenClientIds.get(client.clientId);
+    if (previousIndex !== undefined) {
+      push(
+        'API_OIDC_CLIENT_REGISTRY_CLIENT_ID_DUPLICATE',
+        `${path}.client_id`,
+        `OIDC client_id \`${client.clientId}\` duplicates entries[${previousIndex}] and must remain globally unique.`
+      );
+    } else {
+      seenClientIds.set(client.clientId, index);
+    }
+
     if (
-      client.clientId !== 'zdp-web-public-staging' ||
-      client.productRef !== 'web-public-home' ||
-      client.environment !== 'staging' ||
-      client.status !== 'disabled'
+      client.environment !== contract.environment ||
+      !Number.isInteger(client.entryRevision) ||
+      client.entryRevision < 1 ||
+      client.applicationType !== 'web' ||
+      !OIDC_CLIENT_REGISTRY_LIFECYCLE_STATES.includes(
+        client.status as (typeof OIDC_CLIENT_REGISTRY_LIFECYCLE_STATES)[number]
+      )
     ) {
       push(
-        'API_OIDC_CLIENT_REGISTRY_FIXTURE_IDENTITY_INVALID',
-        'oidc_client_registry.entries[0]',
-        'The first fixture must remain the disabled staging registration for web-public-home.'
+        'API_OIDC_CLIENT_REGISTRY_ENTRY_BOUNDARY_INVALID',
+        path,
+        'Each client must match the registry environment, use a positive entry revision, be a web application, and use a reviewed lifecycle state.'
       );
     }
+
     if (
-      !hasExactStringValues(client.exactRedirectUris, [
-        'https://web-public.staging.8ailors.xyz/auth/callback'
-      ]) ||
-      !hasExactStringValues(client.exactPostLogoutRedirectUris, [
-        'https://web-public.staging.8ailors.xyz/'
-      ]) ||
-      client.exactRedirectUris.some((uri) => uri.includes('*')) ||
-      client.exactPostLogoutRedirectUris.some((uri) => uri.includes('*'))
+      !hasUniqueStringValues(client.exactRedirectUris) ||
+      !hasUniqueStringValues(client.exactPostLogoutRedirectUris) ||
+      !client.exactRedirectUris.every(isExactHttpsOidcRedirectUri) ||
+      !client.exactPostLogoutRedirectUris.every(isExactHttpsOidcRedirectUri)
     ) {
       push(
         'API_OIDC_CLIENT_REGISTRY_REDIRECT_INVALID',
-        'oidc_client_registry.entries[0].exact_redirect_uris',
-        'The staging client must use only its exact HTTPS callback and logout URI without wildcards.'
+        `${path}.exact_redirect_uris`,
+        'OIDC redirect and post-logout URIs must be unique exact HTTPS URIs without wildcards, credentials, or fragments.'
       );
     }
+
     if (
-      !hasExactStringValues(client.allowedScopeRefs, ['openid', 'profile']) ||
-      !hasExactStringValues(client.allowedAudienceRefs, ['zdp-web-public'])
+      !client.allowedScopeRefs.includes('openid') ||
+      !hasUniqueStringValues(client.allowedScopeRefs) ||
+      !hasUniqueStringValues(client.allowedAudienceRefs) ||
+      !hasExactStringValues(client.allowedGrantTypes, ['authorization_code']) ||
+      !hasExactStringValues(client.allowedResponseTypes, ['code']) ||
+      !hasExactStringValues(client.allowedPkceMethods, ['S256'])
     ) {
       push(
         'API_OIDC_CLIENT_REGISTRY_GRANT_INVALID',
-        'oidc_client_registry.entries[0].allowed_scope_refs',
-        'The first client may request only openid/profile and the zdp-web-public audience.'
+        `${path}.allowed_scope_refs`,
+        'Web clients must request openid, keep scope and audience values unique, and use only authorization_code, code, and PKCE S256.'
       );
     }
+
     if (
       client.clientType !== 'confidential' ||
       client.tokenEndpointAuthMethod !== 'private_key_jwt' ||
-      client.jwksRef !== 'client-keyset://zdp-web-public-staging'
+      !client.jwksRef.startsWith('client-keyset://') ||
+      client.keyRotationPolicyRef !==
+        'oidc-provider-runtime-v1-client-key-rotation'
     ) {
       push(
         'API_OIDC_CLIENT_REGISTRY_AUTH_METHOD_INVALID',
-        'oidc_client_registry.entries[0].token_endpoint_auth_method',
-        'The product BFF must authenticate as a confidential client with private_key_jwt and a logical keyset reference.'
+        `${path}.token_endpoint_auth_method`,
+        'Product BFFs must be confidential private_key_jwt clients with logical keyset and key-rotation policy references.'
       );
     }
+
     if (
       client.sessionPolicyRef !==
         'oidc-provider-runtime-v1-product-session' ||
       client.revocationPolicyRef !== 'oidc-provider-runtime-v1-revocation' ||
-      client.runtimeBoundary !==
-        'product_bff_required_static_site_forbidden' ||
-      client.callbackHandlerRef !== 'zdp-web-public-bff-candidate'
+      !client.runtimeBoundary.startsWith('product_bff_required')
     ) {
       push(
         'API_OIDC_CLIENT_REGISTRY_RUNTIME_BOUNDARY_INVALID',
-        'oidc_client_registry.entries[0].runtime_boundary',
-        'The static public site must not handle the callback; an explicit product BFF candidate owns the disabled runtime boundary.'
+        `${path}.runtime_boundary`,
+        'Every web client must use the reviewed product-session and revocation policies and place callback exchange in a product BFF boundary.'
       );
     }
+
     validateRequiredOidcValues(
       client.activationRequirements,
       OIDC_CLIENT_ACTIVATION_REQUIREMENTS,
       'API_OIDC_CLIENT_REGISTRY_ACTIVATION_REQUIREMENT_MISSING',
-      'oidc_client_registry.entries[0].activation_requirements',
+      `${path}.activation_requirements`,
       push
     );
+    if (client.status === 'active' && client.activationEvidenceRefs.length === 0) {
+      push(
+        'API_OIDC_CLIENT_REGISTRY_ACTIVATION_EVIDENCE_MISSING',
+        `${path}.activation_evidence_refs`,
+        'An active OIDC client must reference reviewed activation evidence; declaring requirements alone is not proof.'
+      );
+    }
+  });
+
+  const firstFixture = contract.entries.find(
+    (client) => client.clientId === 'zdp-web-public-staging'
+  );
+  if (
+    firstFixture === undefined ||
+    firstFixture.productRef !== 'web-public-home' ||
+    firstFixture.ownerRef !== 'zdp-web-public' ||
+    firstFixture.environment !== 'staging' ||
+    firstFixture.status !== 'disabled' ||
+    firstFixture.statusReason !== 'callback_runtime_not_deployed'
+  ) {
+    push(
+      'API_OIDC_CLIENT_REGISTRY_FIXTURE_IDENTITY_INVALID',
+      'oidc_client_registry.entries',
+      'The registry must retain the disabled zdp-web-public staging fixture until its callback runtime is deployed and reviewed.'
+    );
+  } else {
+    if (
+      !hasExactStringValues(firstFixture.exactRedirectUris, [
+        'https://web-public.staging.8ailors.xyz/auth/callback'
+      ]) ||
+      !hasExactStringValues(firstFixture.exactPostLogoutRedirectUris, [
+        'https://web-public.staging.8ailors.xyz/'
+      ]) ||
+      !hasExactStringValues(firstFixture.allowedScopeRefs, [
+        'openid',
+        'profile'
+      ]) ||
+      !hasExactStringValues(firstFixture.allowedAudienceRefs, [
+        'zdp-web-public'
+      ]) ||
+      firstFixture.jwksRef !== 'client-keyset://zdp-web-public-staging' ||
+      firstFixture.runtimeBoundary !==
+        'product_bff_required_static_site_forbidden' ||
+      firstFixture.callbackHandlerRef !== 'zdp-web-public-bff-candidate' ||
+      firstFixture.activationEvidenceRefs.length !== 0
+    ) {
+      push(
+        'API_OIDC_CLIENT_REGISTRY_FIXTURE_CONFIGURATION_INVALID',
+        'oidc_client_registry.entries',
+        'The first disabled fixture must keep its exact staging URI, grant, keyset, BFF candidate, and empty activation-evidence configuration.'
+      );
+    }
   }
 
   validateRequiredOidcValues(
@@ -912,6 +1093,28 @@ function validateOidcClientRegistry(
     'oidc_client_registry.forbidden_values',
     push
   );
+}
+
+function hasUniqueStringValues(values: readonly string[]): boolean {
+  return new Set(values).size === values.length;
+}
+
+function isExactHttpsOidcRedirectUri(uri: string): boolean {
+  if (uri.includes('*')) {
+    return false;
+  }
+  try {
+    const parsed = new URL(uri);
+    return (
+      parsed.protocol === 'https:' &&
+      parsed.hostname.length > 0 &&
+      parsed.username.length === 0 &&
+      parsed.password.length === 0 &&
+      parsed.hash.length === 0
+    );
+  } catch {
+    return false;
+  }
 }
 
 function validateOidcProviderRuntime(

@@ -3,6 +3,34 @@
 이 문서는 제품 웹 로그인 계약의 첫 번째 구체화다. 둘 다 `proposed-contract`이며 실제 endpoint,
 DNS, key, session store 또는 배포가 준비됐다는 뜻이 아니다.
 
+## 중앙 registry 운영 계약
+
+Core identity가 환경별 registry의 정본을 소유한다. 제품 저장소의 환경변수나 배포 설정은 registry를
+복제한 projection일 수 있지만 `client_id`, callback, scope, audience 또는 상태를 독자적으로 확정할 수
+없다. staging과 production 항목은 서로 섞지 않으며 retired `client_id`는 tombstone으로 보존하고 다시
+사용하지 않는다.
+
+registry와 각 client entry는 revision을 가진다. 변경은 현재 revision을 확인하는 compare-and-swap과
+감사 receipt를 함께 요구한다. 경쟁하는 두 변경 중 먼저 반영된 변경만 성공하고, 뒤늦은 변경은 최신
+registry를 다시 읽어 재검토해야 한다. `last write wins`로 callback이나 keyset 변경을 덮어쓰지 않는다.
+
+client 상태는 `disabled`, `active`, `suspended`, `retired` 네 가지다.
+
+- `disabled → active`: 활성화 요구사항과 검토 receipt가 모두 필요하다.
+- `active → suspended`: 보안·운영 사유와 session/token revocation receipt가 필요하다.
+- `suspended → active`: 문제 해결 증거와 재활성화 검토 receipt가 필요하다.
+- `disabled|suspended → retired`: 폐기 사유와 감사 receipt가 필요하다.
+- `retired`는 terminal state이며 되돌리지 않는다.
+
+`active`가 아닌 client는 새 authorization과 token exchange를 허용하지 않는다. callback, logout URI,
+scope, audience, token endpoint 인증 방식, JWKS, session·revocation policy 또는 BFF 경계를 바꾸면 보안
+민감 변경으로 감사하고 재활성화 증거를 다시 확인한다. `client_id`, product, environment와 client type은
+수정하지 않고 기존 항목을 retire한 뒤 새 client를 등록한다.
+
+모든 web client는 Authorization Code Flow, response type `code`, PKCE `S256`만 허용한다. callback과
+logout URI는 wildcard, credential, fragment가 없는 exact HTTPS URI여야 한다. client ID 중복, registry와
+다른 environment, revision 없는 변경, 평문 secret/key material은 검증 단계에서 거부한다.
+
 ## 첫 client fixture
 
 `zdp-web-public`은 현재 정적 사이트이므로 OIDC callback과 token 교환을 처리할 수 없다. registry에는
@@ -17,6 +45,9 @@ callback은 별도 제품 BFF 후보가 처리해야 한다.
 - exact callback과 logout smoke
 - 중앙 session revocation 전파 smoke
 - Core Access deny smoke
+
+실제 활성 상태는 위 증거를 가리키는 `activation_evidence_refs`가 있어야 한다. 요구사항 목록만 채운 것은
+배포·검증 증거가 아니다. 현재 fixture의 목록은 비어 있으므로 `disabled`가 맞다.
 
 정적 사이트에 callback handler를 추가하거나 등록되지 않은 `return_to`, wildcard callback, production
 hostname을 fixture에 섞지 않는다.

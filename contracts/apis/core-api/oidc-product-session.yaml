@@ -28,17 +28,29 @@ oidc_product_session:
   required_client_registry_fields:
     - client_id
     - product_ref
+    - owner_ref
     - environment
+    - entry_revision
+    - application_type
     - exact_redirect_uris
     - exact_post_logout_redirect_uris
     - allowed_scope_refs
     - allowed_audience_refs
+    - allowed_grant_types
+    - allowed_response_types
+    - allowed_pkce_methods
     - client_type
     - token_endpoint_auth_method
     - jwks_ref
     - status
+    - status_reason
     - session_policy_ref
     - revocation_policy_ref
+    - key_rotation_policy_ref
+    - runtime_boundary
+    - callback_handler_ref
+    - activation_requirements
+    - activation_evidence_refs
   required_access_decision_bindings:
     - subject_ref
     - product_ref

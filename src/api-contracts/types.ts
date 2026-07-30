@@ -54,27 +54,57 @@ export interface OidcClientRegistryContract {
   readonly ownerBoundary: string;
   readonly authority: string;
   readonly environment: string;
+  readonly registryRevision: number;
+  readonly sourceOfTruth: string;
+  readonly updatePolicy: string;
+  readonly environmentIsolation: string;
+  readonly clientIdReusePolicy: string;
+  readonly lifecycle: OidcClientRegistryLifecycle;
+  readonly immutableFields: readonly string[];
+  readonly securitySensitiveFields: readonly string[];
+  readonly requiredAuditEvents: readonly string[];
   readonly entries: readonly OidcClientRegistryEntry[];
   readonly forbiddenValues: readonly string[];
+}
+
+export interface OidcClientRegistryLifecycle {
+  readonly states: readonly string[];
+  readonly terminalStates: readonly string[];
+  readonly transitions: readonly OidcClientRegistryTransition[];
+}
+
+export interface OidcClientRegistryTransition {
+  readonly from: string;
+  readonly to: string;
+  readonly requiredEvidence: string;
 }
 
 export interface OidcClientRegistryEntry {
   readonly clientId: string;
   readonly productRef: string;
+  readonly ownerRef: string;
   readonly environment: string;
+  readonly entryRevision: number;
+  readonly applicationType: string;
   readonly exactRedirectUris: readonly string[];
   readonly exactPostLogoutRedirectUris: readonly string[];
   readonly allowedScopeRefs: readonly string[];
   readonly allowedAudienceRefs: readonly string[];
+  readonly allowedGrantTypes: readonly string[];
+  readonly allowedResponseTypes: readonly string[];
+  readonly allowedPkceMethods: readonly string[];
   readonly clientType: string;
   readonly tokenEndpointAuthMethod: string;
   readonly jwksRef: string;
   readonly status: string;
+  readonly statusReason: string;
   readonly sessionPolicyRef: string;
   readonly revocationPolicyRef: string;
+  readonly keyRotationPolicyRef: string;
   readonly runtimeBoundary: string;
   readonly callbackHandlerRef: string;
   readonly activationRequirements: readonly string[];
+  readonly activationEvidenceRefs: readonly string[];
 }
 
 export interface OidcProviderRuntimeContract {

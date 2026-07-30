@@ -1,5 +1,16 @@
 # CHANGELOG.md
 
+## 0.16.0
+
+### Added
+
+- 중앙 OIDC client registry에 revision compare-and-swap, 환경 격리, immutable field, 보안 민감 변경, 감사 이벤트와 증거 기반 lifecycle 계약을 추가했다.
+- client ID 중복, cross-environment entry, 부정확한 HTTPS redirect, unreviewed lifecycle, active client의 activation evidence 누락을 거부하는 회귀 검사를 추가했다.
+
+### Changed
+
+- 첫 `zdp-web-public-staging` fixture는 계속 disabled로 유지하되, 단일 fixture 전용 validator를 여러 제품을 수용하는 일반 registry validator로 확장했다.
+
 ## 0.15.0
 
 ### Added
