@@ -600,7 +600,7 @@ describe('api contract checker', () => {
       'date-difference'
     ]);
     expect(
-      contracts.calculatorCatalog.definitions.slice(0, 2).every(
+      contracts.calculatorCatalog.definitions.slice(0, 3).every(
         (definition) =>
           definition.jurisdiction === 'global' &&
           definition.lifecycleStatus === 'reviewed' &&
@@ -610,7 +610,7 @@ describe('api contract checker', () => {
             'caller_decimal_places_0_to_100_half_away_from_zero'
       )
     ).toBe(true);
-    expect(contracts.calculatorConformance.cases).toHaveLength(11);
+    expect(contracts.calculatorConformance.cases).toHaveLength(18);
     expect(contracts.calculatorConformance.roundingMode).toBe(
       'half_away_from_zero'
     );

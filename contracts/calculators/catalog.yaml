@@ -153,13 +153,13 @@ definitions:
       - cost_and_selling_price_currency_must_match
 
   - id: break-even-point
-    lifecycle_status: draft
+    lifecycle_status: reviewed
     contract_version: "1.0.0"
     compatible_engine_versions:
       - "0.x"
     jurisdiction: global
-    precision_policy: explicit_before_active
-    rounding_policy: explicit_before_active
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
     inputs:
       - id: fixed_cost
         value_kind: decimal
@@ -210,6 +210,7 @@ definitions:
       - contribution_margin_is_unit_price_minus_unit_variable_cost
       - non_positive_contribution_margin_returns_specific_error
       - break_even_quantity_is_fixed_cost_divided_by_contribution_margin
+      - break_even_quantity_is_theoretical_and_not_implicitly_rounded_to_whole_items
       - all_currency_inputs_must_match
 
   - id: compound-interest

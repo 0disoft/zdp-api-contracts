@@ -22,7 +22,7 @@
 - `data-transfer-time`
 - `date-difference`
 
-모두 `jurisdiction: global`이다. `percentage-change`와 `margin-markup`은 reviewed 구현 묶음이고 나머지 네 정의는 draft다. 국가별 세금, 노동, 금융 규제나 기관 정책을 정답 조건으로 사용하지 않는다.
+모두 `jurisdiction: global`이다. `percentage-change`, `margin-markup`, `break-even-point`는 reviewed 구현 묶음이고 나머지 세 정의는 draft다. 국가별 세금, 노동, 금융 규제나 기관 정책을 정답 조건으로 사용하지 않는다.
 
 ## 표현 경계
 

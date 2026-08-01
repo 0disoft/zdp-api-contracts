@@ -172,3 +172,147 @@ cases:
     expected:
       status: error
       error_code: domain_error
+
+  - id: break-even-point.basic
+    calculator_id: break-even-point
+    input:
+      fixed_cost:
+        value: "1000"
+        unit: USD
+      unit_price:
+        value: "50"
+        unit: USD
+      unit_variable_cost:
+        value: "30"
+        unit: USD
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        contribution_margin_per_unit:
+          value: "20.00"
+          unit: USD
+        break_even_quantity:
+          value: "50.00"
+          unit: items
+
+  - id: break-even-point.zero-fixed-cost
+    calculator_id: break-even-point
+    input:
+      fixed_cost:
+        value: "0"
+        unit: EUR
+      unit_price:
+        value: "25"
+        unit: EUR
+      unit_variable_cost:
+        value: "10"
+        unit: EUR
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        contribution_margin_per_unit:
+          value: "15.00"
+          unit: EUR
+        break_even_quantity:
+          value: "0.00"
+          unit: items
+
+  - id: break-even-point.half-away-rounding
+    calculator_id: break-even-point
+    input:
+      fixed_cost:
+        value: "5"
+        unit: USD
+      unit_price:
+        value: "7"
+        unit: USD
+      unit_variable_cost:
+        value: "5"
+        unit: USD
+    options:
+      decimal_places: 0
+    expected:
+      status: success
+      output:
+        contribution_margin_per_unit:
+          value: "2"
+          unit: USD
+        break_even_quantity:
+          value: "3"
+          unit: items
+
+  - id: break-even-point.zero-contribution-margin
+    calculator_id: break-even-point
+    input:
+      fixed_cost:
+        value: "1000"
+        unit: USD
+      unit_price:
+        value: "30"
+        unit: USD
+      unit_variable_cost:
+        value: "30"
+        unit: USD
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: non_positive_contribution_margin
+
+  - id: break-even-point.negative-contribution-margin
+    calculator_id: break-even-point
+    input:
+      fixed_cost:
+        value: "1000"
+        unit: USD
+      unit_price:
+        value: "20"
+        unit: USD
+      unit_variable_cost:
+        value: "30"
+        unit: USD
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: non_positive_contribution_margin
+
+  - id: break-even-point.currency-mismatch
+    calculator_id: break-even-point
+    input:
+      fixed_cost:
+        value: "1000"
+        unit: USD
+      unit_price:
+        value: "50"
+        unit: EUR
+      unit_variable_cost:
+        value: "30"
+        unit: USD
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: incompatible_units
+
+  - id: break-even-point.negative-fixed-cost
+    calculator_id: break-even-point
+    input:
+      fixed_cost:
+        value: "-1"
+        unit: USD
+      unit_price:
+        value: "50"
+        unit: USD
+      unit_variable_cost:
+        value: "30"
+        unit: USD
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: domain_error
