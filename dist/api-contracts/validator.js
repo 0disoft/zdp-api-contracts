@@ -70,7 +70,11 @@ const REQUIRED_CALCULATOR_BASE_ERROR_CODES = [
 ];
 const CALCULATOR_CATALOG_FILE = 'contracts/calculators/catalog.yaml';
 const CALCULATOR_CONFORMANCE_FILE = 'contracts/calculators/conformance.yaml';
-const REVIEWED_CALCULATOR_IDS = ['percentage-change', 'margin-markup'];
+const REVIEWED_CALCULATOR_IDS = [
+    'percentage-change',
+    'margin-markup',
+    'break-even-point'
+];
 const REVIEWED_PRECISION_POLICY = 'canonical_ascii_decimal_string_max_1000_digits';
 const REVIEWED_ROUNDING_POLICY = 'caller_decimal_places_0_to_100_half_away_from_zero';
 const CONFORMANCE_DECIMAL_INPUT_POLICY = 'canonical_ascii_decimal_string';
