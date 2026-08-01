@@ -316,3 +316,266 @@ cases:
     expected:
       status: error
       error_code: domain_error
+
+  - id: data-transfer-time.decimal-gigabyte
+    calculator_id: data-transfer-time
+    input:
+      data_size:
+        value: "1"
+        unit: gigabyte
+      data_rate:
+        value: "100"
+        unit: megabits_per_second
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        transfer_duration:
+          value: "80.00"
+          unit: seconds
+
+  - id: data-transfer-time.binary-gibibyte
+    calculator_id: data-transfer-time
+    input:
+      data_size:
+        value: "1"
+        unit: gibibyte
+      data_rate:
+        value: "100"
+        unit: megabits_per_second
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        transfer_duration:
+          value: "85.90"
+          unit: seconds
+
+  - id: data-transfer-time.zero-size
+    calculator_id: data-transfer-time
+    input:
+      data_size:
+        value: "0"
+        unit: byte
+      data_rate:
+        value: "1"
+        unit: gigabits_per_second
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        transfer_duration:
+          value: "0.00"
+          unit: seconds
+
+  - id: data-transfer-time.half-away-rounding
+    calculator_id: data-transfer-time
+    input:
+      data_size:
+        value: "1"
+        unit: bit
+      data_rate:
+        value: "8"
+        unit: bits_per_second
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        transfer_duration:
+          value: "0.13"
+          unit: seconds
+
+  - id: data-transfer-time.unsupported-size-unit
+    calculator_id: data-transfer-time
+    input:
+      data_size:
+        value: "1"
+        unit: petabyte
+      data_rate:
+        value: "1"
+        unit: bits_per_second
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: unsupported_unit
+
+  - id: data-transfer-time.unsupported-rate-unit
+    calculator_id: data-transfer-time
+    input:
+      data_size:
+        value: "1"
+        unit: byte
+      data_rate:
+        value: "1"
+        unit: bytes_per_second
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: unsupported_unit
+
+  - id: data-transfer-time.zero-rate
+    calculator_id: data-transfer-time
+    input:
+      data_size:
+        value: "1"
+        unit: byte
+      data_rate:
+        value: "0"
+        unit: bits_per_second
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: domain_error
+
+  - id: data-transfer-time.negative-size
+    calculator_id: data-transfer-time
+    input:
+      data_size:
+        value: "-1"
+        unit: byte
+      data_rate:
+        value: "1"
+        unit: bits_per_second
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: domain_error
+
+  - id: data-transfer-time.size-kilobit
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: kilobit }
+      data_rate: { value: "1", unit: bits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "1000", unit: seconds }
+
+  - id: data-transfer-time.size-kilobyte
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: kilobyte }
+      data_rate: { value: "1", unit: bits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "8000", unit: seconds }
+
+  - id: data-transfer-time.size-megabit
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: megabit }
+      data_rate: { value: "1", unit: bits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "1000000", unit: seconds }
+
+  - id: data-transfer-time.size-megabyte
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: megabyte }
+      data_rate: { value: "1", unit: bits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "8000000", unit: seconds }
+
+  - id: data-transfer-time.size-gigabit
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: gigabit }
+      data_rate: { value: "1", unit: bits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "1000000000", unit: seconds }
+
+  - id: data-transfer-time.size-terabit
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: terabit }
+      data_rate: { value: "1", unit: bits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "1000000000000", unit: seconds }
+
+  - id: data-transfer-time.size-terabyte
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: terabyte }
+      data_rate: { value: "1", unit: bits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "8000000000000", unit: seconds }
+
+  - id: data-transfer-time.size-kibibyte
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: kibibyte }
+      data_rate: { value: "1", unit: bits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "8192", unit: seconds }
+
+  - id: data-transfer-time.size-mebibyte
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: mebibyte }
+      data_rate: { value: "1", unit: bits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "8388608", unit: seconds }
+
+  - id: data-transfer-time.size-tebibyte
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: tebibyte }
+      data_rate: { value: "1", unit: bits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "8796093022208", unit: seconds }
+
+  - id: data-transfer-time.rate-kilobits
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: megabit }
+      data_rate: { value: "1", unit: kilobits_per_second }
+    options: { decimal_places: 0 }
+    expected:
+      status: success
+      output:
+        transfer_duration: { value: "1000", unit: seconds }
+
+  - id: data-transfer-time.negative-rate
+    calculator_id: data-transfer-time
+    input:
+      data_size: { value: "1", unit: byte }
+      data_rate: { value: "-1", unit: bits_per_second }
+    options: { decimal_places: 2 }
+    expected:
+      status: error
+      error_code: domain_error

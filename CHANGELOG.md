@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## 0.18.0
+
+### Added
+
+- `data-transfer-time`을 reviewed 계산기 계약으로 승격하고 SI·IEC 데이터 크기, bit·byte 환산, bits-per-second 전송률과 초 단위 결과 의미를 고정했다.
+- decimal·binary 단위, half-away 반올림, 0 크기, 0 전송률, 음수 크기와 미지원 단위 적합성 벡터를 추가했다.
+- 최초 호환 엔진을 `0.3.0`으로 고정하고 모든 열거 입력 단위의 성공 벡터 누락과 성공 결과의 단위·소수 자릿수 drift를 validator가 거부하도록 강화했다.
+
 ## 0.17.0
 
 ### Added

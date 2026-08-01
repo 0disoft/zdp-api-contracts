@@ -600,7 +600,10 @@ describe('api contract checker', () => {
       'date-difference'
     ]);
     expect(
-      contracts.calculatorCatalog.definitions.slice(0, 3).every(
+      contracts.calculatorCatalog.definitions
+        .filter((definition) => definition.id !== 'compound-interest')
+        .slice(0, 4)
+        .every(
         (definition) =>
           definition.jurisdiction === 'global' &&
           definition.lifecycleStatus === 'reviewed' &&
@@ -608,9 +611,14 @@ describe('api contract checker', () => {
             'canonical_ascii_decimal_string_max_1000_digits' &&
           definition.roundingPolicy ===
             'caller_decimal_places_0_to_100_half_away_from_zero'
-      )
+        )
     ).toBe(true);
-    expect(contracts.calculatorConformance.cases).toHaveLength(18);
+    expect(contracts.calculatorConformance.cases).toHaveLength(38);
+    expect(
+      contracts.calculatorCatalog.definitions.find(
+        (definition) => definition.id === 'data-transfer-time'
+      )?.compatibleEngineVersions
+    ).toEqual(['0.3.0']);
     expect(contracts.calculatorConformance.roundingMode).toBe(
       'half_away_from_zero'
     );
@@ -728,6 +736,98 @@ describe('api contract checker', () => {
 
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
       'API_CALCULATOR_CONFORMANCE_FIELD_UNKNOWN'
+    );
+  });
+
+  it('rejects calculator conformance unit and precision drift', () => {
+    const contracts = loadCommittedContracts();
+    const original = contracts.calculatorConformance.cases.find(
+      (testCase) => testCase.id === 'data-transfer-time.decimal-gigabyte'
+    );
+    if (!original || original.expected.status !== 'success') {
+      throw new Error('Expected the data transfer success fixture.');
+    }
+    const dataSize = original.input.data_size;
+    const transferDuration = original.expected.output.transfer_duration;
+    if (
+      dataSize === undefined ||
+      typeof dataSize === 'string' ||
+      transferDuration === undefined
+    ) {
+      throw new Error('Expected unit-bearing data transfer fixture values.');
+    }
+
+    const invalidInputUnit = validateApiContracts({
+      ...contracts,
+      calculatorConformance: {
+        ...contracts.calculatorConformance,
+        cases: [
+          {
+            ...original,
+            input: {
+              ...original.input,
+              data_size: { ...dataSize, unit: 'petabyte' }
+            }
+          },
+          ...contracts.calculatorConformance.cases.filter(
+            (testCase) => testCase.id !== original.id
+          )
+        ]
+      }
+    });
+    expect(
+      invalidInputUnit.diagnostics.map((diagnostic) => diagnostic.code)
+    ).toContain('API_CALCULATOR_CONFORMANCE_INPUT_UNIT_INVALID');
+
+    const invalidOutput = validateApiContracts({
+      ...contracts,
+      calculatorConformance: {
+        ...contracts.calculatorConformance,
+        cases: [
+          {
+            ...original,
+            expected: {
+              status: 'success',
+              output: {
+                ...original.expected.output,
+                transfer_duration: {
+                  value: '80.0',
+                  unit: 'minutes'
+                }
+              }
+            }
+          },
+          ...contracts.calculatorConformance.cases.filter(
+            (testCase) => testCase.id !== original.id
+          )
+        ]
+      }
+    });
+    const invalidOutputCodes = invalidOutput.diagnostics.map(
+      (diagnostic) => diagnostic.code
+    );
+    expect(invalidOutputCodes).toContain(
+      'API_CALCULATOR_CONFORMANCE_OUTPUT_UNIT_INVALID'
+    );
+    expect(invalidOutputCodes).toContain(
+      'API_CALCULATOR_CONFORMANCE_OUTPUT_PRECISION_INVALID'
+    );
+  });
+
+  it('requires successful conformance coverage for every enumerated input unit', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      calculatorConformance: {
+        ...contracts.calculatorConformance,
+        cases: contracts.calculatorConformance.cases.filter(
+          (testCase) => testCase.id !== 'data-transfer-time.size-tebibyte'
+        )
+      }
+    });
+
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CALCULATOR_CONFORMANCE_UNIT_COVERAGE_MISSING'
     );
   });
 

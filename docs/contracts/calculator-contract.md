@@ -22,7 +22,7 @@
 - `data-transfer-time`
 - `date-difference`
 
-모두 `jurisdiction: global`이다. `percentage-change`, `margin-markup`, `break-even-point`는 reviewed 구현 묶음이고 나머지 세 정의는 draft다. 국가별 세금, 노동, 금융 규제나 기관 정책을 정답 조건으로 사용하지 않는다.
+모두 `jurisdiction: global`이다. `percentage-change`, `margin-markup`, `break-even-point`, `data-transfer-time`은 reviewed 구현 묶음이고 나머지 두 정의는 draft다. 국가별 세금, 노동, 금융 규제나 기관 정책을 정답 조건으로 사용하지 않는다.
 
 ## 표현 경계
 
@@ -30,7 +30,7 @@
 
 ## 숫자 정책
 
-reviewed 두 계산기는 로케일 구분자가 없는 ASCII decimal string을 입력으로 받는다. 부호와 소수점을 제외한 입력 숫자는 최대 1000자리이며 결과 소수 자리는 호출자가 0-100 범위에서 지정한다. 반올림은 정확한 중간값에서 0에서 멀어지는 `half_away_from_zero`다. `1,000`이나 `1.000,5` 같은 표시 문자열은 제품의 locale adapter가 표준 값으로 바꾼 뒤 엔진에 전달해야 한다.
+reviewed 네 계산기는 로케일 구분자가 없는 ASCII decimal string을 입력으로 받는다. 부호와 소수점을 제외한 입력 숫자는 최대 1000자리이며 결과 소수 자리는 호출자가 0-100 범위에서 지정한다. 반올림은 정확한 중간값에서 0에서 멀어지는 `half_away_from_zero`다. `1,000`이나 `1.000,5` 같은 표시 문자열은 제품의 locale adapter가 표준 값으로 바꾼 뒤 엔진에 전달해야 한다.
 
 나머지 draft 정의의 precision과 rounding policy는 `explicit_before_active`다. 임의 반올림을 허용한다는 뜻이 아니라 독립 검증 벡터와 구현 정책을 확정하기 전에는 reviewed나 active로 올리지 못한다는 뜻이다.
 

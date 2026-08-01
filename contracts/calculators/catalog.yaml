@@ -286,13 +286,13 @@ definitions:
       - principal_currency_is_preserved
 
   - id: data-transfer-time
-    lifecycle_status: draft
+    lifecycle_status: reviewed
     contract_version: "1.0.0"
     compatible_engine_versions:
-      - "0.x"
+      - "0.3.0"
     jurisdiction: global
-    precision_policy: explicit_before_active
-    rounding_policy: explicit_before_active
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
     inputs:
       - id: data_size
         value_kind: decimal
@@ -346,8 +346,13 @@ definitions:
     semantic_rules:
       - decimal_prefix_units_use_powers_of_1000
       - binary_prefix_units_use_powers_of_1024
+      - byte_units_convert_to_eight_bits_per_byte
       - data_rate_normalizes_to_bits_per_second
       - transfer_duration_is_total_bits_divided_by_bits_per_second
+      - zero_data_size_returns_zero_seconds
+      - negative_data_size_returns_domain_error
+      - non_positive_data_rate_returns_domain_error
+      - unknown_size_or_rate_unit_returns_unsupported_unit
 
   - id: date-difference
     lifecycle_status: draft

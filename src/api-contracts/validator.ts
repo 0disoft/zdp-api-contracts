@@ -6,6 +6,7 @@ import type {
   ApiSchemaBundleContract,
   ApiSchemaDefinition,
   CalculatorConformanceCase,
+  CalculatorConformanceInputValue,
   CalculatorDefinition,
   CalculatorInputDefinition,
   CalculatorOutputDefinition
@@ -94,7 +95,8 @@ const CALCULATOR_CONFORMANCE_FILE = 'contracts/calculators/conformance.yaml';
 const REVIEWED_CALCULATOR_IDS = [
   'percentage-change',
   'margin-markup',
-  'break-even-point'
+  'break-even-point',
+  'data-transfer-time'
 ] as const;
 const REVIEWED_PRECISION_POLICY =
   'canonical_ascii_decimal_string_max_1000_digits';
@@ -109,6 +111,7 @@ const CALCULATOR_FIELD_ID_PATTERN = /^[a-z][a-z0-9_]*$/;
 const CALCULATOR_RULE_PATTERN = /^[a-z][a-z0-9_]*$/;
 const CALCULATOR_VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
 const CALCULATOR_ENGINE_VERSION_PATTERN = /^(?:\d+\.x|\d+\.\d+\.\d+)$/;
+const CANONICAL_CALCULATOR_DECIMAL_PATTERN = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/;
 
 const REQUIRED_ROUTE_FIELDS = [
   'resource',
@@ -1976,6 +1979,9 @@ function validateCalculatorConformance(
 
   validateUniqueConformanceCaseIds(conformance.cases, diagnostics);
   for (const calculatorId of REVIEWED_CALCULATOR_IDS) {
+    const definition = contracts.calculatorCatalog.definitions.find(
+      (candidate) => candidate.id === calculatorId
+    );
     const cases = conformance.cases.filter(
       (testCase) => testCase.calculatorId === calculatorId
     );
@@ -1994,6 +2000,30 @@ function validateCalculatorConformance(
         'cases',
         `Reviewed calculator \`${calculatorId}\` needs an error fixture.`
       );
+    }
+    if (definition) {
+      for (const input of definition.inputs) {
+        if (input.unitPolicy !== 'enumerated') {
+          continue;
+        }
+        for (const unit of input.unitOptions) {
+          const covered = cases.some((testCase) => {
+            if (testCase.expected.status !== 'success') {
+              return false;
+            }
+            const value = testCase.input[input.id];
+            return value !== undefined && typeof value !== 'string' && value.unit === unit;
+          });
+          if (!covered) {
+            pushCalculatorConformanceDiagnostic(
+              diagnostics,
+              'API_CALCULATOR_CONFORMANCE_UNIT_COVERAGE_MISSING',
+              'cases',
+              `Reviewed calculator \`${calculatorId}\` needs a successful \`${input.id}\` fixture for unit \`${unit}\`.`
+            );
+          }
+        }
+      }
     }
   }
   conformance.cases.forEach((testCase, index) =>
@@ -2046,6 +2076,13 @@ function validateCalculatorConformanceCase(
     `${path}.input`,
     diagnostics
   );
+  const unsupportedInputUnits = validateCalculatorConformanceInputs(
+    contracts,
+    definition,
+    testCase,
+    path,
+    diagnostics
+  );
   if (testCase.expected.status === 'success') {
     validateConformanceKeys(
       Object.keys(testCase.expected.output),
@@ -2054,12 +2091,53 @@ function validateCalculatorConformanceCase(
       diagnostics
     );
     for (const [field, output] of Object.entries(testCase.expected.output)) {
-      if (!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(output.value)) {
+      if (!CANONICAL_CALCULATOR_DECIMAL_PATTERN.test(output.value)) {
         pushCalculatorConformanceDiagnostic(
           diagnostics,
           'API_CALCULATOR_CONFORMANCE_OUTPUT_VALUE_INVALID',
           `${path}.expected.output.${field}.value`,
           'Successful fixture output values must be canonical ASCII decimal strings.'
+        );
+      }
+      const definitionOutput = definition.outputs.find(
+        (candidate) => candidate.id === field
+      );
+      if (!definitionOutput) {
+        continue;
+      }
+      if (
+        definitionOutput.unitPolicy === 'enumerated' &&
+        !definitionOutput.unitOptions.includes(output.unit)
+      ) {
+        pushCalculatorConformanceDiagnostic(
+          diagnostics,
+          'API_CALCULATOR_CONFORMANCE_OUTPUT_UNIT_INVALID',
+          `${path}.expected.output.${field}.unit`,
+          `Successful fixture output unit \`${output.unit}\` is not declared by \`${field}\`.`
+        );
+      }
+      if (
+        definitionOutput.unitPolicy === 'caller_supplied' &&
+        !calculatorCallerSuppliedUnits(definition, testCase.input).includes(
+          output.unit
+        )
+      ) {
+        pushCalculatorConformanceDiagnostic(
+          diagnostics,
+          'API_CALCULATOR_CONFORMANCE_OUTPUT_UNIT_INVALID',
+          `${path}.expected.output.${field}.unit`,
+          `Successful fixture output unit \`${output.unit}\` must come from a caller-supplied input unit.`
+        );
+      }
+      if (
+        decimalPlacesInCanonicalValue(output.value) !==
+        testCase.options.decimalPlaces
+      ) {
+        pushCalculatorConformanceDiagnostic(
+          diagnostics,
+          'API_CALCULATOR_CONFORMANCE_OUTPUT_PRECISION_INVALID',
+          `${path}.expected.output.${field}.value`,
+          `Successful fixture output must use exactly ${testCase.options.decimalPlaces} decimal places.`
         );
       }
     }
@@ -2070,7 +2148,138 @@ function validateCalculatorConformanceCase(
       `${path}.expected.error_code`,
       `Error fixture code \`${testCase.expected.errorCode}\` is not declared by \`${definition.id}\`.`
     );
+  } else if (
+    testCase.expected.errorCode === 'unsupported_unit' &&
+    unsupportedInputUnits.length === 0
+  ) {
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_UNSUPPORTED_UNIT_CASE_INVALID',
+      `${path}.input`,
+      'An unsupported_unit fixture must contain at least one unit outside its enumerated input contract.'
+    );
   }
+}
+
+function validateCalculatorConformanceInputs(
+  contracts: ApiContracts,
+  definition: CalculatorDefinition,
+  testCase: CalculatorConformanceCase,
+  path: string,
+  diagnostics: ApiContractDiagnostic[]
+): readonly string[] {
+  const unsupportedUnits: string[] = [];
+  const skipDecimalShape =
+    testCase.expected.status === 'error' &&
+    (testCase.expected.errorCode === 'invalid_input' ||
+      testCase.expected.errorCode === 'limit_exceeded');
+
+  for (const input of definition.inputs) {
+    const value = testCase.input[input.id];
+    if (value === undefined) {
+      continue;
+    }
+    const inputPath = `${path}.input.${input.id}`;
+    const decimalValue = calculatorConformanceDecimalValue(
+      value,
+      input.unitPolicy,
+      inputPath,
+      diagnostics
+    );
+
+    if (typeof value !== 'string' && input.unitPolicy === 'enumerated') {
+      if (!input.unitOptions.includes(value.unit)) {
+        unsupportedUnits.push(input.id);
+        if (
+          testCase.expected.status !== 'error' ||
+          testCase.expected.errorCode !== 'unsupported_unit'
+        ) {
+          pushCalculatorConformanceDiagnostic(
+            diagnostics,
+            'API_CALCULATOR_CONFORMANCE_INPUT_UNIT_INVALID',
+            `${inputPath}.unit`,
+            `Fixture input unit \`${value.unit}\` is not declared by \`${input.id}\`.`
+          );
+        }
+      }
+    }
+
+    if (
+      input.valueKind === 'decimal' &&
+      decimalValue !== undefined &&
+      !skipDecimalShape
+    ) {
+      if (!CANONICAL_CALCULATOR_DECIMAL_PATTERN.test(decimalValue)) {
+        pushCalculatorConformanceDiagnostic(
+          diagnostics,
+          'API_CALCULATOR_CONFORMANCE_INPUT_VALUE_INVALID',
+          `${inputPath}${typeof value === 'string' ? '' : '.value'}`,
+          'Fixture decimal inputs must be canonical ASCII decimal strings.'
+        );
+      } else if (
+        decimalValue.replace(/[-.]/g, '').length >
+        contracts.calculatorConformance.maxInputDigits
+      ) {
+        pushCalculatorConformanceDiagnostic(
+          diagnostics,
+          'API_CALCULATOR_CONFORMANCE_INPUT_LIMIT_INVALID',
+          `${inputPath}${typeof value === 'string' ? '' : '.value'}`,
+          `Fixture decimal inputs must not exceed ${contracts.calculatorConformance.maxInputDigits} digits.`
+        );
+      }
+    }
+  }
+
+  return unsupportedUnits;
+}
+
+function calculatorConformanceDecimalValue(
+  value: CalculatorConformanceInputValue,
+  unitPolicy: string,
+  path: string,
+  diagnostics: ApiContractDiagnostic[]
+): string | undefined {
+  if (unitPolicy === 'none') {
+    if (typeof value === 'string') {
+      return value;
+    }
+    pushCalculatorConformanceDiagnostic(
+      diagnostics,
+      'API_CALCULATOR_CONFORMANCE_INPUT_SHAPE_INVALID',
+      path,
+      'A fixture input without units must be a decimal string.'
+    );
+    return undefined;
+  }
+  if (typeof value !== 'string') {
+    return value.value;
+  }
+  pushCalculatorConformanceDiagnostic(
+    diagnostics,
+    'API_CALCULATOR_CONFORMANCE_INPUT_SHAPE_INVALID',
+    path,
+    'A fixture input with a unit policy must be a value/unit object.'
+  );
+  return undefined;
+}
+
+function calculatorCallerSuppliedUnits(
+  definition: CalculatorDefinition,
+  input: Readonly<Record<string, CalculatorConformanceInputValue>>
+): readonly string[] {
+  return definition.inputs.flatMap((field) => {
+    const value = input[field.id];
+    return field.unitPolicy === 'caller_supplied' &&
+      value !== undefined &&
+      typeof value !== 'string'
+      ? [value.unit]
+      : [];
+  });
+}
+
+function decimalPlacesInCanonicalValue(value: string): number {
+  const decimalPoint = value.indexOf('.');
+  return decimalPoint === -1 ? 0 : value.length - decimalPoint - 1;
 }
 
 function validateConformanceKeys(
