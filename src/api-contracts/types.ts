@@ -259,14 +259,19 @@ export interface CalculatorConformanceUnitValue {
 }
 
 export interface CalculatorConformanceOptions {
-  readonly decimalPlaces: number;
+  readonly decimalPlaces?: number;
+}
+
+export interface CalculatorConformanceOutputValue {
+  readonly value: string | number;
+  readonly unit: string;
 }
 
 export type CalculatorConformanceExpectation =
   | {
       readonly status: 'success';
       readonly output: Readonly<
-        Record<string, CalculatorConformanceUnitValue>
+        Record<string, CalculatorConformanceOutputValue>
       >;
     }
   | {

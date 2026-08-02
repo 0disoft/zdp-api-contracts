@@ -1,5 +1,17 @@
 # CHANGELOG.md
 
+## 0.19.0
+
+### Added
+
+- `date-difference`를 reviewed 계산기 계약으로 승격하고 strict `YYYY-MM-DD`, proleptic Gregorian, `0001`–`9999`, inclusive/exclusive 경계와 정확한 정수 일수 의미를 고정했다.
+- 윤년·세기·전체 지원 범위·역전 범위·시간대 문자열 거부를 포함한 날짜 적합성 벡터를 추가했다.
+
+### Changed
+
+- 계산기 conformance schema를 v2로 올려 소수 계산기의 canonical decimal string과 날짜 계산기의 JSON integer 출력을 각각 검증한다.
+- 모호한 `elapsed_days` 결과 ID를 `calendar_day_count`로 교체하고 날짜 계산에서 의미 없는 precision/rounding 오류를 제거했다.
+
 ## 0.18.0
 
 ### Added

@@ -355,13 +355,13 @@ definitions:
       - unknown_size_or_rate_unit_returns_unsupported_unit
 
   - id: date-difference
-    lifecycle_status: draft
+    lifecycle_status: reviewed
     contract_version: "1.0.0"
     compatible_engine_versions:
-      - "0.x"
+      - "0.4.0"
     jurisdiction: global
-    precision_policy: explicit_before_active
-    rounding_policy: explicit_before_active
+    precision_policy: exact_integer_calendar_days_years_0001_to_9999
+    rounding_policy: not_applicable_exact_integer
     inputs:
       - id: start_date
         value_kind: date
@@ -370,7 +370,7 @@ definitions:
         unit_options: []
         allowed_values: []
         required: true
-        domain: iso_8601_calendar_date
+        domain: strict_ascii_yyyy_mm_dd_proleptic_gregorian_years_0001_to_9999
       - id: end_date
         value_kind: date
         unit_dimension: date
@@ -378,7 +378,7 @@ definitions:
         unit_options: []
         allowed_values: []
         required: true
-        domain: iso_8601_calendar_date
+        domain: strict_ascii_yyyy_mm_dd_proleptic_gregorian_years_0001_to_9999
       - id: boundary_mode
         value_kind: enum
         unit_dimension: dimensionless
@@ -390,7 +390,7 @@ definitions:
         required: true
         domain: allowed_values_only
     outputs:
-      - id: elapsed_days
+      - id: calendar_day_count
         value_kind: integer
         unit_dimension: duration
         unit_policy: enumerated
@@ -402,11 +402,12 @@ definitions:
       - limit_exceeded
       - contract_mismatch
       - invalid_date_range
-      - precision_policy_required
-      - rounding_policy_required
     semantic_rules:
-      - inputs_are_plain_iso_8601_calendar_dates
+      - inputs_match_ascii_yyyy_mm_dd_exactly
+      - supported_years_are_0001_through_9999_inclusive
+      - dates_use_the_proleptic_gregorian_calendar
+      - leap_years_follow_the_4_100_400_rule
       - time_of_day_and_timezone_are_not_accepted
       - end_date_before_start_date_returns_invalid_date_range
-      - exclusive_mode_excludes_end_boundary
+      - exclusive_mode_counts_start_inclusive_end_exclusive
       - inclusive_mode_includes_both_boundaries

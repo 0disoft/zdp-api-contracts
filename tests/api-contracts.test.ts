@@ -599,21 +599,37 @@ describe('api contract checker', () => {
       'data-transfer-time',
       'date-difference'
     ]);
+    const reviewed = contracts.calculatorCatalog.definitions.filter(
+      (definition) => definition.lifecycleStatus === 'reviewed'
+    );
+    expect(reviewed.map((definition) => definition.id)).toEqual([
+      'percentage-change',
+      'margin-markup',
+      'break-even-point',
+      'data-transfer-time',
+      'date-difference'
+    ]);
     expect(
-      contracts.calculatorCatalog.definitions
-        .filter((definition) => definition.id !== 'compound-interest')
-        .slice(0, 4)
+      reviewed
+        .filter((definition) => definition.id !== 'date-difference')
         .every(
-        (definition) =>
-          definition.jurisdiction === 'global' &&
-          definition.lifecycleStatus === 'reviewed' &&
-          definition.precisionPolicy ===
-            'canonical_ascii_decimal_string_max_1000_digits' &&
-          definition.roundingPolicy ===
-            'caller_decimal_places_0_to_100_half_away_from_zero'
+          (definition) =>
+            definition.jurisdiction === 'global' &&
+            definition.precisionPolicy ===
+              'canonical_ascii_decimal_string_max_1000_digits' &&
+            definition.roundingPolicy ===
+              'caller_decimal_places_0_to_100_half_away_from_zero'
         )
     ).toBe(true);
-    expect(contracts.calculatorConformance.cases).toHaveLength(38);
+    expect(
+      reviewed.find((definition) => definition.id === 'date-difference')
+    ).toMatchObject({
+      precisionPolicy: 'exact_integer_calendar_days_years_0001_to_9999',
+      roundingPolicy: 'not_applicable_exact_integer',
+      compatibleEngineVersions: ['0.4.0']
+    });
+    expect(contracts.calculatorConformance.schemaVersion).toBe(2);
+    expect(contracts.calculatorConformance.cases).toHaveLength(57);
     expect(
       contracts.calculatorCatalog.definitions.find(
         (definition) => definition.id === 'data-transfer-time'

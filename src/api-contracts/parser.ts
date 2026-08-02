@@ -1736,6 +1736,11 @@ function parseCalculatorConformanceCase(
   const expected = requiredObject(testCase, 'expected', context);
   assertOnlyKeys(options, ['decimal_places'], `${context}.options`);
 
+  const decimalPlaces = options.decimal_places;
+  if (decimalPlaces !== undefined && typeof decimalPlaces !== 'number') {
+    throw new Error(`${context}.options.decimal_places must be a number when declared.`);
+  }
+
   return {
     id: requiredString(testCase, 'id', context),
     calculatorId: requiredString(testCase, 'calculator_id', context),
@@ -1745,13 +1750,7 @@ function parseCalculatorConformanceCase(
         parseCalculatorConformanceInputValue(value, `${context}.input.${key}`)
       ])
     ),
-    options: {
-      decimalPlaces: requiredNumber(
-        options,
-        'decimal_places',
-        `${context}.options`
-      )
-    },
+    options: decimalPlaces === undefined ? {} : { decimalPlaces },
     expected: parseCalculatorConformanceExpectation(expected, context)
   };
 }
@@ -1786,7 +1785,7 @@ function parseCalculatorConformanceExpectation(
           }
           return [
             key,
-            parseCalculatorConformanceUnitValue(
+            parseCalculatorConformanceOutputValue(
               value,
               `${context}.expected.output.${key}`
             )
@@ -1807,6 +1806,21 @@ function parseCalculatorConformanceExpectation(
     };
   }
   throw new Error(`${context}.expected.status must be success or error.`);
+}
+
+function parseCalculatorConformanceOutputValue(
+  value: Record<string, unknown>,
+  context: string
+): { readonly value: string | number; readonly unit: string } {
+  assertOnlyKeys(value, ['value', 'unit'], context);
+  const outputValue = value.value;
+  if (typeof outputValue !== 'string' && typeof outputValue !== 'number') {
+    throw new Error(`${context}.value must be a decimal string or integer number.`);
+  }
+  return {
+    value: outputValue,
+    unit: requiredString(value, 'unit', context)
+  };
 }
 
 function parseCalculatorConformanceUnitValue(

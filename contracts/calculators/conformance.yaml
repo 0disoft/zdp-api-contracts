@@ -1,5 +1,5 @@
 calculator_conformance:
-  schema_version: 1
+  schema_version: 2
   contract_version: "1.0.0"
   engine_version_range: "0.x"
   decimal_input_policy: canonical_ascii_decimal_string
@@ -579,3 +579,147 @@ cases:
     expected:
       status: error
       error_code: domain_error
+
+  - id: date-difference.same-day-exclusive
+    calculator_id: date-difference
+    input: { start_date: "2024-06-15", end_date: "2024-06-15", boundary_mode: exclusive }
+    options: {}
+    expected:
+      status: success
+      output:
+        calendar_day_count: { value: 0, unit: days }
+
+  - id: date-difference.same-day-inclusive
+    calculator_id: date-difference
+    input: { start_date: "2024-06-15", end_date: "2024-06-15", boundary_mode: inclusive }
+    options: {}
+    expected:
+      status: success
+      output:
+        calendar_day_count: { value: 1, unit: days }
+
+  - id: date-difference.adjacent-exclusive
+    calculator_id: date-difference
+    input: { start_date: "2024-06-15", end_date: "2024-06-16", boundary_mode: exclusive }
+    options: {}
+    expected:
+      status: success
+      output:
+        calendar_day_count: { value: 1, unit: days }
+
+  - id: date-difference.adjacent-inclusive
+    calculator_id: date-difference
+    input: { start_date: "2024-06-15", end_date: "2024-06-16", boundary_mode: inclusive }
+    options: {}
+    expected:
+      status: success
+      output:
+        calendar_day_count: { value: 2, unit: days }
+
+  - id: date-difference.leap-year-2000
+    calculator_id: date-difference
+    input: { start_date: "2000-02-28", end_date: "2000-03-01", boundary_mode: exclusive }
+    options: {}
+    expected:
+      status: success
+      output:
+        calendar_day_count: { value: 2, unit: days }
+
+  - id: date-difference.century-1900
+    calculator_id: date-difference
+    input: { start_date: "1900-02-28", end_date: "1900-03-01", boundary_mode: exclusive }
+    options: {}
+    expected:
+      status: success
+      output:
+        calendar_day_count: { value: 1, unit: days }
+
+  - id: date-difference.month-boundary
+    calculator_id: date-difference
+    input: { start_date: "2023-01-31", end_date: "2023-02-01", boundary_mode: exclusive }
+    options: {}
+    expected:
+      status: success
+      output:
+        calendar_day_count: { value: 1, unit: days }
+
+  - id: date-difference.year-boundary
+    calculator_id: date-difference
+    input: { start_date: "2023-12-31", end_date: "2024-01-01", boundary_mode: exclusive }
+    options: {}
+    expected:
+      status: success
+      output:
+        calendar_day_count: { value: 1, unit: days }
+
+  - id: date-difference.supported-range-exclusive
+    calculator_id: date-difference
+    input: { start_date: "0001-01-01", end_date: "9999-12-31", boundary_mode: exclusive }
+    options: {}
+    expected:
+      status: success
+      output:
+        calendar_day_count: { value: 3652058, unit: days }
+
+  - id: date-difference.supported-range-inclusive
+    calculator_id: date-difference
+    input: { start_date: "0001-01-01", end_date: "9999-12-31", boundary_mode: inclusive }
+    options: {}
+    expected:
+      status: success
+      output:
+        calendar_day_count: { value: 3652059, unit: days }
+
+  - id: date-difference.end-before-start
+    calculator_id: date-difference
+    input: { start_date: "2024-01-02", end_date: "2024-01-01", boundary_mode: exclusive }
+    options: {}
+    expected: { status: error, error_code: invalid_date_range }
+
+  - id: date-difference.non-padded-date
+    calculator_id: date-difference
+    input: { start_date: "2024-2-01", end_date: "2024-02-02", boundary_mode: exclusive }
+    options: {}
+    expected: { status: error, error_code: invalid_input }
+
+  - id: date-difference.timestamp-rejected
+    calculator_id: date-difference
+    input: { start_date: "2024-01-01T00:00:00", end_date: "2024-01-02", boundary_mode: exclusive }
+    options: {}
+    expected: { status: error, error_code: invalid_input }
+
+  - id: date-difference.utc-marker-rejected
+    calculator_id: date-difference
+    input: { start_date: "2024-01-01Z", end_date: "2024-01-02", boundary_mode: exclusive }
+    options: {}
+    expected: { status: error, error_code: invalid_input }
+
+  - id: date-difference.offset-rejected
+    calculator_id: date-difference
+    input: { start_date: "2024-01-01+09:00", end_date: "2024-01-02", boundary_mode: exclusive }
+    options: {}
+    expected: { status: error, error_code: invalid_input }
+
+  - id: date-difference.invalid-leap-day
+    calculator_id: date-difference
+    input: { start_date: "2023-02-29", end_date: "2023-03-01", boundary_mode: exclusive }
+    options: {}
+    expected: { status: error, error_code: domain_error }
+
+  - id: date-difference.year-zero
+    calculator_id: date-difference
+    input: { start_date: "0000-01-01", end_date: "0001-01-01", boundary_mode: exclusive }
+    options: {}
+    expected: { status: error, error_code: limit_exceeded }
+
+  - id: date-difference.invalid-boundary-mode
+    calculator_id: date-difference
+    input: { start_date: "2024-01-01", end_date: "2024-01-02", boundary_mode: both }
+    options: {}
+    expected: { status: error, error_code: invalid_input }
+
+  - id: date-difference.contract-mismatch
+    calculator_id: date-difference
+    input: { start_date: "2024-01-01", end_date: "2024-01-02", boundary_mode: exclusive }
+    options: {}
+    expected: { status: error, error_code: contract_mismatch }
