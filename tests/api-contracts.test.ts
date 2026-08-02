@@ -606,6 +606,7 @@ describe('api contract checker', () => {
       'percentage-change',
       'margin-markup',
       'break-even-point',
+      'compound-interest',
       'data-transfer-time',
       'date-difference'
     ]);
@@ -629,7 +630,14 @@ describe('api contract checker', () => {
       compatibleEngineVersions: ['0.4.0']
     });
     expect(contracts.calculatorConformance.schemaVersion).toBe(2);
-    expect(contracts.calculatorConformance.cases).toHaveLength(57);
+    expect(contracts.calculatorConformance.cases).toHaveLength(73);
+    expect(
+      reviewed.find((definition) => definition.id === 'compound-interest')
+    ).toMatchObject({
+      compatibleEngineVersions: ['0.4.0'],
+      precisionPolicy: 'canonical_ascii_decimal_string_max_1000_digits',
+      roundingPolicy: 'caller_decimal_places_0_to_100_half_away_from_zero'
+    });
     expect(
       contracts.calculatorCatalog.definitions.find(
         (definition) => definition.id === 'data-transfer-time'
@@ -645,8 +653,8 @@ describe('api contract checker', () => {
       join(process.cwd(), 'contracts', 'calculators', 'catalog.yaml'),
       'utf8'
     ).replace(
-      '    lifecycle_status: draft',
-      '    lifecycle_status: draft\n    screen_component_payload: forbidden'
+      '  - id: percentage-change\n    lifecycle_status: reviewed',
+      '  - id: percentage-change\n    lifecycle_status: reviewed\n    screen_component_payload: forbidden'
     );
 
     expect(() => parseCalculatorCatalogContract(source)).toThrow(

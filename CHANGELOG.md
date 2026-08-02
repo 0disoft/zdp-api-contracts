@@ -1,5 +1,17 @@
 # CHANGELOG.md
 
+## 0.20.0
+
+### Added
+
+- `compound-interest`를 reviewed 계산기 계약으로 승격하고 principal, nominal annual rate, frequency, exact integer compounding periods를 고정했다.
+- 연·반기·분기·월·일 복리, 음수 금리, identity, half-away tie, 통화 보존과 실행 한계 벡터를 추가했다.
+
+### Changed
+
+- 모호한 decimal `duration_years`를 canonical unsigned integer `compounding_periods`로 교체해 fractional compounding을 제거했다.
+- 기간은 frequency당 최대 100년, 축약 후 거듭제곱 피연산자 예상 자릿수는 250,000으로 제한하고 exact rational 중간값은 반올림하지 않도록 고정했다.
+
 ## 0.19.0
 
 ### Added

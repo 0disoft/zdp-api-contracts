@@ -723,3 +723,143 @@ cases:
     input: { start_date: "2024-01-01", end_date: "2024-01-02", boundary_mode: exclusive }
     options: {}
     expected: { status: error, error_code: contract_mismatch }
+
+  - id: compound-interest.annual-two-periods
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "0.05", compounding_periods: "2", compounding_frequency: "1_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "110.25", unit: USD }
+        interest_earned: { value: "10.25", unit: USD }
+
+  - id: compound-interest.semiannual-two-periods
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "0.10", compounding_periods: "2", compounding_frequency: "2_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "110.25", unit: USD }
+        interest_earned: { value: "10.25", unit: USD }
+
+  - id: compound-interest.quarterly-four-periods
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "0.20", compounding_periods: "4", compounding_frequency: "4_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "121.55", unit: USD }
+        interest_earned: { value: "21.55", unit: USD }
+
+  - id: compound-interest.monthly-six-periods
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "0.12", compounding_periods: "6", compounding_frequency: "12_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "106.15", unit: USD }
+        interest_earned: { value: "6.15", unit: USD }
+
+  - id: compound-interest.daily-one-period
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "3.65", compounding_periods: "1", compounding_frequency: "365_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "101.00", unit: USD }
+        interest_earned: { value: "1.00", unit: USD }
+
+  - id: compound-interest.negative-rate
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "-0.12", compounding_periods: "12", compounding_frequency: "12_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "88.64", unit: USD }
+        interest_earned: { value: "-11.36", unit: USD }
+
+  - id: compound-interest.half-away-tie
+    calculator_id: compound-interest
+    input: { principal: { value: "1", unit: USD }, nominal_annual_rate: "0.005", compounding_periods: "1", compounding_frequency: "1_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "1.01", unit: USD }
+        interest_earned: { value: "0.01", unit: USD }
+
+  - id: compound-interest.zero-principal
+    calculator_id: compound-interest
+    input: { principal: { value: "0", unit: USD }, nominal_annual_rate: "0.05", compounding_periods: "10", compounding_frequency: "1_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "0.00", unit: USD }
+        interest_earned: { value: "0.00", unit: USD }
+
+  - id: compound-interest.zero-rate
+    calculator_id: compound-interest
+    input: { principal: { value: "123.456", unit: USD }, nominal_annual_rate: "0", compounding_periods: "12", compounding_frequency: "12_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "123.46", unit: USD }
+        interest_earned: { value: "0.00", unit: USD }
+
+  - id: compound-interest.zero-periods
+    calculator_id: compound-interest
+    input: { principal: { value: "100.125", unit: USD }, nominal_annual_rate: "0.05", compounding_periods: "0", compounding_frequency: "1_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "100.13", unit: USD }
+        interest_earned: { value: "0.00", unit: USD }
+
+  - id: compound-interest.currency-preserved
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: EUR }, nominal_annual_rate: "0.05", compounding_periods: "1", compounding_frequency: "1_per_year" }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        future_value: { value: "105.00", unit: EUR }
+        interest_earned: { value: "5.00", unit: EUR }
+
+  - id: compound-interest.rate-negative-one
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "-1", compounding_periods: "1", compounding_frequency: "1_per_year" }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: compound-interest.negative-principal
+    calculator_id: compound-interest
+    input: { principal: { value: "-1", unit: USD }, nominal_annual_rate: "0.05", compounding_periods: "1", compounding_frequency: "1_per_year" }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: compound-interest.malformed-periods
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "0.05", compounding_periods: "1.5", compounding_frequency: "1_per_year" }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: invalid_input }
+
+  - id: compound-interest.unknown-frequency
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "0.05", compounding_periods: "1", compounding_frequency: "52_per_year" }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: invalid_input }
+
+  - id: compound-interest.period-limit
+    calculator_id: compound-interest
+    input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "0.05", compounding_periods: "36501", compounding_frequency: "365_per_year" }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: limit_exceeded }

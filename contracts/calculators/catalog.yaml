@@ -214,13 +214,13 @@ definitions:
       - all_currency_inputs_must_match
 
   - id: compound-interest
-    lifecycle_status: draft
+    lifecycle_status: reviewed
     contract_version: "1.0.0"
     compatible_engine_versions:
-      - "0.x"
+      - "0.4.0"
     jurisdiction: global
-    precision_policy: explicit_before_active
-    rounding_policy: explicit_before_active
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
     inputs:
       - id: principal
         value_kind: decimal
@@ -238,15 +238,14 @@ definitions:
         allowed_values: []
         required: true
         domain: finite_decimal_greater_than_negative_one
-      - id: duration_years
-        value_kind: decimal
-        unit_dimension: duration
-        unit_policy: enumerated
-        unit_options:
-          - years
+      - id: compounding_periods
+        value_kind: integer
+        unit_dimension: count
+        unit_policy: none
+        unit_options: []
         allowed_values: []
         required: true
-        domain: non_negative_finite_decimal
+        domain: canonical_unsigned_integer_string_not_exceeding_frequency_times_100
       - id: compounding_frequency
         value_kind: enum
         unit_dimension: dimensionless
@@ -282,7 +281,12 @@ definitions:
       - nominal_annual_rate_is_decimal_ratio
       - compounding_frequency_is_periods_per_year
       - future_value_uses_discrete_compounding
-      - interest_earned_is_future_value_minus_principal
+      - compounding_periods_is_the_exact_non_negative_integer_exponent
+      - compounding_periods_must_not_exceed_frequency_times_100
+      - reduced_power_operand_estimated_digits_must_not_exceed_250000
+      - exact_rational_intermediates_are_not_rounded
+      - future_value_and_interest_earned_are_rounded_independently_from_exact_values
+      - interest_earned_is_exact_future_value_minus_exact_principal
       - principal_currency_is_preserved
 
   - id: data-transfer-time

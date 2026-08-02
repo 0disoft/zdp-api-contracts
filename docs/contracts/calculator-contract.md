@@ -22,7 +22,7 @@
 - `data-transfer-time`
 - `date-difference`
 
-모두 `jurisdiction: global`이다. `percentage-change`, `margin-markup`, `break-even-point`, `data-transfer-time`, `date-difference`는 reviewed 구현 묶음이고 `compound-interest`만 draft다. 국가별 세금, 노동, 금융 규제나 기관 정책을 정답 조건으로 사용하지 않는다.
+여섯 정의 모두 `jurisdiction: global`이며 reviewed 구현 묶음이다. 국가별 세금, 노동, 금융 규제나 기관 정책을 정답 조건으로 사용하지 않는다.
 
 ## 표현 경계
 
@@ -34,7 +34,7 @@ reviewed 소수 계산기는 로케일 구분자가 없는 ASCII decimal string�
 
 `date-difference`는 ASCII `YYYY-MM-DD`만 받으며 연도 `0001`–`9999`의 proleptic Gregorian 달력을 사용한다. 시간, timezone, offset은 받지 않는다. `exclusive`는 `[start_date, end_date)`, `inclusive`는 `[start_date, end_date]`를 뜻한다. 결과 `calendar_day_count`는 반올림 없는 JSON 정수다.
 
-남은 `compound-interest` draft 정의의 precision과 rounding policy는 `explicit_before_active`다. 임의 반올림을 허용한다는 뜻이 아니라 독립 검증 벡터와 구현 정책을 확정하기 전에는 reviewed나 active로 올리지 못한다는 뜻이다.
+`compound-interest`는 소수 연수를 지수로 쓰지 않는다. 호출자는 frequency와 정확한 비음수 정수 `compounding_periods`를 제공한다. 기간은 frequency당 100년을 넘지 못하고, 축약 후 거듭제곱 피연산자의 예상 자릿수는 250,000을 넘지 못한다. principal과 rate를 exact rational로 계산한 뒤 future value와 interest를 각각 마지막에만 반올림한다.
 
 active 승격에는 다음이 필요하다.
 
