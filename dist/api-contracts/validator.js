@@ -74,6 +74,7 @@ const REVIEWED_CALCULATOR_IDS = [
     'percentage-change',
     'margin-markup',
     'break-even-point',
+    'compound-interest',
     'data-transfer-time',
     'date-difference'
 ];
@@ -1242,6 +1243,13 @@ function validateCalculatorConformance(contracts, diagnostics) {
                     });
                     if (!covered) {
                         pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_UNIT_COVERAGE_MISSING', 'cases', `Reviewed calculator \`${calculatorId}\` needs a successful \`${input.id}\` fixture for unit \`${unit}\`.`);
+                    }
+                }
+                for (const allowedValue of input.allowedValues) {
+                    const covered = cases.some((testCase) => testCase.expected.status === 'success' &&
+                        testCase.input[input.id] === allowedValue);
+                    if (!covered) {
+                        pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_ENUM_COVERAGE_MISSING', 'cases', `Reviewed calculator \`${calculatorId}\` needs a successful \`${input.id}\` fixture for value \`${allowedValue}\`.`);
                     }
                 }
             }
