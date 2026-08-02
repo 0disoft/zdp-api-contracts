@@ -855,6 +855,35 @@ describe('api contract checker', () => {
     );
   });
 
+  it('rejects successful conformance cases with undeclared enum values', () => {
+    const contracts = loadCommittedContracts();
+    const original = contracts.calculatorConformance.cases.find(
+      (testCase) => testCase.id === 'date-difference.same-day-exclusive'
+    );
+    if (!original || original.expected.status !== 'success') {
+      throw new Error('Expected the date-difference success fixture.');
+    }
+    const result = validateApiContracts({
+      ...contracts,
+      calculatorConformance: {
+        ...contracts.calculatorConformance,
+        cases: [
+          {
+            ...original,
+            input: { ...original.input, boundary_mode: 'both' }
+          },
+          ...contracts.calculatorConformance.cases.filter(
+            (testCase) => testCase.id !== original.id
+          )
+        ]
+      }
+    });
+
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_CALCULATOR_CONFORMANCE_ENUM_VALUE_INVALID'
+    );
+  });
+
   it('keeps core auth session routes explicit in the API catalog with referral and money reward routes', () => {
     const contracts = loadCommittedContracts();
 

@@ -1339,6 +1339,13 @@ function validateCalculatorConformanceInputs(contracts, definition, testCase, pa
                 }
             }
         }
+        if (input.valueKind === 'enum' &&
+            typeof value === 'string' &&
+            !input.allowedValues.includes(value) &&
+            (testCase.expected.status !== 'error' ||
+                testCase.expected.errorCode !== 'invalid_input')) {
+            pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_ENUM_VALUE_INVALID', inputPath, `Fixture enum value \`${value}\` is not declared by \`${input.id}\`.`);
+        }
         if (input.valueKind === 'decimal' &&
             decimalValue !== undefined &&
             !skipDecimalShape) {

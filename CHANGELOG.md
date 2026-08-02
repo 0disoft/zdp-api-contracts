@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.20.1
+
+### Fixed
+
+- 성공 적합성 벡터가 계산기 정의의 `allowed_values` 밖 enum 값을 사용하는 경우 validator가 거부하도록 보강했다.
+
 ## 0.20.0
 
 ### Added
