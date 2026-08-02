@@ -13,7 +13,7 @@
 - 구현 전에 확정해야 하는 precision과 rounding policy
 - 계약 버전과 연결된 성공·오류 적합성 벡터
 
-## 첫 정의 묶음
+## Reviewed 정의 묶음
 
 - `percentage-change`
 - `margin-markup`
@@ -22,7 +22,19 @@
 - `data-transfer-time`
 - `date-difference`
 
-여섯 정의 모두 `jurisdiction: global`이며 reviewed 구현 묶음이다. 국가별 세금, 노동, 금융 규제나 기관 정책을 정답 조건으로 사용하지 않는다.
+소상공인·무인매장 후속 묶음:
+
+- `studycafe-seat-occupancy`
+- `studycafe-break-even`
+- `kiosk-roi`
+- `unattended-labor-savings`
+- `locker-revenue`
+- `study-room-schedule-revenue`
+- `security-cost-break-even`
+
+13개 정의 모두 `jurisdiction: global`이며 reviewed 구현 묶음이다. 후속 7종은 사용자 제공 좌석·시간·비용·비율만 계산하고 최저임금, 임대료, 보안업체 요금 같은 외부 정책값을 내장하지 않는다. 국가별 세금, 노동, 금융 규제나 기관 정책을 정답 조건으로 사용하지 않는다.
+
+후속 7종의 비율 입력은 표준 decimal ratio이며 0–1 경계를 계약에서 검사한다. 좌석시간과 룸시간은 각각 `seat_hours`, `room_hours`로 구분하고, 금액 입력은 한 호출 안에서 같은 caller-supplied currency를 사용한다. 음수 순절감액과 순매출은 손실 신호로 보존하지만 음수 입력 비용이나 가동률 범위 이탈은 정의역 오류다.
 
 ## 표현 경계
 

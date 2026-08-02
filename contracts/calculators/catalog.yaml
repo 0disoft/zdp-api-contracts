@@ -416,3 +416,196 @@ definitions:
       - end_date_before_start_date_returns_invalid_date_range
       - exclusive_mode_counts_start_inclusive_end_exclusive
       - inclusive_mode_includes_both_boundaries
+
+  - id: studycafe-seat-occupancy
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.5.0"
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - id: seat_count
+        value_kind: integer
+        unit_dimension: count
+        unit_policy: enumerated
+        unit_options: [seats]
+        allowed_values: []
+        required: true
+        domain: canonical_positive_integer_string
+      - id: opening_days_per_month
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options: [days]
+        allowed_values: []
+        required: true
+        domain: canonical_positive_integer_string
+      - id: opening_hours_per_day
+        value_kind: decimal
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options: [hours]
+        allowed_values: []
+        required: true
+        domain: positive_finite_decimal
+      - id: occupied_seat_hours
+        value_kind: decimal
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options: [seat_hours]
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal_not_exceeding_available_seat_hours
+    outputs:
+      - id: available_seat_hours
+        value_kind: decimal
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options: [seat_hours]
+      - id: occupancy_percentage
+        value_kind: decimal
+        unit_dimension: percent
+        unit_policy: enumerated
+        unit_options: [percent]
+    error_codes: [invalid_input, domain_error, limit_exceeded, contract_mismatch, denominator_zero, precision_policy_required, rounding_policy_required]
+    semantic_rules:
+      - available_seat_hours_is_seat_count_times_opening_days_times_opening_hours
+      - occupancy_percentage_is_occupied_seat_hours_divided_by_available_seat_hours_times_100
+      - occupied_seat_hours_must_not_exceed_available_seat_hours
+
+  - id: studycafe-break-even
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions: ["0.5.0"]
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - { id: seat_count, value_kind: integer, unit_dimension: count, unit_policy: enumerated, unit_options: [seats], allowed_values: [], required: true, domain: canonical_positive_integer_string }
+      - { id: opening_days_per_month, value_kind: integer, unit_dimension: duration, unit_policy: enumerated, unit_options: [days], allowed_values: [], required: true, domain: canonical_positive_integer_string }
+      - { id: opening_hours_per_day, value_kind: decimal, unit_dimension: duration, unit_policy: enumerated, unit_options: [hours], allowed_values: [], required: true, domain: positive_finite_decimal }
+      - { id: average_seat_hour_price, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: positive_finite_decimal }
+      - { id: monthly_fixed_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: variable_cost_ratio, value_kind: decimal, unit_dimension: dimensionless, unit_policy: none, unit_options: [], allowed_values: [], required: true, domain: finite_decimal_ratio_zero_inclusive_one_exclusive }
+    outputs:
+      - { id: break_even_revenue, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+      - { id: break_even_occupancy_percentage, value_kind: decimal, unit_dimension: percent, unit_policy: enumerated, unit_options: [percent] }
+    error_codes: [invalid_input, domain_error, limit_exceeded, contract_mismatch, denominator_zero, incompatible_units, precision_policy_required, rounding_policy_required]
+    semantic_rules:
+      - break_even_revenue_is_monthly_fixed_cost_divided_by_one_minus_variable_cost_ratio
+      - full_capacity_revenue_is_seat_count_times_opening_days_times_opening_hours_times_average_seat_hour_price
+      - break_even_occupancy_percentage_is_break_even_revenue_divided_by_full_capacity_revenue_times_100
+      - all_currency_inputs_must_match
+
+  - id: kiosk-roi
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions: ["0.5.0"]
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - { id: initial_investment, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: monthly_incremental_revenue, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: monthly_labor_savings, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: monthly_additional_operating_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+    outputs:
+      - { id: monthly_net_benefit, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+      - { id: payback_months, value_kind: decimal, unit_dimension: duration, unit_policy: enumerated, unit_options: [months] }
+    error_codes: [invalid_input, domain_error, limit_exceeded, contract_mismatch, denominator_zero, incompatible_units, precision_policy_required, rounding_policy_required]
+    semantic_rules:
+      - monthly_net_benefit_is_incremental_revenue_plus_labor_savings_minus_additional_operating_cost
+      - non_positive_monthly_net_benefit_returns_domain_error
+      - payback_months_is_initial_investment_divided_by_monthly_net_benefit
+      - all_currency_inputs_must_match
+
+  - id: unattended-labor-savings
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions: ["0.5.0"]
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - { id: current_monthly_labor_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: unattended_monthly_labor_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: additional_monthly_system_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+    outputs:
+      - { id: gross_monthly_labor_savings, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+      - { id: net_monthly_savings, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+    error_codes: [invalid_input, domain_error, limit_exceeded, contract_mismatch, incompatible_units, precision_policy_required, rounding_policy_required]
+    semantic_rules:
+      - gross_monthly_labor_savings_is_current_cost_minus_unattended_cost
+      - net_monthly_savings_is_gross_savings_minus_additional_system_cost
+      - negative_savings_are_preserved_as_loss_signals
+      - all_currency_inputs_must_match
+
+  - id: locker-revenue
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions: ["0.5.0"]
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - { id: locker_count, value_kind: integer, unit_dimension: count, unit_policy: enumerated, unit_options: [lockers], allowed_values: [], required: true, domain: canonical_non_negative_integer_string }
+      - { id: monthly_price_per_locker, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: utilization_ratio, value_kind: decimal, unit_dimension: dimensionless, unit_policy: none, unit_options: [], allowed_values: [], required: true, domain: finite_decimal_ratio_zero_to_one_inclusive }
+      - { id: monthly_operating_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+    outputs:
+      - { id: monthly_gross_revenue, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+      - { id: monthly_net_revenue, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+    error_codes: [invalid_input, domain_error, limit_exceeded, contract_mismatch, incompatible_units, precision_policy_required, rounding_policy_required]
+    semantic_rules:
+      - monthly_gross_revenue_is_locker_count_times_price_times_utilization_ratio
+      - monthly_net_revenue_is_gross_revenue_minus_operating_cost
+      - all_currency_inputs_must_match
+
+  - id: study-room-schedule-revenue
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions: ["0.5.0"]
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - { id: bookable_room_hours, value_kind: decimal, unit_dimension: duration, unit_policy: enumerated, unit_options: [room_hours], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: booking_ratio, value_kind: decimal, unit_dimension: dimensionless, unit_policy: none, unit_options: [], allowed_values: [], required: true, domain: finite_decimal_ratio_zero_to_one_inclusive }
+      - { id: average_hourly_price, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: monthly_operating_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+    outputs:
+      - { id: booked_room_hours, value_kind: decimal, unit_dimension: duration, unit_policy: enumerated, unit_options: [room_hours] }
+      - { id: monthly_gross_revenue, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+      - { id: monthly_net_revenue, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+    error_codes: [invalid_input, domain_error, limit_exceeded, contract_mismatch, incompatible_units, precision_policy_required, rounding_policy_required]
+    semantic_rules:
+      - booked_room_hours_is_bookable_room_hours_times_booking_ratio
+      - monthly_gross_revenue_is_booked_room_hours_times_average_hourly_price
+      - monthly_net_revenue_is_gross_revenue_minus_operating_cost
+      - all_currency_inputs_must_match
+
+  - id: security-cost-break-even
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions: ["0.5.0"]
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - { id: monthly_base_fixed_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: monthly_security_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: unit_price, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: positive_finite_decimal }
+      - { id: unit_variable_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+    outputs:
+      - { id: total_monthly_fixed_cost, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+      - { id: contribution_margin_per_unit, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+      - { id: break_even_quantity, value_kind: decimal, unit_dimension: count, unit_policy: enumerated, unit_options: [items] }
+    error_codes: [invalid_input, domain_error, limit_exceeded, contract_mismatch, non_positive_contribution_margin, incompatible_units, precision_policy_required, rounding_policy_required]
+    semantic_rules:
+      - total_monthly_fixed_cost_is_base_fixed_cost_plus_security_cost
+      - contribution_margin_is_unit_price_minus_unit_variable_cost
+      - non_positive_contribution_margin_returns_specific_error
+      - break_even_quantity_is_total_monthly_fixed_cost_divided_by_contribution_margin
+      - all_currency_inputs_must_match

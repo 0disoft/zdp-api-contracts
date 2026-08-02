@@ -18,7 +18,14 @@ const REQUIRED_CALCULATOR_IDS = [
     'break-even-point',
     'compound-interest',
     'data-transfer-time',
-    'date-difference'
+    'date-difference',
+    'studycafe-seat-occupancy',
+    'studycafe-break-even',
+    'kiosk-roi',
+    'unattended-labor-savings',
+    'locker-revenue',
+    'study-room-schedule-revenue',
+    'security-cost-break-even'
 ];
 const ALLOWED_CALCULATOR_LIFECYCLE_STATUSES = [
     'draft',
@@ -76,7 +83,14 @@ const REVIEWED_CALCULATOR_IDS = [
     'break-even-point',
     'compound-interest',
     'data-transfer-time',
-    'date-difference'
+    'date-difference',
+    'studycafe-seat-occupancy',
+    'studycafe-break-even',
+    'kiosk-roi',
+    'unattended-labor-savings',
+    'locker-revenue',
+    'study-room-schedule-revenue',
+    'security-cost-break-even'
 ];
 const DATE_DIFFERENCE_PRECISION_POLICY = 'exact_integer_calendar_days_years_0001_to_9999';
 const DATE_DIFFERENCE_ROUNDING_POLICY = 'not_applicable_exact_integer';
@@ -1124,7 +1138,7 @@ function validateCalculatorCatalog(contracts, diagnostics) {
                 code: 'API_CALCULATOR_DEFINITION_MISSING',
                 file: CALCULATOR_CATALOG_FILE,
                 path: 'definitions',
-                message: `Calculator definition \`${calculatorId}\` is required for the first global batch.`
+                message: `Calculator definition \`${calculatorId}\` is required for the reviewed global batches.`
             });
         }
     }
@@ -1136,7 +1150,7 @@ function validateCalculatorDefinition(contracts, definition, index, diagnostics)
         pushCalculatorDiagnostic(diagnostics, 'API_CALCULATOR_ID_INVALID', `${path}.id`, `Calculator id \`${definition.id}\` must use stable kebab-case.`);
     }
     if (!includesValue(REQUIRED_CALCULATOR_IDS, definition.id)) {
-        pushCalculatorDiagnostic(diagnostics, 'API_CALCULATOR_ID_UNREVIEWED', `${path}.id`, `Calculator id \`${definition.id}\` is outside the reviewed first batch.`);
+        pushCalculatorDiagnostic(diagnostics, 'API_CALCULATOR_ID_UNREVIEWED', `${path}.id`, `Calculator id \`${definition.id}\` is outside the reviewed global batches.`);
     }
     if (!contracts.calculatorCatalog.allowedLifecycleStatuses.includes(definition.lifecycleStatus)) {
         pushCalculatorDiagnostic(diagnostics, 'API_CALCULATOR_LIFECYCLE_STATUS_INVALID', `${path}.lifecycle_status`, `Calculator lifecycle status \`${definition.lifecycleStatus}\` is not allowed.`);
@@ -1204,7 +1218,7 @@ function validateCalculatorConformance(contracts, diagnostics) {
         pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_VERSION_MISMATCH', 'calculator_conformance.contract_version', 'Calculator conformance contract_version must match the calculator catalog.');
     }
     if (conformance.engineVersionRange !== '0.x') {
-        pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_ENGINE_VERSION_INVALID', 'calculator_conformance.engine_version_range', 'The first calculator engine compatibility range must be `0.x`.');
+        pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_ENGINE_VERSION_INVALID', 'calculator_conformance.engine_version_range', 'The calculator engine compatibility range must be `0.x`.');
     }
     if (conformance.decimalInputPolicy !== CONFORMANCE_DECIMAL_INPUT_POLICY) {
         pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_INPUT_POLICY_INVALID', 'calculator_conformance.decimal_input_policy', `Decimal input policy must be \`${CONFORMANCE_DECIMAL_INPUT_POLICY}\`.`);

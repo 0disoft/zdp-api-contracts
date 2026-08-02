@@ -59,7 +59,7 @@ agent-facing 문서에는 raw package command를 실행 권한처럼 적지 않�
 - export plan이 generated artifact를 쓰거나 schema publish를 주장하지 않는지 확인한다.
 - package export map과 `files` whitelist가 README의 package surface 설명과 어긋나지 않는지 확인한다.
 - tarball을 빈 Node 소비자에 설치했을 때 root와 공개 subpath가 Bun 전역이나 저장소 source layout에 기대지 않는지 확인한다.
-- 계산기 계약이 첫 국가 공통 6종, 안정 오류, 허용 값 종류·단위, 계약·엔진 버전 handoff를 유지하는지 확인한다.
+- 계산기 계약이 첫 국가 공통 6종과 소상공인·무인매장 7종, 안정 오류, 허용 값 종류·단위, 계약·엔진 버전 handoff를 유지하는지 확인한다.
 - 계산기 정의에 화면 payload, 로케일 문자열, 계산 함수 구현이 들어가지 않는지 확인한다.
 - reviewed 계산기의 정밀도·반올림 정책과 공통 적합성 벡터가 같은 계약 버전을 유지하는지 확인한다.
 

@@ -863,3 +863,175 @@ cases:
     input: { principal: { value: "100", unit: USD }, nominal_annual_rate: "0.05", compounding_periods: "36501", compounding_frequency: "365_per_year" }
     options: { decimal_places: 2 }
     expected: { status: error, error_code: limit_exceeded }
+
+  - id: studycafe-seat-occupancy.basic
+    calculator_id: studycafe-seat-occupancy
+    input:
+      seat_count: { value: "100", unit: seats }
+      opening_days_per_month: { value: "30", unit: days }
+      opening_hours_per_day: { value: "10", unit: hours }
+      occupied_seat_hours: { value: "15000", unit: seat_hours }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        available_seat_hours: { value: "30000.00", unit: seat_hours }
+        occupancy_percentage: { value: "50.00", unit: percent }
+
+  - id: studycafe-seat-occupancy.over-capacity
+    calculator_id: studycafe-seat-occupancy
+    input:
+      seat_count: { value: "100", unit: seats }
+      opening_days_per_month: { value: "30", unit: days }
+      opening_hours_per_day: { value: "10", unit: hours }
+      occupied_seat_hours: { value: "30001", unit: seat_hours }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: studycafe-break-even.basic
+    calculator_id: studycafe-break-even
+    input:
+      seat_count: { value: "100", unit: seats }
+      opening_days_per_month: { value: "30", unit: days }
+      opening_hours_per_day: { value: "10", unit: hours }
+      average_seat_hour_price: { value: "2", unit: USD }
+      monthly_fixed_cost: { value: "3000", unit: USD }
+      variable_cost_ratio: "0.25"
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        break_even_revenue: { value: "4000.00", unit: USD }
+        break_even_occupancy_percentage: { value: "6.67", unit: percent }
+
+  - id: studycafe-break-even.invalid-variable-ratio
+    calculator_id: studycafe-break-even
+    input:
+      seat_count: { value: "100", unit: seats }
+      opening_days_per_month: { value: "30", unit: days }
+      opening_hours_per_day: { value: "10", unit: hours }
+      average_seat_hour_price: { value: "2", unit: USD }
+      monthly_fixed_cost: { value: "3000", unit: USD }
+      variable_cost_ratio: "1"
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: kiosk-roi.basic
+    calculator_id: kiosk-roi
+    input:
+      initial_investment: { value: "12000", unit: USD }
+      monthly_incremental_revenue: { value: "1500", unit: USD }
+      monthly_labor_savings: { value: "1000", unit: USD }
+      monthly_additional_operating_cost: { value: "500", unit: USD }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        monthly_net_benefit: { value: "2000.00", unit: USD }
+        payback_months: { value: "6.00", unit: months }
+
+  - id: kiosk-roi.non-positive-benefit
+    calculator_id: kiosk-roi
+    input:
+      initial_investment: { value: "12000", unit: USD }
+      monthly_incremental_revenue: { value: "500", unit: USD }
+      monthly_labor_savings: { value: "500", unit: USD }
+      monthly_additional_operating_cost: { value: "1000", unit: USD }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: unattended-labor-savings.basic
+    calculator_id: unattended-labor-savings
+    input:
+      current_monthly_labor_cost: { value: "5000", unit: USD }
+      unattended_monthly_labor_cost: { value: "1000", unit: USD }
+      additional_monthly_system_cost: { value: "500", unit: USD }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        gross_monthly_labor_savings: { value: "4000.00", unit: USD }
+        net_monthly_savings: { value: "3500.00", unit: USD }
+
+  - id: unattended-labor-savings.negative-input
+    calculator_id: unattended-labor-savings
+    input:
+      current_monthly_labor_cost: { value: "-1", unit: USD }
+      unattended_monthly_labor_cost: { value: "0", unit: USD }
+      additional_monthly_system_cost: { value: "0", unit: USD }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: locker-revenue.basic
+    calculator_id: locker-revenue
+    input:
+      locker_count: { value: "100", unit: lockers }
+      monthly_price_per_locker: { value: "20", unit: USD }
+      utilization_ratio: "0.75"
+      monthly_operating_cost: { value: "300", unit: USD }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        monthly_gross_revenue: { value: "1500.00", unit: USD }
+        monthly_net_revenue: { value: "1200.00", unit: USD }
+
+  - id: locker-revenue.invalid-ratio
+    calculator_id: locker-revenue
+    input:
+      locker_count: { value: "100", unit: lockers }
+      monthly_price_per_locker: { value: "20", unit: USD }
+      utilization_ratio: "1.1"
+      monthly_operating_cost: { value: "300", unit: USD }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: study-room-schedule-revenue.basic
+    calculator_id: study-room-schedule-revenue
+    input:
+      bookable_room_hours: { value: "400", unit: room_hours }
+      booking_ratio: "0.6"
+      average_hourly_price: { value: "15", unit: USD }
+      monthly_operating_cost: { value: "1000", unit: USD }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        booked_room_hours: { value: "240.00", unit: room_hours }
+        monthly_gross_revenue: { value: "3600.00", unit: USD }
+        monthly_net_revenue: { value: "2600.00", unit: USD }
+
+  - id: study-room-schedule-revenue.invalid-ratio
+    calculator_id: study-room-schedule-revenue
+    input:
+      bookable_room_hours: { value: "400", unit: room_hours }
+      booking_ratio: "1.1"
+      average_hourly_price: { value: "15", unit: USD }
+      monthly_operating_cost: { value: "1000", unit: USD }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: security-cost-break-even.basic
+    calculator_id: security-cost-break-even
+    input:
+      monthly_base_fixed_cost: { value: "5000", unit: USD }
+      monthly_security_cost: { value: "500", unit: USD }
+      unit_price: { value: "10", unit: USD }
+      unit_variable_cost: { value: "4", unit: USD }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        total_monthly_fixed_cost: { value: "5500.00", unit: USD }
+        contribution_margin_per_unit: { value: "6.00", unit: USD }
+        break_even_quantity: { value: "916.67", unit: items }
+
+  - id: security-cost-break-even.non-positive-contribution
+    calculator_id: security-cost-break-even
+    input:
+      monthly_base_fixed_cost: { value: "5000", unit: USD }
+      monthly_security_cost: { value: "500", unit: USD }
+      unit_price: { value: "4", unit: USD }
+      unit_variable_cost: { value: "4", unit: USD }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: non_positive_contribution_margin }

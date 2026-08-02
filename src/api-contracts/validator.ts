@@ -33,7 +33,14 @@ const REQUIRED_CALCULATOR_IDS = [
   'break-even-point',
   'compound-interest',
   'data-transfer-time',
-  'date-difference'
+  'date-difference',
+  'studycafe-seat-occupancy',
+  'studycafe-break-even',
+  'kiosk-roi',
+  'unattended-labor-savings',
+  'locker-revenue',
+  'study-room-schedule-revenue',
+  'security-cost-break-even'
 ] as const;
 
 const ALLOWED_CALCULATOR_LIFECYCLE_STATUSES = [
@@ -98,7 +105,14 @@ const REVIEWED_CALCULATOR_IDS = [
   'break-even-point',
   'compound-interest',
   'data-transfer-time',
-  'date-difference'
+  'date-difference',
+  'studycafe-seat-occupancy',
+  'studycafe-break-even',
+  'kiosk-roi',
+  'unattended-labor-savings',
+  'locker-revenue',
+  'study-room-schedule-revenue',
+  'security-cost-break-even'
 ] as const;
 const DATE_DIFFERENCE_PRECISION_POLICY =
   'exact_integer_calendar_days_years_0001_to_9999';
@@ -1753,7 +1767,7 @@ function validateCalculatorCatalog(
         code: 'API_CALCULATOR_DEFINITION_MISSING',
         file: CALCULATOR_CATALOG_FILE,
         path: 'definitions',
-        message: `Calculator definition \`${calculatorId}\` is required for the first global batch.`
+        message: `Calculator definition \`${calculatorId}\` is required for the reviewed global batches.`
       });
     }
   }
@@ -1783,7 +1797,7 @@ function validateCalculatorDefinition(
       diagnostics,
       'API_CALCULATOR_ID_UNREVIEWED',
       `${path}.id`,
-      `Calculator id \`${definition.id}\` is outside the reviewed first batch.`
+      `Calculator id \`${definition.id}\` is outside the reviewed global batches.`
     );
   }
   if (!contracts.calculatorCatalog.allowedLifecycleStatuses.includes(definition.lifecycleStatus)) {
@@ -1955,7 +1969,7 @@ function validateCalculatorConformance(
       diagnostics,
       'API_CALCULATOR_CONFORMANCE_ENGINE_VERSION_INVALID',
       'calculator_conformance.engine_version_range',
-      'The first calculator engine compatibility range must be `0.x`.'
+      'The calculator engine compatibility range must be `0.x`.'
     );
   }
   if (conformance.decimalInputPolicy !== CONFORMANCE_DECIMAL_INPUT_POLICY) {

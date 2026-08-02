@@ -597,7 +597,14 @@ describe('api contract checker', () => {
       'break-even-point',
       'compound-interest',
       'data-transfer-time',
-      'date-difference'
+      'date-difference',
+      'studycafe-seat-occupancy',
+      'studycafe-break-even',
+      'kiosk-roi',
+      'unattended-labor-savings',
+      'locker-revenue',
+      'study-room-schedule-revenue',
+      'security-cost-break-even'
     ]);
     const reviewed = contracts.calculatorCatalog.definitions.filter(
       (definition) => definition.lifecycleStatus === 'reviewed'
@@ -608,7 +615,14 @@ describe('api contract checker', () => {
       'break-even-point',
       'compound-interest',
       'data-transfer-time',
-      'date-difference'
+      'date-difference',
+      'studycafe-seat-occupancy',
+      'studycafe-break-even',
+      'kiosk-roi',
+      'unattended-labor-savings',
+      'locker-revenue',
+      'study-room-schedule-revenue',
+      'security-cost-break-even'
     ]);
     expect(
       reviewed
@@ -630,7 +644,7 @@ describe('api contract checker', () => {
       compatibleEngineVersions: ['0.4.0']
     });
     expect(contracts.calculatorConformance.schemaVersion).toBe(2);
-    expect(contracts.calculatorConformance.cases).toHaveLength(73);
+    expect(contracts.calculatorConformance.cases).toHaveLength(87);
     expect(
       reviewed.find((definition) => definition.id === 'compound-interest')
     ).toMatchObject({
@@ -643,6 +657,21 @@ describe('api contract checker', () => {
         (definition) => definition.id === 'data-transfer-time'
       )?.compatibleEngineVersions
     ).toEqual(['0.3.0', '0.4.0']);
+    expect(
+      reviewed
+        .filter((definition) => [
+          'studycafe-seat-occupancy',
+          'studycafe-break-even',
+          'kiosk-roi',
+          'unattended-labor-savings',
+          'locker-revenue',
+          'study-room-schedule-revenue',
+          'security-cost-break-even'
+        ].includes(definition.id))
+        .every((definition) =>
+          definition.compatibleEngineVersions.includes('0.5.0')
+        )
+    ).toBe(true);
     expect(contracts.calculatorConformance.roundingMode).toBe(
       'half_away_from_zero'
     );

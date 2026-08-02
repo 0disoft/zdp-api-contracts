@@ -39,7 +39,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - schema model handoff가 required field와 optional field를 분리해 SDK가 선택적 reference를 잃지 않게 하는 계약
 - typed fetch client가 읽어야 할 error envelope, request/trace id, timeout, abort signal, mutation idempotency handoff
 - npm package metadata, MIT license, public export map, package file whitelist
-- 국가 공통 계산기 6종의 정의, reviewed 4종의 숫자·반올림 정책과 공통 적합성 벡터, 안정 오류와 계약·엔진 버전 handoff
+- 국가 공통 계산기 6종과 소상공인·무인매장 계산기 7종의 reviewed 정의, 숫자·반올림 정책과 공통 적합성 벡터, 안정 오류와 계약·엔진 버전 handoff
 
 ## 현재 제외
 
@@ -72,7 +72,7 @@ API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelo
 - webhook contract: signature verification, idempotency key, replay policy, dead-letter policy 기준
 - API catalog: 실제 route 정의가 들어올 때 `operation_id`, `service_id`, schema ref, method, success status가 표준 계약과 맞는지 확인하는 자리
 - SDK generation input: 활성 SDK target과 허용 target pool, route/error/webhook metadata, SDK가 소유하면 안 되는 runtime/token/final authorization 경계
-- calculator catalog: 첫 국가 공통 6종, 값 종류·단위·오류 allowlist, 계약·엔진 버전, 화면 payload와 계산 함수 금지 경계
+- calculator catalog: reviewed 계산기 13종, 값 종류·단위·오류 allowlist, 계약·엔진 버전, 화면 payload와 계산 함수 금지 경계
 - calculator conformance: reviewed 계산기의 ASCII decimal 또는 strict calendar-date 입력, 한계, 반올림·정수 정책과 구현 중립 성공·오류 벡터
 
 첫 route catalog는 `core-api` auth/session과 access-decision 계약이다. 이 계약은 `/v1/auth/registrations`, `/v1/auth/sessions`, `/v1/auth/sessions/refresh`, `/v1/auth/sessions/current`의 GET·DELETE, `/v1/auth/recovery/requests`, `/v1/auth/passkey/challenges`, `/v1/auth/passkey/assertions`, `/v1/auth/oauth/callbacks/{provider}`, `/v1/auth/product-link-challenges`의 create·complete·exchange와 `/v1/access/authorization-decisions`의 method, schema ref, session effect, audit event, idempotency, credential policy를 고정한다. GET current-session은 identity-only 조회고, access-decision은 Core가 session을 다시 검증해 별도 authorization 판정을 만들며, 데스크톱 product-link는 브라우저 session credential을 복사하지 않는 single-use handoff다. 이 경로들은 live endpoint가 아니라 `zdp-web-apps`, `zdp-auth-ui`, 설치형 제품 consumer의 route 승격 전제 조건이다.
