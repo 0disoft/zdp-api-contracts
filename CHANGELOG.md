@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.20.2
+
+### Fixed
+
+- 기존 데이터 전송 계산이 그대로 포함된 엔진 `0.4.0`을 `data-transfer-time` 호환 버전에 추가했다.
+
 ## 0.20.1
 
 ### Fixed

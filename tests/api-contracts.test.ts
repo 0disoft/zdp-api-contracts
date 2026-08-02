@@ -642,7 +642,7 @@ describe('api contract checker', () => {
       contracts.calculatorCatalog.definitions.find(
         (definition) => definition.id === 'data-transfer-time'
       )?.compatibleEngineVersions
-    ).toEqual(['0.3.0']);
+    ).toEqual(['0.3.0', '0.4.0']);
     expect(contracts.calculatorConformance.roundingMode).toBe(
       'half_away_from_zero'
     );
