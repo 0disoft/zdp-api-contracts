@@ -74,10 +74,13 @@ const REVIEWED_CALCULATOR_IDS = [
     'percentage-change',
     'margin-markup',
     'break-even-point',
-    'data-transfer-time'
+    'data-transfer-time',
+    'date-difference'
 ];
-const REVIEWED_PRECISION_POLICY = 'canonical_ascii_decimal_string_max_1000_digits';
-const REVIEWED_ROUNDING_POLICY = 'caller_decimal_places_0_to_100_half_away_from_zero';
+const DATE_DIFFERENCE_PRECISION_POLICY = 'exact_integer_calendar_days_years_0001_to_9999';
+const DATE_DIFFERENCE_ROUNDING_POLICY = 'not_applicable_exact_integer';
+const REVIEWED_DECIMAL_PRECISION_POLICY = 'canonical_ascii_decimal_string_max_1000_digits';
+const REVIEWED_DECIMAL_ROUNDING_POLICY = 'caller_decimal_places_0_to_100_half_away_from_zero';
 const CONFORMANCE_DECIMAL_INPUT_POLICY = 'canonical_ascii_decimal_string';
 const CONFORMANCE_ROUNDING_MODE = 'half_away_from_zero';
 const CONFORMANCE_MAX_INPUT_DIGITS = 1000;
@@ -1147,12 +1150,16 @@ function validateCalculatorDefinition(contracts, definition, index, diagnostics)
         pushCalculatorDiagnostic(diagnostics, 'API_CALCULATOR_JURISDICTION_INVALID', `${path}.jurisdiction`, 'The first calculator batch must stay jurisdiction global.');
     }
     const isReviewedCalculator = includesValue(REVIEWED_CALCULATOR_IDS, definition.id);
-    const expectedPrecisionPolicy = isReviewedCalculator
-        ? REVIEWED_PRECISION_POLICY
-        : 'explicit_before_active';
-    const expectedRoundingPolicy = isReviewedCalculator
-        ? REVIEWED_ROUNDING_POLICY
-        : 'explicit_before_active';
+    const expectedPrecisionPolicy = definition.id === 'date-difference'
+        ? DATE_DIFFERENCE_PRECISION_POLICY
+        : isReviewedCalculator
+            ? REVIEWED_DECIMAL_PRECISION_POLICY
+            : 'explicit_before_active';
+    const expectedRoundingPolicy = definition.id === 'date-difference'
+        ? DATE_DIFFERENCE_ROUNDING_POLICY
+        : isReviewedCalculator
+            ? REVIEWED_DECIMAL_ROUNDING_POLICY
+            : 'explicit_before_active';
     if (definition.precisionPolicy !== expectedPrecisionPolicy) {
         pushCalculatorDiagnostic(diagnostics, 'API_CALCULATOR_PRECISION_POLICY_INVALID', `${path}.precision_policy`, `Calculator precision_policy must be \`${expectedPrecisionPolicy}\`.`);
     }
@@ -1166,7 +1173,10 @@ function validateCalculatorDefinition(contracts, definition, index, diagnostics)
     validateUniqueCalculatorFieldIds(definition, path, diagnostics);
     definition.inputs.forEach((input, inputIndex) => validateCalculatorInput(contracts, input, `${path}.inputs[${inputIndex}]`, diagnostics));
     definition.outputs.forEach((output, outputIndex) => validateCalculatorOutput(contracts, output, `${path}.outputs[${outputIndex}]`, diagnostics));
-    for (const errorCode of REQUIRED_CALCULATOR_BASE_ERROR_CODES) {
+    const requiredErrorCodes = definition.id === 'date-difference'
+        ? REQUIRED_CALCULATOR_BASE_ERROR_CODES.filter((code) => code !== 'precision_policy_required' && code !== 'rounding_policy_required')
+        : REQUIRED_CALCULATOR_BASE_ERROR_CODES;
+    for (const errorCode of requiredErrorCodes) {
         if (!definition.errorCodes.includes(errorCode)) {
             pushCalculatorDiagnostic(diagnostics, 'API_CALCULATOR_BASE_ERROR_CODE_MISSING', `${path}.error_codes`, `Calculator \`${definition.id}\` must declare base error code \`${errorCode}\`.`);
         }
@@ -1186,8 +1196,8 @@ function validateCalculatorDefinition(contracts, definition, index, diagnostics)
 }
 function validateCalculatorConformance(contracts, diagnostics) {
     const conformance = contracts.calculatorConformance;
-    if (conformance.schemaVersion !== 1) {
-        pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_SCHEMA_VERSION_INVALID', 'calculator_conformance.schema_version', 'Calculator conformance schema_version must be 1.');
+    if (conformance.schemaVersion !== 2) {
+        pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_SCHEMA_VERSION_INVALID', 'calculator_conformance.schema_version', 'Calculator conformance schema_version must be 2.');
     }
     if (conformance.contractVersion !== contracts.calculatorCatalog.contractVersion) {
         pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_VERSION_MISMATCH', 'calculator_conformance.contract_version', 'Calculator conformance contract_version must match the calculator catalog.');
@@ -1249,9 +1259,13 @@ function validateCalculatorConformanceCase(contracts, testCase, index, diagnosti
         pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_CALCULATOR_INVALID', `${path}.calculator_id`, `Conformance calculator \`${testCase.calculatorId}\` is not in the reviewed engine batch.`);
         return;
     }
-    if (!Number.isInteger(testCase.options.decimalPlaces) ||
-        testCase.options.decimalPlaces < 0 ||
-        testCase.options.decimalPlaces > CONFORMANCE_MAX_DECIMAL_PLACES) {
+    const expectsIntegerOutput = definition.outputs.every((output) => output.valueKind === 'integer');
+    if (expectsIntegerOutput && testCase.options.decimalPlaces !== undefined) {
+        pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_DECIMAL_PLACES_NOT_APPLICABLE', `${path}.options.decimal_places`, 'Exact integer calculators must not declare decimal_places.');
+    }
+    else if (!expectsIntegerOutput && (!Number.isInteger(testCase.options.decimalPlaces) ||
+        (testCase.options.decimalPlaces ?? -1) < 0 ||
+        (testCase.options.decimalPlaces ?? -1) > CONFORMANCE_MAX_DECIMAL_PLACES)) {
         pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_DECIMAL_PLACES_OUT_OF_RANGE', `${path}.options.decimal_places`, `decimal_places must be an integer from 0 to ${CONFORMANCE_MAX_DECIMAL_PLACES}.`);
     }
     validateConformanceKeys(Object.keys(testCase.input), definition.inputs.map((input) => input.id), `${path}.input`, diagnostics);
@@ -1259,10 +1273,16 @@ function validateCalculatorConformanceCase(contracts, testCase, index, diagnosti
     if (testCase.expected.status === 'success') {
         validateConformanceKeys(Object.keys(testCase.expected.output), definition.outputs.map((output) => output.id), `${path}.expected.output`, diagnostics);
         for (const [field, output] of Object.entries(testCase.expected.output)) {
-            if (!CANONICAL_CALCULATOR_DECIMAL_PATTERN.test(output.value)) {
+            const definitionOutput = definition.outputs.find((candidate) => candidate.id === field);
+            if (definitionOutput?.valueKind === 'integer') {
+                if (!Number.isSafeInteger(output.value)) {
+                    pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_OUTPUT_VALUE_INVALID', `${path}.expected.output.${field}.value`, 'Successful exact-integer fixture output values must be safe JSON integers.');
+                }
+            }
+            else if (typeof output.value !== 'string' ||
+                !CANONICAL_CALCULATOR_DECIMAL_PATTERN.test(output.value)) {
                 pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_OUTPUT_VALUE_INVALID', `${path}.expected.output.${field}.value`, 'Successful fixture output values must be canonical ASCII decimal strings.');
             }
-            const definitionOutput = definition.outputs.find((candidate) => candidate.id === field);
             if (!definitionOutput) {
                 continue;
             }
@@ -1274,8 +1294,10 @@ function validateCalculatorConformanceCase(contracts, testCase, index, diagnosti
                 !calculatorCallerSuppliedUnits(definition, testCase.input).includes(output.unit)) {
                 pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_OUTPUT_UNIT_INVALID', `${path}.expected.output.${field}.unit`, `Successful fixture output unit \`${output.unit}\` must come from a caller-supplied input unit.`);
             }
-            if (decimalPlacesInCanonicalValue(output.value) !==
-                testCase.options.decimalPlaces) {
+            if (definitionOutput.valueKind !== 'integer' &&
+                typeof output.value === 'string' &&
+                decimalPlacesInCanonicalValue(output.value) !==
+                    testCase.options.decimalPlaces) {
                 pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_OUTPUT_PRECISION_INVALID', `${path}.expected.output.${field}.value`, `Successful fixture output must use exactly ${testCase.options.decimalPlaces} decimal places.`);
             }
         }
