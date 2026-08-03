@@ -218,6 +218,7 @@ definitions:
     contract_version: "1.0.0"
     compatible_engine_versions:
       - "0.4.0"
+      - "0.5.0"
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -295,6 +296,7 @@ definitions:
     compatible_engine_versions:
       - "0.3.0"
       - "0.4.0"
+      - "0.5.0"
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -364,6 +366,7 @@ definitions:
     contract_version: "1.0.0"
     compatible_engine_versions:
       - "0.4.0"
+      - "0.5.0"
     jurisdiction: global
     precision_policy: exact_integer_calendar_days_years_0001_to_9999
     rounding_policy: not_applicable_exact_integer
