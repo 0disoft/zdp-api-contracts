@@ -27,6 +27,7 @@ agent-facing 문서에는 raw package command를 실행 권한처럼 적지 않�
 - package export source: `package.json`, `src/index.ts`, `tsconfig.build.json`; consumer output: generated `dist/`
 - service catalog compile source: root `service.yaml`, consumed by full-SHA-pinned `0disoft/service-catalog-generator` v0.5.11 in GitHub Actions
 - calculator contract sources: `contracts/calculators/catalog.yaml`, `contracts/calculators/conformance.yaml`
+- credit purchase sources: `contracts/apis/money-api/credit-purchase.yaml`, `contracts/apis/money-api/credit-purchase-read.yaml`
 
 ## Forbidden Value Checks
 
@@ -55,6 +56,8 @@ agent-facing 문서에는 raw package command를 실행 권한처럼 적지 않�
 - OIDC 제품 로그인 handoff가 Authorization Code Flow, RFC 9700, PKCE S256, exact redirect URI, 중앙 client registry, 제품 host-only session과 Core Access 재판단 경계를 유지하는지 확인한다.
 - 첫 staging client가 disabled BFF 경계와 exact callback에서 이탈하거나 provider runtime의 TTL·single-use·key rotation·revocation 상한이 느슨해지는지 확인한다.
 - 중앙 client registry가 revision compare-and-swap, 환경 격리, client ID 비재사용, 증거 기반 lifecycle, 보안 민감 변경 감사와 active 전 activation evidence 요구를 유지하는지 확인한다.
+- 공통 귤 충전이 서버 재검증, immutable snapshot reference, 분리된 식별자, 결제·지급 상태 분리와 미확정 결과 reconciliation을 유지하는지 확인한다.
+- client 금액·통화·지급량, success redirect와 임의 return URL이 결제 권위로 승격되거나 return receipt가 재사용 가능한 bearer가 되지 않는지 확인한다.
 - 여러 제품 entry에서 client ID 중복, registry와 다른 environment, wildcard·credential·fragment URI, grant/response/PKCE drift와 평문 key material을 거부하는지 확인한다.
 - export plan이 generated artifact를 쓰거나 schema publish를 주장하지 않는지 확인한다.
 - package export map과 `files` whitelist가 README의 package surface 설명과 어긋나지 않는지 확인한다.

@@ -5,6 +5,7 @@ export interface ApiContracts {
     readonly sdkGenerationInput: SdkGenerationInputContract;
     readonly apiCatalog: ApiCatalogContract;
     readonly schemaBundles: readonly ApiSchemaBundleContract[];
+    readonly creditPurchase: CreditPurchaseContract;
     readonly accessDecision: AccessDecisionContract;
     readonly productLinkHandoff: ProductLinkHandoffContract;
     readonly sensitiveActionAuthorization: SensitiveActionAuthorizationContract;
@@ -13,6 +14,31 @@ export interface ApiContracts {
     readonly oidcProviderRuntime: OidcProviderRuntimeContract;
     readonly calculatorCatalog: CalculatorCatalogContract;
     readonly calculatorConformance: CalculatorConformanceContract;
+}
+export interface CreditPurchaseContract {
+    readonly schemaVersion: number;
+    readonly status: string;
+    readonly ownerBoundary: string;
+    readonly operationIds: readonly string[];
+    readonly checkoutStates: readonly string[];
+    readonly nonTerminalStates: readonly string[];
+    readonly terminalStates: readonly string[];
+    readonly requiredIntentBindings: readonly string[];
+    readonly serverRevalidatedClaims: readonly string[];
+    readonly immutableSnapshotRefs: readonly string[];
+    readonly separatedIdentifiers: readonly string[];
+    readonly authoritativeCompletionEvidence: readonly string[];
+    readonly idempotencyPolicy: string;
+    readonly returnTargetPolicy: string;
+    readonly returnReceiptPolicy: string;
+    readonly returnReceiptSingleUse: boolean;
+    readonly successRedirectIsPaymentEvidence: boolean;
+    readonly clientAmountsAuthoritative: boolean;
+    readonly balanceRefreshPolicy: string;
+    readonly unknownOutcomePolicy: string;
+    readonly forbiddenUrlValues: readonly string[];
+    readonly forbiddenConsumerUses: readonly string[];
+    readonly forbiddenValues: readonly string[];
 }
 export interface OidcProductSessionContract {
     readonly schemaVersion: number;

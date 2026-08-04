@@ -434,3 +434,120 @@ routes:
       - authentication_failed
       - account_restricted
       - not_found
+  - operation_id: money.credit_pack_catalog_projections.get
+    service_id: money-api
+    resource: credit_pack_catalog_projection
+    action: get
+    method: GET
+    path: /v1/credit-pack-catalog-projections/{product_ref}
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/money-api/credit-purchase-read.yaml#CreditPackCatalogProjectionGetRequest
+    response_schema_ref: contracts/apis/money-api/credit-purchase-read.yaml#CreditPackCatalogProjectionGetResponse
+    auth_required: true
+    permission_check: money.billing.credit_pack_catalog.read
+    audit_event: money.billing.credit_pack_catalog.read
+    idempotency: not_required
+    owner_boundary: money
+    tenant_boundary: common_zdp_wallet
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - account_restricted
+      - scope_access_denied
+      - product_not_found
+      - catalog_unavailable
+      - sale_unavailable
+  - operation_id: money.credit_checkout_intents.create
+    service_id: money-api
+    resource: credit_checkout_intent
+    action: create
+    method: POST
+    path: /v1/credit-checkout-intents
+    success_statuses:
+      - 201
+    request_schema_ref: contracts/apis/money-api/credit-purchase.yaml#CreditCheckoutIntentCreateRequest
+    response_schema_ref: contracts/apis/money-api/credit-purchase.yaml#CreditCheckoutIntentCreateResponse
+    auth_required: true
+    permission_check: money.payments.credit_checkout_intent.create
+    audit_event: money.payments.credit_checkout_intent.created
+    idempotency: required_idempotency_key
+    owner_boundary: money
+    tenant_boundary: common_zdp_wallet
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - account_restricted
+      - scope_access_denied
+      - product_not_found
+      - ship_tier_not_found
+      - sale_unavailable
+      - payment_unavailable
+      - risk_hold
+      - return_target_not_registered
+      - idempotency_conflict
+  - operation_id: money.credit_checkout_intents.status.get
+    service_id: money-api
+    resource: credit_checkout_intent_status
+    action: get
+    method: GET
+    path: /v1/credit-checkout-intents/{checkout_intent_ref}
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/money-api/credit-purchase-read.yaml#CreditCheckoutIntentStatusGetRequest
+    response_schema_ref: contracts/apis/money-api/credit-purchase-read.yaml#CreditCheckoutIntentStatusGetResponse
+    auth_required: true
+    permission_check: money.payments.credit_checkout_intent.read
+    audit_event: money.payments.credit_checkout_intent.read
+    idempotency: not_required
+    owner_boundary: money
+    tenant_boundary: common_zdp_wallet
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - account_restricted
+      - scope_access_denied
+      - not_found
+  - operation_id: money.credit_checkout_return_receipts.exchange
+    service_id: money-api
+    resource: credit_checkout_return_receipt
+    action: exchange
+    method: POST
+    path: /v1/credit-checkout-return-receipts/exchange
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/money-api/credit-purchase.yaml#CreditCheckoutReturnReceiptExchangeRequest
+    response_schema_ref: contracts/apis/money-api/credit-purchase.yaml#CreditCheckoutReturnReceiptExchangeResponse
+    auth_required: true
+    permission_check: money.payments.credit_checkout_return_receipt.exchange
+    audit_event: money.payments.credit_checkout_return_receipt.consumed
+    idempotency: required_idempotency_key
+    owner_boundary: money
+    tenant_boundary: common_zdp_wallet
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - account_restricted
+      - scope_access_denied
+      - receipt_invalid
+      - receipt_expired
+      - receipt_already_consumed
+      - product_mismatch
+      - return_target_mismatch
+      - idempotency_conflict

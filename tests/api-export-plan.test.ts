@@ -7,6 +7,7 @@ import {
   parseApiSchemaBundleContract,
   parseCalculatorCatalogContract,
   parseCalculatorConformanceContract,
+  parseCreditPurchaseContract,
   parseErrorEnvelopeContract,
   parseOidcClientRegistryContract,
   parseOidcProductSessionContract,
@@ -68,7 +69,11 @@ describe('api export plan', () => {
       'core.auth.passkey_assertions.verify',
       'core.auth.oauth_callbacks.accept',
       'core.referral.uses.create',
-      'money.referral_rewards.status.get'
+      'money.referral_rewards.status.get',
+      'money.credit_pack_catalog_projections.get',
+      'money.credit_checkout_intents.create',
+      'money.credit_checkout_intents.status.get',
+      'money.credit_checkout_return_receipts.exchange'
     ]);
     expect(plan.typedFetchOperationMap).toMatchObject({
       'core.auth.sessions.create': {
@@ -339,6 +344,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    creditPurchase: parseCreditPurchaseContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'money-api',
+          'credit-purchase.yaml'
+        ),
+        'utf8'
+      )
+    ),
     accessDecision: parseAccessDecisionContract(
       readFileSync(
         join(
@@ -508,6 +525,32 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/money-api/referral-reward.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'money-api',
+            'credit-purchase-read.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/money-api/credit-purchase-read.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'money-api',
+            'credit-purchase.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/money-api/credit-purchase.yaml'
       )
     ]
   };

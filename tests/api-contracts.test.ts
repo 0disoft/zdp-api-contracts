@@ -10,6 +10,7 @@ import {
   parseApiSchemaBundleContract,
   parseCalculatorCatalogContract,
   parseCalculatorConformanceContract,
+  parseCreditPurchaseContract,
   parseErrorEnvelopeContract,
   parseOidcClientRegistryContract,
   parseOidcProductSessionContract,
@@ -34,6 +35,63 @@ describe('api contract checker', () => {
 
     expect(result.diagnostics).toEqual([]);
     expect(result.ok).toBe(true);
+  });
+
+  it('keeps credit purchase on server-authoritative Money contracts', () => {
+    const contracts = loadCommittedContracts();
+
+    expect(contracts.creditPurchase.checkoutStates).toEqual([
+      'created',
+      'payment_pending',
+      'credit_issuance_pending',
+      'completed',
+      'review_required',
+      'failed',
+      'cancelled',
+      'expired'
+    ]);
+    expect(contracts.creditPurchase.successRedirectIsPaymentEvidence).toBe(false);
+    expect(contracts.creditPurchase.clientAmountsAuthoritative).toBe(false);
+    expect(contracts.creditPurchase.returnReceiptSingleUse).toBe(true);
+    expect(
+      contracts.apiCatalog.routes
+        .filter((route) => route.operationId.startsWith('money.credit_'))
+        .map((route) => route.operationId)
+    ).toEqual([...contracts.creditPurchase.operationIds]);
+  });
+
+  it('rejects client-authoritative checkout amounts and reusable return receipts', () => {
+    const contracts = loadCommittedContracts();
+    const bundle = schemaBundleByFile(
+      contracts,
+      'contracts/apis/money-api/credit-purchase.yaml'
+    );
+    const schemas = bundle.schemas.map((schema) =>
+      schema.id === 'CreditCheckoutIntentCreateRequest'
+        ? { ...schema, optionalFields: [...schema.optionalFields, 'amount'] }
+        : schema
+    );
+    const result = validateApiContracts({
+      ...contracts,
+      creditPurchase: {
+        ...contracts.creditPurchase,
+        returnReceiptSingleUse: false
+      },
+      schemaBundles: contracts.schemaBundles.map((candidate) =>
+        candidate.file === bundle.file ? { ...candidate, schemas } : candidate
+      )
+    });
+
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'API_CREDIT_PURCHASE_RETURN_RECEIPT_REUSABLE'
+        }),
+        expect.objectContaining({
+          code: 'API_CREDIT_PURCHASE_CLIENT_AUTHORITY_FIELD_FORBIDDEN'
+        })
+      ])
+    );
   });
 
   it('keeps product web sign-in on the proposed OIDC BFF handoff boundary', () => {
@@ -939,7 +997,11 @@ describe('api contract checker', () => {
       'core.auth.passkey_assertions.verify',
       'core.auth.oauth_callbacks.accept',
       'core.referral.uses.create',
-      'money.referral_rewards.status.get'
+      'money.referral_rewards.status.get',
+      'money.credit_pack_catalog_projections.get',
+      'money.credit_checkout_intents.create',
+      'money.credit_checkout_intents.status.get',
+      'money.credit_checkout_return_receipts.exchange'
     ]);
     const authRoutes = contracts.apiCatalog.routes.filter((route) =>
       route.operationId.startsWith('core.auth.')
@@ -1425,6 +1487,8 @@ describe('api contract checker', () => {
       'contracts/apis/core-api/product-link.yaml',
       'contracts/apis/core-api/referral.yaml',
       'contracts/apis/core-api/sensitive-action-authorization.yaml',
+      'contracts/apis/money-api/credit-purchase-read.yaml',
+      'contracts/apis/money-api/credit-purchase.yaml',
       'contracts/apis/money-api/referral-reward.yaml'
     ]);
     expect(
@@ -1819,6 +1883,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    creditPurchase: parseCreditPurchaseContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'money-api',
+          'credit-purchase.yaml'
+        ),
+        'utf8'
+      )
+    ),
     accessDecision: parseAccessDecisionContract(
       readFileSync(
         join(
@@ -1976,6 +2052,32 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/core-api/access-decision.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'money-api',
+            'credit-purchase-read.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/money-api/credit-purchase-read.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'money-api',
+            'credit-purchase.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/money-api/credit-purchase.yaml'
       )
     ],
     calculatorCatalog: parseCalculatorCatalogContract(

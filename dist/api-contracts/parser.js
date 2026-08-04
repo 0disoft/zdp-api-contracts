@@ -25,7 +25,7 @@ export class ApiContractLoadError extends Error {
  */
 export async function loadApiContracts(root = process.cwd()) {
     const contractsRoot = join(root, 'contracts');
-    const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog, calculatorCatalog, calculatorConformance, accessDecision, productLinkHandoff, sensitiveActionAuthorization, oidcProductSession, oidcClientRegistry, oidcProviderRuntime] = await Promise.all([
+    const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog, calculatorCatalog, calculatorConformance, creditPurchase, accessDecision, productLinkHandoff, sensitiveActionAuthorization, oidcProductSession, oidcClientRegistry, oidcProviderRuntime] = await Promise.all([
         loadContract(contractsRoot, 'route', 'route-contract.yaml', parseRouteContract),
         loadContract(contractsRoot, 'error-envelope', 'error-envelope.yaml', parseErrorEnvelopeContract),
         loadContract(contractsRoot, 'webhook', 'webhook-contract.yaml', parseWebhookContract),
@@ -33,6 +33,7 @@ export async function loadApiContracts(root = process.cwd()) {
         loadContract(contractsRoot, 'api-catalog', join('apis', 'catalog.yaml'), parseApiCatalogContract),
         loadContract(contractsRoot, 'calculator-catalog', join('calculators', 'catalog.yaml'), parseCalculatorCatalogContract),
         loadContract(contractsRoot, 'calculator-conformance', join('calculators', 'conformance.yaml'), parseCalculatorConformanceContract),
+        loadContract(contractsRoot, 'credit-purchase', join('apis', 'money-api', 'credit-purchase.yaml'), parseCreditPurchaseContract),
         loadContract(contractsRoot, 'access-decision', join('apis', 'core-api', 'access-decision.yaml'), parseAccessDecisionContract),
         loadContract(contractsRoot, 'product-link-handoff', join('apis', 'core-api', 'product-link.yaml'), parseProductLinkHandoffContract),
         loadContract(contractsRoot, 'sensitive-action-authorization', join('apis', 'core-api', 'sensitive-action-authorization.yaml'), parseSensitiveActionAuthorizationContract),
@@ -48,6 +49,7 @@ export async function loadApiContracts(root = process.cwd()) {
         apiCatalog,
         calculatorCatalog,
         calculatorConformance,
+        creditPurchase,
         accessDecision,
         productLinkHandoff,
         sensitiveActionAuthorization,
@@ -66,6 +68,7 @@ export async function loadApiContracts(root = process.cwd()) {
     const loadedApiCatalog = requireLoadedContract(apiCatalog);
     const loadedCalculatorCatalog = requireLoadedContract(calculatorCatalog);
     const loadedCalculatorConformance = requireLoadedContract(calculatorConformance);
+    const loadedCreditPurchase = requireLoadedContract(creditPurchase);
     const loadedAccessDecision = requireLoadedContract(accessDecision);
     const loadedProductLinkHandoff = requireLoadedContract(productLinkHandoff);
     const loadedSensitiveActionAuthorization = requireLoadedContract(sensitiveActionAuthorization);
@@ -84,6 +87,7 @@ export async function loadApiContracts(root = process.cwd()) {
         sdkGenerationInput: loadedSdkGenerationInput.value,
         apiCatalog: loadedApiCatalog.value,
         schemaBundles: schemaBundleResults.map((result) => requireLoadedContract(result).value),
+        creditPurchase: loadedCreditPurchase.value,
         accessDecision: loadedAccessDecision.value,
         productLinkHandoff: loadedProductLinkHandoff.value,
         sensitiveActionAuthorization: loadedSensitiveActionAuthorization.value,
@@ -92,6 +96,63 @@ export async function loadApiContracts(root = process.cwd()) {
         oidcProviderRuntime: loadedOidcProviderRuntime.value,
         calculatorCatalog: loadedCalculatorCatalog.value,
         calculatorConformance: loadedCalculatorConformance.value
+    };
+}
+export function parseCreditPurchaseContract(source) {
+    const file = 'contracts/apis/money-api/credit-purchase.yaml';
+    const data = parseYamlObject(source, file);
+    assertOnlyKeys(data, ['credit_purchase', 'schema_bundle'], file);
+    const contract = requiredObject(data, 'credit_purchase', file);
+    const context = `${file}#credit_purchase`;
+    assertOnlyKeys(contract, [
+        'schema_version',
+        'status',
+        'owner_boundary',
+        'operation_ids',
+        'checkout_states',
+        'non_terminal_states',
+        'terminal_states',
+        'required_intent_bindings',
+        'server_revalidated_claims',
+        'immutable_snapshot_refs',
+        'separated_identifiers',
+        'authoritative_completion_evidence',
+        'idempotency_policy',
+        'return_target_policy',
+        'return_receipt_policy',
+        'return_receipt_single_use',
+        'success_redirect_is_payment_evidence',
+        'client_amounts_authoritative',
+        'balance_refresh_policy',
+        'unknown_outcome_policy',
+        'forbidden_url_values',
+        'forbidden_consumer_uses',
+        'forbidden_values'
+    ], context);
+    return {
+        schemaVersion: requiredNumber(contract, 'schema_version', context),
+        status: requiredString(contract, 'status', context),
+        ownerBoundary: requiredString(contract, 'owner_boundary', context),
+        operationIds: requiredStringList(contract, 'operation_ids', context),
+        checkoutStates: requiredStringList(contract, 'checkout_states', context),
+        nonTerminalStates: requiredStringList(contract, 'non_terminal_states', context),
+        terminalStates: requiredStringList(contract, 'terminal_states', context),
+        requiredIntentBindings: requiredStringList(contract, 'required_intent_bindings', context),
+        serverRevalidatedClaims: requiredStringList(contract, 'server_revalidated_claims', context),
+        immutableSnapshotRefs: requiredStringList(contract, 'immutable_snapshot_refs', context),
+        separatedIdentifiers: requiredStringList(contract, 'separated_identifiers', context),
+        authoritativeCompletionEvidence: requiredStringList(contract, 'authoritative_completion_evidence', context),
+        idempotencyPolicy: requiredString(contract, 'idempotency_policy', context),
+        returnTargetPolicy: requiredString(contract, 'return_target_policy', context),
+        returnReceiptPolicy: requiredString(contract, 'return_receipt_policy', context),
+        returnReceiptSingleUse: requiredBoolean(contract, 'return_receipt_single_use', context),
+        successRedirectIsPaymentEvidence: requiredBoolean(contract, 'success_redirect_is_payment_evidence', context),
+        clientAmountsAuthoritative: requiredBoolean(contract, 'client_amounts_authoritative', context),
+        balanceRefreshPolicy: requiredString(contract, 'balance_refresh_policy', context),
+        unknownOutcomePolicy: requiredString(contract, 'unknown_outcome_policy', context),
+        forbiddenUrlValues: requiredStringList(contract, 'forbidden_url_values', context),
+        forbiddenConsumerUses: requiredStringList(contract, 'forbidden_consumer_uses', context),
+        forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
     };
 }
 export function parseOidcProductSessionContract(source) {

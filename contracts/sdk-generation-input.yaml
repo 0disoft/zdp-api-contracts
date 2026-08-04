@@ -16,6 +16,8 @@ sdk_generation_input:
     - contracts/apis/core-api/referral.yaml
     - contracts/apis/core-api/sensitive-action-authorization.yaml
     - contracts/apis/money-api/referral-reward.yaml
+    - contracts/apis/money-api/credit-purchase.yaml
+    - contracts/apis/money-api/credit-purchase-read.yaml
   generation_targets:
     - typescript
     - dart

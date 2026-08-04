@@ -1,5 +1,17 @@
 # CHANGELOG.md
 
+## 0.22.0
+
+### Added
+
+- 공통 함선 팩 catalog projection, checkout intent 생성, 상태 조회와 일회용 return receipt 교환 계약을 추가했다.
+- 결제와 귤 지급을 분리한 상태, immutable 가격·세금·혜택 snapshot reference, 식별자 분리와 reconciliation 경계를 기계 검증한다.
+
+### Changed
+
+- SDK generation input이 credit-purchase schema bundle과 네 Money operation을 읽도록 확장했다.
+- 클라이언트 금액·통화·지급량, success redirect와 임의 return URL을 결제 권위로 사용할 수 없게 계약을 닫았다.
+
 ## 0.21.1
 
 ### Fixed

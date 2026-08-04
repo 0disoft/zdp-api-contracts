@@ -1,0 +1,164 @@
+credit_purchase:
+  schema_version: 1
+  status: contract-only
+  owner_boundary: money
+  operation_ids:
+    - money.credit_pack_catalog_projections.get
+    - money.credit_checkout_intents.create
+    - money.credit_checkout_intents.status.get
+    - money.credit_checkout_return_receipts.exchange
+  checkout_states:
+    - created
+    - payment_pending
+    - credit_issuance_pending
+    - completed
+    - review_required
+    - failed
+    - cancelled
+    - expired
+  non_terminal_states:
+    - created
+    - payment_pending
+    - credit_issuance_pending
+    - review_required
+  terminal_states:
+    - completed
+    - failed
+    - cancelled
+    - expired
+  required_intent_bindings:
+    - product_ref
+    - ship_tier_id
+    - scope_type
+    - scope_ref
+    - environment
+    - locale
+    - return_target_id
+  server_revalidated_claims:
+    - product_ref
+    - ship_tier_id
+    - scope_type
+    - scope_ref
+    - environment
+    - account_payment_eligibility
+    - catalog_sale_state
+    - provider_capability
+  immutable_snapshot_refs:
+    - catalog_version
+    - price_snapshot_ref
+    - tax_snapshot_ref
+    - benefit_snapshot_ref
+  separated_identifiers:
+    - checkout_intent_ref
+    - operation_ref
+    - payment_attempt_ref
+    - provider_object_ref
+    - ledger_issuance_ref
+    - return_receipt_ref
+  authoritative_completion_evidence:
+    - signed_provider_webhook
+    - provider_state_query
+    - reconciliation
+  idempotency_policy: same_key_same_normalized_binding_replays_different_binding_conflicts
+  return_target_policy: exact_environment_product_registry_target_id_only
+  return_receipt_policy: short_lived_single_use_opaque_server_exchange_only
+  return_receipt_single_use: true
+  success_redirect_is_payment_evidence: false
+  client_amounts_authoritative: false
+  balance_refresh_policy: reread_money_balance_after_receipt_exchange_or_completed_status
+  unknown_outcome_policy: remain_pending_or_review_required_until_reconciled
+  forbidden_url_values:
+    - provider_token
+    - payment_credential
+    - central_session
+    - raw_price_snapshot
+  forbidden_consumer_uses:
+    - client_supplied_price_or_credits_as_authority
+    - success_redirect_as_payment_proof
+    - return_receipt_as_reusable_bearer
+    - product_local_credit_issuance
+    - arbitrary_return_url
+  forbidden_values:
+    - authorization_header
+    - cookie_header
+    - refresh_token_plaintext
+    - provider_secret
+    - raw_provider_error
+    - raw_customer_payload
+    - stack_trace
+    - screen_component_payload
+
+schema_bundle:
+  service_id: money-api
+  owner_boundary: money
+  status: contract-only
+  purpose: define provider-neutral credit-pack catalog projection, checkout intent, status, and one-time return receipt exchange before live handlers or generated SDKs exist
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+      - idempotency_key
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: CreditCheckoutIntentCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - product_ref
+        - ship_tier_id
+        - scope_type
+        - scope_ref
+        - environment
+        - locale
+        - return_target_id
+    - id: CreditCheckoutIntentCreateResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - checkout_intent_ref
+        - operation_ref
+        - checkout_status
+        - payment_status
+        - credit_issuance_status
+        - catalog_version
+        - price_snapshot_ref
+        - tax_snapshot_ref
+        - benefit_snapshot_ref
+        - return_target_id
+        - wallet_handoff_ref
+        - created_at
+        - expires_at
+    - id: CreditCheckoutReturnReceiptExchangeRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: one_time_receipt_input_only_never_echo_or_persist_plaintext
+      required_fields:
+        - return_receipt
+        - product_ref
+        - return_target_id
+      secret_fields:
+        - return_receipt
+    - id: CreditCheckoutReturnReceiptExchangeResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - checkout_intent_ref
+        - operation_ref
+        - checkout_status
+        - payment_status
+        - credit_issuance_status
+        - balance_refresh_required
+        - consumed_at

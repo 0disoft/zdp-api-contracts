@@ -17,6 +17,7 @@ import type {
   CalculatorDefinition,
   CalculatorInputDefinition,
   CalculatorOutputDefinition,
+  CreditPurchaseContract,
   ErrorEnvelopeContract,
   OidcClientRegistryContract,
   OidcClientRegistryEntry,
@@ -96,6 +97,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     apiCatalog,
     calculatorCatalog,
     calculatorConformance,
+    creditPurchase,
     accessDecision,
     productLinkHandoff,
     sensitiveActionAuthorization,
@@ -148,6 +150,12 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
       ),
       loadContract(
         contractsRoot,
+        'credit-purchase',
+        join('apis', 'money-api', 'credit-purchase.yaml'),
+        parseCreditPurchaseContract
+      ),
+      loadContract(
+        contractsRoot,
         'access-decision',
         join('apis', 'core-api', 'access-decision.yaml'),
         parseAccessDecisionContract
@@ -192,6 +200,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     apiCatalog,
     calculatorCatalog,
     calculatorConformance,
+    creditPurchase,
     accessDecision,
     productLinkHandoff,
     sensitiveActionAuthorization,
@@ -213,6 +222,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
   const loadedCalculatorConformance = requireLoadedContract(
     calculatorConformance
   );
+  const loadedCreditPurchase = requireLoadedContract(creditPurchase);
   const loadedAccessDecision = requireLoadedContract(accessDecision);
   const loadedProductLinkHandoff = requireLoadedContract(productLinkHandoff);
   const loadedSensitiveActionAuthorization = requireLoadedContract(
@@ -245,6 +255,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     schemaBundles: schemaBundleResults.map(
       (result) => requireLoadedContract(result).value
     ),
+    creditPurchase: loadedCreditPurchase.value,
     accessDecision: loadedAccessDecision.value,
     productLinkHandoff: loadedProductLinkHandoff.value,
     sensitiveActionAuthorization: loadedSensitiveActionAuthorization.value,
@@ -253,6 +264,127 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     oidcProviderRuntime: loadedOidcProviderRuntime.value,
     calculatorCatalog: loadedCalculatorCatalog.value,
     calculatorConformance: loadedCalculatorConformance.value
+  };
+}
+
+export function parseCreditPurchaseContract(
+  source: string
+): CreditPurchaseContract {
+  const file = 'contracts/apis/money-api/credit-purchase.yaml';
+  const data = parseYamlObject(source, file);
+  assertOnlyKeys(data, ['credit_purchase', 'schema_bundle'], file);
+  const contract = requiredObject(data, 'credit_purchase', file);
+  const context = `${file}#credit_purchase`;
+  assertOnlyKeys(
+    contract,
+    [
+      'schema_version',
+      'status',
+      'owner_boundary',
+      'operation_ids',
+      'checkout_states',
+      'non_terminal_states',
+      'terminal_states',
+      'required_intent_bindings',
+      'server_revalidated_claims',
+      'immutable_snapshot_refs',
+      'separated_identifiers',
+      'authoritative_completion_evidence',
+      'idempotency_policy',
+      'return_target_policy',
+      'return_receipt_policy',
+      'return_receipt_single_use',
+      'success_redirect_is_payment_evidence',
+      'client_amounts_authoritative',
+      'balance_refresh_policy',
+      'unknown_outcome_policy',
+      'forbidden_url_values',
+      'forbidden_consumer_uses',
+      'forbidden_values'
+    ],
+    context
+  );
+
+  return {
+    schemaVersion: requiredNumber(contract, 'schema_version', context),
+    status: requiredString(contract, 'status', context),
+    ownerBoundary: requiredString(contract, 'owner_boundary', context),
+    operationIds: requiredStringList(contract, 'operation_ids', context),
+    checkoutStates: requiredStringList(contract, 'checkout_states', context),
+    nonTerminalStates: requiredStringList(
+      contract,
+      'non_terminal_states',
+      context
+    ),
+    terminalStates: requiredStringList(contract, 'terminal_states', context),
+    requiredIntentBindings: requiredStringList(
+      contract,
+      'required_intent_bindings',
+      context
+    ),
+    serverRevalidatedClaims: requiredStringList(
+      contract,
+      'server_revalidated_claims',
+      context
+    ),
+    immutableSnapshotRefs: requiredStringList(
+      contract,
+      'immutable_snapshot_refs',
+      context
+    ),
+    separatedIdentifiers: requiredStringList(
+      contract,
+      'separated_identifiers',
+      context
+    ),
+    authoritativeCompletionEvidence: requiredStringList(
+      contract,
+      'authoritative_completion_evidence',
+      context
+    ),
+    idempotencyPolicy: requiredString(contract, 'idempotency_policy', context),
+    returnTargetPolicy: requiredString(contract, 'return_target_policy', context),
+    returnReceiptPolicy: requiredString(
+      contract,
+      'return_receipt_policy',
+      context
+    ),
+    returnReceiptSingleUse: requiredBoolean(
+      contract,
+      'return_receipt_single_use',
+      context
+    ),
+    successRedirectIsPaymentEvidence: requiredBoolean(
+      contract,
+      'success_redirect_is_payment_evidence',
+      context
+    ),
+    clientAmountsAuthoritative: requiredBoolean(
+      contract,
+      'client_amounts_authoritative',
+      context
+    ),
+    balanceRefreshPolicy: requiredString(
+      contract,
+      'balance_refresh_policy',
+      context
+    ),
+    unknownOutcomePolicy: requiredString(
+      contract,
+      'unknown_outcome_policy',
+      context
+    ),
+    forbiddenUrlValues: requiredStringList(
+      contract,
+      'forbidden_url_values',
+      context
+    ),
+    forbiddenConsumerUses: requiredStringList(
+      contract,
+      'forbidden_consumer_uses',
+      context
+    ),
+    forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
   };
 }
 

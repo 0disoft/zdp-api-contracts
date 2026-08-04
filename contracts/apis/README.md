@@ -13,3 +13,7 @@ family다. Opaque receipt의 exact binding과 issuer/audience 상태를 고정�
 verify endpoint 또는 제품별 권한 handler를 활성화하지 않는다.
 
 생성된 OpenAPI, SDK source, published docs artifact는 이 디렉터리에 넣지 않는다.
+
+`money-api/credit-purchase.yaml`은 공통 함선 팩 catalog projection, checkout intent, 상태 조회와 일회용
+return receipt 교환을 정의한다. live 결제 제공자나 base URL을 여는 계약이 아니며 제품이 보낸 금액,
+통화, 지급 귤, 보너스와 success redirect를 결제·지급 정본으로 사용하지 못하게 한다.

@@ -67,3 +67,12 @@
 - 미검토 값 종류, 단위 차원, 단위 정책, 오류 코드를 임의로 추가하지 않는다.
 - draft 계산기는 precision과 rounding 정책을 확정하기 전 active로 승격하지 않는다.
 - reviewed 계산기의 contract version, 숫자 한계, 반올림 정책과 적합성 벡터를 함께 바꾼다.
+
+## Credit Purchase Contract
+
+- 제품 요청의 금액, 통화, 지급량, 보너스, 세금과 success redirect를 결제 권위값으로 받지 않는다.
+- catalog, account eligibility, risk, provider capability를 Money가 다시 검증하고 immutable snapshot reference를 남긴다.
+- intent, operation, payment attempt, provider object, ledger issuance, return receipt 식별자를 분리한다.
+- `payment_pending`, `credit_issuance_pending`, `completed`, `review_required`를 합치지 않는다.
+- return receipt는 짧은 수명, 일회용, server exchange 전용이며 임의 return URL을 받지 않는다.
+- receipt 교환이나 completed status 뒤에도 제품은 Money 잔액을 다시 읽고 로컬에서 지급을 추정하지 않는다.

@@ -1,0 +1,67 @@
+schema_bundle:
+  service_id: money-api
+  owner_boundary: money
+  status: contract-only
+  purpose: define read-only credit-pack catalog projection and checkout status schemas separately from idempotent Money mutations
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: CreditPackCatalogProjectionGetRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - product_ref
+        - scope_type
+        - scope_ref
+        - environment
+        - locale
+    - id: CreditPackCatalogProjectionGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - projection_ref
+        - product_ref
+        - scope_type
+        - scope_ref
+        - environment
+        - locale
+        - catalog_version
+        - currency
+        - ship_tiers
+        - sales_status
+        - projected_at
+        - expires_at
+    - id: CreditCheckoutIntentStatusGetRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - checkout_intent_ref
+    - id: CreditCheckoutIntentStatusGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - checkout_intent_ref
+        - operation_ref
+        - checkout_status
+        - payment_status
+        - credit_issuance_status
+        - return_receipt_status
+        - balance_refresh_required
+        - updated_at
+        - expires_at
