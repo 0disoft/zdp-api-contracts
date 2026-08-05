@@ -1,5 +1,5 @@
 credit_purchase:
-  schema_version: 1
+  schema_version: 2
   status: contract-only
   owner_boundary: money
   operation_ids:
@@ -15,6 +15,25 @@ credit_purchase:
     - review_required
     - failed
     - cancelled
+    - expired
+  payment_states:
+    - not_started
+    - pending
+    - succeeded
+    - review_required
+    - failed
+    - cancelled
+    - expired
+  credit_issuance_states:
+    - not_started
+    - pending
+    - succeeded
+    - review_required
+    - failed
+  return_receipt_states:
+    - not_issued
+    - available
+    - consumed
     - expired
   non_terminal_states:
     - created
@@ -55,14 +74,24 @@ credit_purchase:
     - provider_object_ref
     - ledger_issuance_ref
     - return_receipt_ref
-  authoritative_completion_evidence:
+  authoritative_payment_evidence:
     - signed_provider_webhook
     - provider_state_query
     - reconciliation
+  authoritative_completion_evidence:
+    - payment_status_succeeded
+    - credit_issuance_status_succeeded
+  persistence_contract_ref: zdp-money-platform/contracts/money-db-schema.yaml#credit_checkout_persistence
+  checkout_completion_policy: verified_payment_success_then_ledger_issuance_success
+  provider_success_completes_checkout: false
+  ledger_issuance_required_for_completion: true
   idempotency_policy: same_key_same_normalized_binding_replays_different_binding_conflicts
   return_target_policy: exact_environment_product_registry_target_id_only
   return_receipt_policy: short_lived_single_use_opaque_server_exchange_only
+  return_receipt_retry_policy: same_idempotency_key_same_exchange_replays_other_attempt_is_already_consumed
   return_receipt_single_use: true
+  return_receipt_plaintext_stored: false
+  return_receipt_digest_algorithm: sha256
   success_redirect_is_payment_evidence: false
   client_amounts_authoritative: false
   balance_refresh_policy: reread_money_balance_after_receipt_exchange_or_completed_status
@@ -132,6 +161,7 @@ schema_bundle:
         - checkout_status
         - payment_status
         - credit_issuance_status
+        - return_receipt_status
         - catalog_version
         - price_snapshot_ref
         - tax_snapshot_ref
@@ -160,5 +190,6 @@ schema_bundle:
         - checkout_status
         - payment_status
         - credit_issuance_status
+        - return_receipt_status
         - balance_refresh_required
         - consumed_at

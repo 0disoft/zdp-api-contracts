@@ -50,14 +50,102 @@ describe('api contract checker', () => {
       'cancelled',
       'expired'
     ]);
+    expect(contracts.creditPurchase.paymentStates).toEqual([
+      'not_started',
+      'pending',
+      'succeeded',
+      'review_required',
+      'failed',
+      'cancelled',
+      'expired'
+    ]);
+    expect(contracts.creditPurchase.creditIssuanceStates).toEqual([
+      'not_started',
+      'pending',
+      'succeeded',
+      'review_required',
+      'failed'
+    ]);
+    expect(contracts.creditPurchase.returnReceiptStates).toEqual([
+      'not_issued',
+      'available',
+      'consumed',
+      'expired'
+    ]);
     expect(contracts.creditPurchase.successRedirectIsPaymentEvidence).toBe(false);
     expect(contracts.creditPurchase.clientAmountsAuthoritative).toBe(false);
     expect(contracts.creditPurchase.returnReceiptSingleUse).toBe(true);
+    expect(contracts.creditPurchase.providerSuccessCompletesCheckout).toBe(false);
+    expect(contracts.creditPurchase.ledgerIssuanceRequiredForCompletion).toBe(true);
+    expect(contracts.creditPurchase.returnReceiptPlaintextStored).toBe(false);
+    expect(contracts.creditPurchase.returnReceiptDigestAlgorithm).toBe('sha256');
     expect(
       contracts.apiCatalog.routes
         .filter((route) => route.operationId.startsWith('money.credit_'))
         .map((route) => route.operationId)
     ).toEqual([...contracts.creditPurchase.operationIds]);
+  });
+
+  it('keeps checkout completion ledger-backed and receipt persistence digest-only', () => {
+    const contracts = loadCommittedContracts();
+    const bundle = schemaBundleByFile(
+      contracts,
+      'contracts/apis/money-api/credit-purchase.yaml'
+    );
+    const readBundle = schemaBundleByFile(
+      contracts,
+      'contracts/apis/money-api/credit-purchase-read.yaml'
+    );
+
+    expect(contracts.creditPurchase.authoritativePaymentEvidence).toEqual([
+      'signed_provider_webhook',
+      'provider_state_query',
+      'reconciliation'
+    ]);
+    expect(contracts.creditPurchase.authoritativeCompletionEvidence).toEqual([
+      'payment_status_succeeded',
+      'credit_issuance_status_succeeded'
+    ]);
+    expect(
+      bundle.schemas.find((schema) => schema.id === 'CreditCheckoutIntentCreateResponse')
+    ).toMatchObject({
+      requiredFields: expect.arrayContaining(['return_receipt_status'])
+    });
+    expect(
+      bundle.schemas.find(
+        (schema) => schema.id === 'CreditCheckoutReturnReceiptExchangeResponse'
+      )
+    ).toMatchObject({
+      requiredFields: expect.arrayContaining(['return_receipt_status'])
+    });
+    expect(
+      readBundle.schemas.find(
+        (schema) => schema.id === 'CreditCheckoutIntentStatusGetResponse'
+      )
+    ).toMatchObject({
+      optionalFields: ['payment_attempt_ref', 'ledger_issuance_ref']
+    });
+  });
+
+  it('rejects provider-only completion and plaintext return receipt storage', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      creditPurchase: {
+        ...contracts.creditPurchase,
+        providerSuccessCompletesCheckout: true,
+        ledgerIssuanceRequiredForCompletion: false,
+        returnReceiptPlaintextStored: true
+      }
+    });
+
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        'API_CREDIT_PURCHASE_PROVIDER_SUCCESS_COMPLETES_CHECKOUT',
+        'API_CREDIT_PURCHASE_LEDGER_ISSUANCE_NOT_REQUIRED',
+        'API_CREDIT_PURCHASE_RETURN_RECEIPT_PLAINTEXT_STORED'
+      ])
+    );
   });
 
   it('rejects client-authoritative checkout amounts and reusable return receipts', () => {
@@ -662,7 +750,11 @@ describe('api contract checker', () => {
       'unattended-labor-savings',
       'locker-revenue',
       'study-room-schedule-revenue',
-      'security-cost-break-even'
+      'security-cost-break-even',
+      'discount',
+      'age',
+      'work-hours',
+      'fuel-cost'
     ]);
     const reviewed = contracts.calculatorCatalog.definitions.filter(
       (definition) => definition.lifecycleStatus === 'reviewed'
@@ -680,11 +772,18 @@ describe('api contract checker', () => {
       'unattended-labor-savings',
       'locker-revenue',
       'study-room-schedule-revenue',
-      'security-cost-break-even'
+      'security-cost-break-even',
+      'discount',
+      'age',
+      'work-hours',
+      'fuel-cost'
     ]);
     expect(
       reviewed
-        .filter((definition) => definition.id !== 'date-difference')
+        .filter(
+          (definition) =>
+            definition.id !== 'date-difference' && definition.id !== 'age'
+        )
         .every(
           (definition) =>
             definition.jurisdiction === 'global' &&
@@ -701,8 +800,15 @@ describe('api contract checker', () => {
       roundingPolicy: 'not_applicable_exact_integer',
       compatibleEngineVersions: ['0.4.0', '0.5.0']
     });
+    expect(
+      reviewed.find((definition) => definition.id === 'age')
+    ).toMatchObject({
+      precisionPolicy: 'exact_integer_calendar_days_years_0001_to_9999',
+      roundingPolicy: 'not_applicable_exact_integer',
+      compatibleEngineVersions: ['0.x']
+    });
     expect(contracts.calculatorConformance.schemaVersion).toBe(2);
-    expect(contracts.calculatorConformance.cases).toHaveLength(87);
+    expect(contracts.calculatorConformance.cases).toHaveLength(112);
     expect(
       reviewed.find((definition) => definition.id === 'compound-interest')
     ).toMatchObject({

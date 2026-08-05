@@ -74,5 +74,7 @@
 - catalog, account eligibility, risk, provider capability를 Money가 다시 검증하고 immutable snapshot reference를 남긴다.
 - intent, operation, payment attempt, provider object, ledger issuance, return receipt 식별자를 분리한다.
 - `payment_pending`, `credit_issuance_pending`, `completed`, `review_required`를 합치지 않는다.
+- provider 결제 성공만으로 `completed`를 만들지 않고 payment 성공과 ledger issuance 성공을 모두 요구한다.
 - return receipt는 짧은 수명, 일회용, server exchange 전용이며 임의 return URL을 받지 않는다.
+- return receipt 평문은 저장하지 않고 SHA-256 digest만 저장하며 exact idempotent retry와 다른 재소비를 구분한다.
 - receipt 교환이나 completed status 뒤에도 제품은 Money 잔액을 다시 읽고 로컬에서 지급을 추정하지 않는다.

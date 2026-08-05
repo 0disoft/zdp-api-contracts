@@ -22,13 +22,15 @@ checkout 상태는 다음 값을 사용한다.
 - 진행 중: `created`, `payment_pending`, `credit_issuance_pending`, `review_required`
 - 종료: `completed`, `failed`, `cancelled`, `expired`
 
-브라우저 success redirect는 결제 증거가 아니다. 완료 근거는 서명 검증된 provider webhook, provider 상태 재조회 또는 reconciliation뿐이다. 결제가 확인돼도 원장 지급이 끝나지 않았으면 `credit_issuance_pending`으로 남겨 거짓 성공을 만들지 않는다. provider timeout 같은 미확정 결과는 실패로 단정하지 않고 pending 또는 review 상태에서 reconciliation을 기다린다.
+브라우저 success redirect는 결제 증거가 아니다. 서명 검증된 provider webhook, provider 상태 재조회 또는 reconciliation은 `payment_status`를 성공으로 옮길 수 있는 결제 증거일 뿐이다. checkout 완료는 `payment_status=succeeded`와 `credit_issuance_status=succeeded`가 함께 충족돼야 한다. 결제가 확인돼도 원장 지급이 끝나지 않았으면 `credit_issuance_pending`으로 남겨 거짓 성공을 만들지 않는다. provider timeout 같은 미확정 결과는 실패로 단정하지 않고 pending 또는 review 상태에서 reconciliation을 기다린다.
+
+API는 checkout, payment, credit issuance, return receipt 상태 enum을 각각 공개한다. 저장소의 `row_version`이나 expected-status CAS는 Money 내부 동시성 장치이므로 API payload로 승격하지 않는다. 상태 조회는 안전한 `payment_attempt_ref`와 `ledger_issuance_ref`만 선택적으로 제공하며 provider object나 내부 DB 식별자를 노출하지 않는다.
 
 ## 복귀와 식별자
 
 복귀 대상은 제품이 보낸 임의 URL이 아니라 환경별 Product Registry에 exact 등록된 `return_target_id`만 허용한다. URL에는 provider token, payment credential, 중앙 session, 원본 price snapshot을 넣지 않는다. 복귀 receipt는 짧은 수명의 opaque 일회용 값이며 제품 BFF에서만 교환하고 평문 저장·응답 echo를 금지한다.
 
-`checkout_intent_ref`, stable `operation_ref`, payment attempt, provider object, ledger issuance, return receipt는 서로 다른 식별자로 유지한다. 같은 idempotency key와 같은 normalized binding은 기존 결과를 재생하고, 다른 binding에서 같은 key를 쓰면 conflict로 거부한다.
+`checkout_intent_ref`, stable `operation_ref`, payment attempt, provider object, ledger issuance, return receipt는 서로 다른 식별자로 유지한다. 같은 idempotency key와 같은 normalized binding은 기존 결과를 재생하고, 다른 binding에서 같은 key를 쓰면 conflict로 거부한다. return receipt 평문은 입력 순간에만 취급하고 저장소에는 SHA-256 digest만 남긴다. 동일 idempotency key와 동일 교환의 재시도만 기존 결과를 replay하며, 다른 소비 시도는 `receipt_already_consumed`로 닫는다.
 
 제품은 receipt 교환 또는 `completed` 상태 확인 뒤 Money 잔액을 다시 읽는다. receipt나 status response를 제품 로컬 잔액 정본으로 저장하거나 자체적으로 귤을 지급하면 안 된다.
 

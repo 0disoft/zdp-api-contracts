@@ -25,7 +25,11 @@ const REQUIRED_CALCULATOR_IDS = [
     'unattended-labor-savings',
     'locker-revenue',
     'study-room-schedule-revenue',
-    'security-cost-break-even'
+    'security-cost-break-even',
+    'discount',
+    'age',
+    'work-hours',
+    'fuel-cost'
 ];
 const ALLOWED_CALCULATOR_LIFECYCLE_STATUSES = [
     'draft',
@@ -90,7 +94,11 @@ const REVIEWED_CALCULATOR_IDS = [
     'unattended-labor-savings',
     'locker-revenue',
     'study-room-schedule-revenue',
-    'security-cost-break-even'
+    'security-cost-break-even',
+    'discount',
+    'age',
+    'work-hours',
+    'fuel-cost'
 ];
 const DATE_DIFFERENCE_PRECISION_POLICY = 'exact_integer_calendar_days_years_0001_to_9999';
 const DATE_DIFFERENCE_ROUNDING_POLICY = 'not_applicable_exact_integer';
@@ -215,6 +223,28 @@ const CREDIT_PURCHASE_CHECKOUT_STATES = [
     'cancelled',
     'expired'
 ];
+const CREDIT_PURCHASE_PAYMENT_STATES = [
+    'not_started',
+    'pending',
+    'succeeded',
+    'review_required',
+    'failed',
+    'cancelled',
+    'expired'
+];
+const CREDIT_PURCHASE_CREDIT_ISSUANCE_STATES = [
+    'not_started',
+    'pending',
+    'succeeded',
+    'review_required',
+    'failed'
+];
+const CREDIT_PURCHASE_RETURN_RECEIPT_STATES = [
+    'not_issued',
+    'available',
+    'consumed',
+    'expired'
+];
 const CREDIT_PURCHASE_NON_TERMINAL_STATES = [
     'created',
     'payment_pending',
@@ -260,10 +290,14 @@ const CREDIT_PURCHASE_SEPARATED_IDENTIFIERS = [
     'ledger_issuance_ref',
     'return_receipt_ref'
 ];
-const CREDIT_PURCHASE_COMPLETION_EVIDENCE = [
+const CREDIT_PURCHASE_PAYMENT_EVIDENCE = [
     'signed_provider_webhook',
     'provider_state_query',
     'reconciliation'
+];
+const CREDIT_PURCHASE_COMPLETION_EVIDENCE = [
+    'payment_status_succeeded',
+    'credit_issuance_status_succeeded'
 ];
 const CREDIT_PURCHASE_FORBIDDEN_URL_VALUES = [
     'provider_token',
@@ -1005,8 +1039,8 @@ function validateCreditPurchase(contracts, schemaBundlesByFile, diagnostics) {
     const requireValues = (actual, expected, code, path) => {
         validateRequiredAccessDecisionValues(actual, expected, code, path, push);
     };
-    if (contract.schemaVersion !== 1) {
-        push('API_CREDIT_PURCHASE_SCHEMA_VERSION_INVALID', 'credit_purchase.schema_version', 'Credit-purchase schema_version must be 1.');
+    if (contract.schemaVersion !== 2) {
+        push('API_CREDIT_PURCHASE_SCHEMA_VERSION_INVALID', 'credit_purchase.schema_version', 'Credit-purchase schema_version must be 2.');
     }
     if (contract.status !== 'contract-only' || contract.ownerBoundary !== 'money') {
         push('API_CREDIT_PURCHASE_OWNERSHIP_INVALID', 'credit_purchase', 'Credit purchase must remain contract-only and owned by Money.');
@@ -1014,12 +1048,16 @@ function validateCreditPurchase(contracts, schemaBundlesByFile, diagnostics) {
     const exactValueSets = [
         [contract.operationIds, CREDIT_PURCHASE_OPERATION_IDS, 'API_CREDIT_PURCHASE_OPERATION_SET_INVALID', 'credit_purchase.operation_ids'],
         [contract.checkoutStates, CREDIT_PURCHASE_CHECKOUT_STATES, 'API_CREDIT_PURCHASE_STATE_SET_INVALID', 'credit_purchase.checkout_states'],
+        [contract.paymentStates, CREDIT_PURCHASE_PAYMENT_STATES, 'API_CREDIT_PURCHASE_PAYMENT_STATE_SET_INVALID', 'credit_purchase.payment_states'],
+        [contract.creditIssuanceStates, CREDIT_PURCHASE_CREDIT_ISSUANCE_STATES, 'API_CREDIT_PURCHASE_CREDIT_ISSUANCE_STATE_SET_INVALID', 'credit_purchase.credit_issuance_states'],
+        [contract.returnReceiptStates, CREDIT_PURCHASE_RETURN_RECEIPT_STATES, 'API_CREDIT_PURCHASE_RETURN_RECEIPT_STATE_SET_INVALID', 'credit_purchase.return_receipt_states'],
         [contract.nonTerminalStates, CREDIT_PURCHASE_NON_TERMINAL_STATES, 'API_CREDIT_PURCHASE_NON_TERMINAL_SET_INVALID', 'credit_purchase.non_terminal_states'],
         [contract.terminalStates, CREDIT_PURCHASE_TERMINAL_STATES, 'API_CREDIT_PURCHASE_TERMINAL_SET_INVALID', 'credit_purchase.terminal_states'],
         [contract.requiredIntentBindings, CREDIT_PURCHASE_INTENT_BINDINGS, 'API_CREDIT_PURCHASE_INTENT_BINDING_SET_INVALID', 'credit_purchase.required_intent_bindings'],
         [contract.serverRevalidatedClaims, CREDIT_PURCHASE_SERVER_REVALIDATED_CLAIMS, 'API_CREDIT_PURCHASE_REVALIDATION_SET_INVALID', 'credit_purchase.server_revalidated_claims'],
         [contract.immutableSnapshotRefs, CREDIT_PURCHASE_SNAPSHOT_REFS, 'API_CREDIT_PURCHASE_SNAPSHOT_SET_INVALID', 'credit_purchase.immutable_snapshot_refs'],
         [contract.separatedIdentifiers, CREDIT_PURCHASE_SEPARATED_IDENTIFIERS, 'API_CREDIT_PURCHASE_IDENTIFIER_SET_INVALID', 'credit_purchase.separated_identifiers'],
+        [contract.authoritativePaymentEvidence, CREDIT_PURCHASE_PAYMENT_EVIDENCE, 'API_CREDIT_PURCHASE_PAYMENT_EVIDENCE_SET_INVALID', 'credit_purchase.authoritative_payment_evidence'],
         [contract.authoritativeCompletionEvidence, CREDIT_PURCHASE_COMPLETION_EVIDENCE, 'API_CREDIT_PURCHASE_EVIDENCE_SET_INVALID', 'credit_purchase.authoritative_completion_evidence'],
         [contract.forbiddenUrlValues, CREDIT_PURCHASE_FORBIDDEN_URL_VALUES, 'API_CREDIT_PURCHASE_URL_FORBIDDEN_SET_INVALID', 'credit_purchase.forbidden_url_values'],
         [contract.forbiddenConsumerUses, CREDIT_PURCHASE_FORBIDDEN_CONSUMER_USES, 'API_CREDIT_PURCHASE_CONSUMER_FORBIDDEN_SET_INVALID', 'credit_purchase.forbidden_consumer_uses']
@@ -1035,6 +1073,10 @@ function validateCreditPurchase(contracts, schemaBundlesByFile, diagnostics) {
         [contract.idempotencyPolicy, 'same_key_same_normalized_binding_replays_different_binding_conflicts', 'API_CREDIT_PURCHASE_IDEMPOTENCY_POLICY_INVALID', 'credit_purchase.idempotency_policy'],
         [contract.returnTargetPolicy, 'exact_environment_product_registry_target_id_only', 'API_CREDIT_PURCHASE_RETURN_TARGET_POLICY_INVALID', 'credit_purchase.return_target_policy'],
         [contract.returnReceiptPolicy, 'short_lived_single_use_opaque_server_exchange_only', 'API_CREDIT_PURCHASE_RETURN_RECEIPT_POLICY_INVALID', 'credit_purchase.return_receipt_policy'],
+        [contract.returnReceiptRetryPolicy, 'same_idempotency_key_same_exchange_replays_other_attempt_is_already_consumed', 'API_CREDIT_PURCHASE_RETURN_RECEIPT_RETRY_POLICY_INVALID', 'credit_purchase.return_receipt_retry_policy'],
+        [contract.returnReceiptDigestAlgorithm, 'sha256', 'API_CREDIT_PURCHASE_RETURN_RECEIPT_DIGEST_INVALID', 'credit_purchase.return_receipt_digest_algorithm'],
+        [contract.persistenceContractRef, 'zdp-money-platform/contracts/money-db-schema.yaml#credit_checkout_persistence', 'API_CREDIT_PURCHASE_PERSISTENCE_REF_INVALID', 'credit_purchase.persistence_contract_ref'],
+        [contract.checkoutCompletionPolicy, 'verified_payment_success_then_ledger_issuance_success', 'API_CREDIT_PURCHASE_COMPLETION_POLICY_INVALID', 'credit_purchase.checkout_completion_policy'],
         [contract.balanceRefreshPolicy, 'reread_money_balance_after_receipt_exchange_or_completed_status', 'API_CREDIT_PURCHASE_BALANCE_REFRESH_POLICY_INVALID', 'credit_purchase.balance_refresh_policy'],
         [contract.unknownOutcomePolicy, 'remain_pending_or_review_required_until_reconciled', 'API_CREDIT_PURCHASE_UNKNOWN_OUTCOME_POLICY_INVALID', 'credit_purchase.unknown_outcome_policy']
     ];
@@ -1045,6 +1087,15 @@ function validateCreditPurchase(contracts, schemaBundlesByFile, diagnostics) {
     }
     if (!contract.returnReceiptSingleUse) {
         push('API_CREDIT_PURCHASE_RETURN_RECEIPT_REUSABLE', 'credit_purchase.return_receipt_single_use', 'Checkout return receipts must be single-use.');
+    }
+    if (contract.returnReceiptPlaintextStored) {
+        push('API_CREDIT_PURCHASE_RETURN_RECEIPT_PLAINTEXT_STORED', 'credit_purchase.return_receipt_plaintext_stored', 'Checkout return receipt plaintext must never be stored.');
+    }
+    if (contract.providerSuccessCompletesCheckout) {
+        push('API_CREDIT_PURCHASE_PROVIDER_SUCCESS_COMPLETES_CHECKOUT', 'credit_purchase.provider_success_completes_checkout', 'Provider payment success must not complete a checkout before ledger issuance.');
+    }
+    if (!contract.ledgerIssuanceRequiredForCompletion) {
+        push('API_CREDIT_PURCHASE_LEDGER_ISSUANCE_NOT_REQUIRED', 'credit_purchase.ledger_issuance_required_for_completion', 'Checkout completion must require successful ledger issuance.');
     }
     if (contract.successRedirectIsPaymentEvidence) {
         push('API_CREDIT_PURCHASE_REDIRECT_TRUSTED', 'credit_purchase.success_redirect_is_payment_evidence', 'A success redirect must never be treated as payment evidence.');
@@ -1349,12 +1400,12 @@ function validateCalculatorDefinition(contracts, definition, index, diagnostics)
         pushCalculatorDiagnostic(diagnostics, 'API_CALCULATOR_JURISDICTION_INVALID', `${path}.jurisdiction`, 'The first calculator batch must stay jurisdiction global.');
     }
     const isReviewedCalculator = includesValue(REVIEWED_CALCULATOR_IDS, definition.id);
-    const expectedPrecisionPolicy = definition.id === 'date-difference'
+    const expectedPrecisionPolicy = definition.id === 'date-difference' || definition.id === 'age'
         ? DATE_DIFFERENCE_PRECISION_POLICY
         : isReviewedCalculator
             ? REVIEWED_DECIMAL_PRECISION_POLICY
             : 'explicit_before_active';
-    const expectedRoundingPolicy = definition.id === 'date-difference'
+    const expectedRoundingPolicy = definition.id === 'date-difference' || definition.id === 'age'
         ? DATE_DIFFERENCE_ROUNDING_POLICY
         : isReviewedCalculator
             ? REVIEWED_DECIMAL_ROUNDING_POLICY
@@ -1372,7 +1423,7 @@ function validateCalculatorDefinition(contracts, definition, index, diagnostics)
     validateUniqueCalculatorFieldIds(definition, path, diagnostics);
     definition.inputs.forEach((input, inputIndex) => validateCalculatorInput(contracts, input, `${path}.inputs[${inputIndex}]`, diagnostics));
     definition.outputs.forEach((output, outputIndex) => validateCalculatorOutput(contracts, output, `${path}.outputs[${outputIndex}]`, diagnostics));
-    const requiredErrorCodes = definition.id === 'date-difference'
+    const requiredErrorCodes = definition.id === 'date-difference' || definition.id === 'age'
         ? REQUIRED_CALCULATOR_BASE_ERROR_CODES.filter((code) => code !== 'precision_policy_required' && code !== 'rounding_policy_required')
         : REQUIRED_CALCULATOR_BASE_ERROR_CODES;
     for (const errorCode of requiredErrorCodes) {

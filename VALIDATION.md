@@ -58,11 +58,13 @@ agent-facing 문서에는 raw package command를 실행 권한처럼 적지 않�
 - 중앙 client registry가 revision compare-and-swap, 환경 격리, client ID 비재사용, 증거 기반 lifecycle, 보안 민감 변경 감사와 active 전 activation evidence 요구를 유지하는지 확인한다.
 - 공통 귤 충전이 서버 재검증, immutable snapshot reference, 분리된 식별자, 결제·지급 상태 분리와 미확정 결과 reconciliation을 유지하는지 확인한다.
 - client 금액·통화·지급량, success redirect와 임의 return URL이 결제 권위로 승격되거나 return receipt가 재사용 가능한 bearer가 되지 않는지 확인한다.
+- provider payment evidence와 checkout completion evidence가 분리되고 ledger issuance 성공 전에는 `completed`를 허용하지 않는지 확인한다.
+- checkout/payment/credit issuance/return receipt enum이 Money 상태기와 일치하며 receipt 평문 비저장·SHA-256 digest·exact retry 정책이 유지되는지 확인한다.
 - 여러 제품 entry에서 client ID 중복, registry와 다른 environment, wildcard·credential·fragment URI, grant/response/PKCE drift와 평문 key material을 거부하는지 확인한다.
 - export plan이 generated artifact를 쓰거나 schema publish를 주장하지 않는지 확인한다.
 - package export map과 `files` whitelist가 README의 package surface 설명과 어긋나지 않는지 확인한다.
 - tarball을 빈 Node 소비자에 설치했을 때 root와 공개 subpath가 Bun 전역이나 저장소 source layout에 기대지 않는지 확인한다.
-- 계산기 계약이 첫 국가 공통 6종과 소상공인·무인매장 7종, 안정 오류, 허용 값 종류·단위, 계약·엔진 버전 handoff를 유지하는지 확인한다.
+- 계산기 계약이 국가 공통 6종, 소상공인·무인매장 7종, 글로벌 범용 4종(discount·age·work-hours·fuel-cost), 안정 오류, 허용 값 종류·단위, 계약·엔진 버전 handoff를 유지하는지 확인한다.
 - 계산기 정의에 화면 payload, 로케일 문자열, 계산 함수 구현이 들어가지 않는지 확인한다.
 - reviewed 계산기의 정밀도·반올림 정책과 공통 적합성 벡터가 같은 계약 버전을 유지하는지 확인한다.
 

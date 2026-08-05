@@ -1,5 +1,19 @@
 # CHANGELOG.md
 
+## 0.23.0
+
+### Added
+
+- checkout, payment, credit issuance, return receipt의 독립 상태 enum과 Money persistence 계약 reference를 추가했다.
+- return receipt SHA-256 digest 저장, 평문 비저장, 동일 idempotency 교환 replay 계약을 추가했다.
+- discount·age·work-hours·fuel-cost 글로벌 범용 계산기 4종 계약과 공통 적합성 벡터를 추가했다.
+
+### Changed
+
+- provider webhook·상태 조회·reconciliation을 payment evidence로 한정하고, payment 성공과 ledger issuance 성공이 모두 있어야 checkout이 완료되도록 명확히 분리했다.
+- checkout 생성·receipt 교환 응답에 `return_receipt_status`를 포함하고 상태 조회에 안전한 payment attempt·ledger issuance reference를 선택적으로 제공한다.
+- reviewed 계산기 묶음을 13종에서 17종으로 확장하고 `age`를 정수 정책 정의로, `work-hours` 시각 입력을 자정 이후 분으로 정규화했다.
+
 ## 0.22.0
 
 ### Added

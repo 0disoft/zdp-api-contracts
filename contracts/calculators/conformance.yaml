@@ -1035,3 +1035,337 @@ cases:
       unit_variable_cost: { value: "4", unit: USD }
     options: { decimal_places: 2 }
     expected: { status: error, error_code: non_positive_contribution_margin }
+
+  - id: discount.single-discount
+    calculator_id: discount
+    input:
+      original_price: { value: "80", unit: USD }
+      discount_rate_1: "25"
+      discount_rate_2: "0"
+      mode: final-price
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        original_price: { value: "80.00", unit: USD }
+        final_price: { value: "60.00", unit: USD }
+        total_savings: { value: "20.00", unit: USD }
+        total_discount_percent: { value: "25.00", unit: percent }
+
+  - id: discount.consecutive-discounts
+    calculator_id: discount
+    input:
+      original_price: { value: "80", unit: USD }
+      discount_rate_1: "10"
+      discount_rate_2: "5"
+      mode: final-price
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        original_price: { value: "80.00", unit: USD }
+        final_price: { value: "68.40", unit: USD }
+        total_savings: { value: "11.60", unit: USD }
+        total_discount_percent: { value: "14.50", unit: percent }
+
+  - id: discount.reverse-original-price
+    calculator_id: discount
+    input:
+      original_price: { value: "60", unit: USD }
+      discount_rate_1: "25"
+      discount_rate_2: "0"
+      mode: original-price
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        original_price: { value: "80.00", unit: USD }
+        final_price: { value: "60.00", unit: USD }
+        total_savings: { value: "20.00", unit: USD }
+        total_discount_percent: { value: "25.00", unit: percent }
+
+  - id: discount.zero-price
+    calculator_id: discount
+    input:
+      original_price: { value: "0", unit: USD }
+      discount_rate_1: "25"
+      discount_rate_2: "0"
+      mode: final-price
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        original_price: { value: "0.00", unit: USD }
+        final_price: { value: "0.00", unit: USD }
+        total_savings: { value: "0.00", unit: USD }
+        total_discount_percent: { value: "0.00", unit: percent }
+
+  - id: discount.full-percent-domain-error
+    calculator_id: discount
+    input:
+      original_price: { value: "80", unit: USD }
+      discount_rate_1: "100"
+      discount_rate_2: "0"
+      mode: final-price
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: discount.negative-price-domain-error
+    calculator_id: discount
+    input:
+      original_price: { value: "-1", unit: USD }
+      discount_rate_1: "10"
+      discount_rate_2: "0"
+      mode: final-price
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: discount.digit-limit-exceeded
+    calculator_id: discount
+    input:
+      original_price: { value: "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", unit: USD }
+      discount_rate_1: "10"
+      discount_rate_2: "0"
+      mode: final-price
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: limit_exceeded }
+
+  - id: age.zero-age
+    calculator_id: age
+    input: { birth_date: "2020-01-01", reference_date: "2020-01-01" }
+    options: {}
+    expected:
+      status: success
+      output:
+        age_years: { value: 0, unit: years }
+        age_months: { value: 0, unit: months }
+        age_days: { value: 0, unit: days }
+        days_lived: { value: 0, unit: days }
+        days_until_next_birthday: { value: 0, unit: days }
+
+  - id: age.leap-year
+    calculator_id: age
+    input: { birth_date: "2020-01-01", reference_date: "2021-01-01" }
+    options: {}
+    expected:
+      status: success
+      output:
+        age_years: { value: 1, unit: years }
+        age_months: { value: 0, unit: months }
+        age_days: { value: 0, unit: days }
+        days_lived: { value: 366, unit: days }
+        days_until_next_birthday: { value: 0, unit: days }
+
+  - id: age.feb29-common-year
+    calculator_id: age
+    input: { birth_date: "2000-02-29", reference_date: "2025-02-28" }
+    options: {}
+    expected:
+      status: success
+      output:
+        age_years: { value: 25, unit: years }
+        age_months: { value: 0, unit: months }
+        age_days: { value: 0, unit: days }
+        days_lived: { value: 9131, unit: days }
+        days_until_next_birthday: { value: 0, unit: days }
+
+  - id: age.feb29-leap-day
+    calculator_id: age
+    input: { birth_date: "1996-02-29", reference_date: "2024-02-29" }
+    options: {}
+    expected:
+      status: success
+      output:
+        age_years: { value: 28, unit: years }
+        age_months: { value: 0, unit: months }
+        age_days: { value: 0, unit: days }
+        days_lived: { value: 10227, unit: days }
+        days_until_next_birthday: { value: 0, unit: days }
+
+  - id: age.invalid-date-range
+    calculator_id: age
+    input: { birth_date: "2024-06-15", reference_date: "2024-06-14" }
+    options: {}
+    expected: { status: error, error_code: invalid_date_range }
+
+  - id: work-hours.normal-shift
+    calculator_id: work-hours
+    input:
+      start_minutes: { value: "540", unit: minutes }
+      end_minutes: { value: "1020", unit: minutes }
+      overnight: "no"
+      break_minutes: { value: "30", unit: minutes }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        total_minutes: { value: 450, unit: minutes }
+        decimal_hours: { value: "7.50", unit: hours }
+
+  - id: work-hours.overnight
+    calculator_id: work-hours
+    input:
+      start_minutes: { value: "1320", unit: minutes }
+      end_minutes: { value: "360", unit: minutes }
+      overnight: "yes"
+      break_minutes: { value: "0", unit: minutes }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        total_minutes: { value: 480, unit: minutes }
+        decimal_hours: { value: "8.00", unit: hours }
+
+  - id: work-hours.equal-times
+    calculator_id: work-hours
+    input:
+      start_minutes: { value: "540", unit: minutes }
+      end_minutes: { value: "540", unit: minutes }
+      overnight: "no"
+      break_minutes: { value: "0", unit: minutes }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        total_minutes: { value: 0, unit: minutes }
+        decimal_hours: { value: "0.00", unit: hours }
+
+  - id: work-hours.equal-times-overnight
+    calculator_id: work-hours
+    input:
+      start_minutes: { value: "540", unit: minutes }
+      end_minutes: { value: "540", unit: minutes }
+      overnight: "yes"
+      break_minutes: { value: "0", unit: minutes }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        total_minutes: { value: 1440, unit: minutes }
+        decimal_hours: { value: "24.00", unit: hours }
+
+  - id: work-hours.break-equals-total
+    calculator_id: work-hours
+    input:
+      start_minutes: { value: "540", unit: minutes }
+      end_minutes: { value: "1020", unit: minutes }
+      overnight: "no"
+      break_minutes: { value: "480", unit: minutes }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        total_minutes: { value: 0, unit: minutes }
+        decimal_hours: { value: "0.00", unit: hours }
+
+  - id: work-hours.break-exceeds-domain-error
+    calculator_id: work-hours
+    input:
+      start_minutes: { value: "540", unit: minutes }
+      end_minutes: { value: "1020", unit: minutes }
+      overnight: "no"
+      break_minutes: { value: "500", unit: minutes }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: work-hours.overnight-without-yes-rejected
+    calculator_id: work-hours
+    input:
+      start_minutes: { value: "540", unit: minutes }
+      end_minutes: { value: "480", unit: minutes }
+      overnight: "no"
+      break_minutes: { value: "0", unit: minutes }
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: fuel-cost.km-per-liter
+    calculator_id: fuel-cost
+    input:
+      distance: "100"
+      economy: "12.5"
+      fuel_price: { value: "1.80", unit: USD }
+      people_count: { value: "1", unit: people }
+      economy_unit: km_per_liter
+      trip: one-way
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        fuel_used: { value: "8.00", unit: liters }
+        total_cost: { value: "14.40", unit: USD }
+        cost_per_person: { value: "14.40", unit: USD }
+
+  - id: fuel-cost.liters-per-100km
+    calculator_id: fuel-cost
+    input:
+      distance: "100"
+      economy: "8"
+      fuel_price: { value: "1.50", unit: USD }
+      people_count: { value: "2", unit: people }
+      economy_unit: liters_per_100km
+      trip: one-way
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        fuel_used: { value: "8.00", unit: liters }
+        total_cost: { value: "12.00", unit: USD }
+        cost_per_person: { value: "6.00", unit: USD }
+
+  - id: fuel-cost.mpg-us-gallon
+    calculator_id: fuel-cost
+    input:
+      distance: "100"
+      economy: "25"
+      fuel_price: { value: "3.60", unit: USD }
+      people_count: { value: "1", unit: people }
+      economy_unit: miles_per_gallon
+      trip: one-way
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        fuel_used: { value: "4.00", unit: gallons }
+        total_cost: { value: "14.40", unit: USD }
+        cost_per_person: { value: "14.40", unit: USD }
+
+  - id: fuel-cost.round-trip
+    calculator_id: fuel-cost
+    input:
+      distance: "100"
+      economy: "12.5"
+      fuel_price: { value: "1.80", unit: USD }
+      people_count: { value: "1", unit: people }
+      economy_unit: km_per_liter
+      trip: round-trip
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        fuel_used: { value: "16.00", unit: liters }
+        total_cost: { value: "28.80", unit: USD }
+        cost_per_person: { value: "28.80", unit: USD }
+
+  - id: fuel-cost.zero-economy-domain-error
+    calculator_id: fuel-cost
+    input:
+      distance: "100"
+      economy: "0"
+      fuel_price: { value: "1.80", unit: USD }
+      people_count: { value: "1", unit: people }
+      economy_unit: km_per_liter
+      trip: one-way
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: fuel-cost.negative-distance-domain-error
+    calculator_id: fuel-cost
+    input:
+      distance: "-1"
+      economy: "12.5"
+      fuel_price: { value: "1.80", unit: USD }
+      people_count: { value: "1", unit: people }
+      economy_unit: km_per_liter
+      trip: one-way
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }

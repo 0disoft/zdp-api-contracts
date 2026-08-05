@@ -65,3 +65,6 @@ schema_bundle:
         - balance_refresh_required
         - updated_at
         - expires_at
+      optional_fields:
+        - payment_attempt_ref
+        - ledger_issuance_ref

@@ -333,6 +333,8 @@ exit:
     - SDK generation input keeps language targets, route metadata, error metadata, webhook metadata, forbidden ownership, and forbidden values explicit before generator work starts
     - OpenAPI, SDK, docs, and webhook schema export plan is reproducible without writing generated artifacts
     - API export plan exposes typed fetch operation map metadata derived from the route catalog before generated SDK artifacts exist
+    - credit purchase contract separates provider payment evidence from ledger-backed checkout completion across checkout, payment, credit issuance, and return receipt state axes
+    - credit purchase return receipts remain digest-only, single-use, and exact-idempotent-retry safe without exposing provider or storage internals
     - contract repository validates without implementing backend handlers
   kill_criteria:
     - product handler shapes become the contract source

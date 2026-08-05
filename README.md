@@ -40,7 +40,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - schema model handoff가 required field와 optional field를 분리해 SDK가 선택적 reference를 잃지 않게 하는 계약
 - typed fetch client가 읽어야 할 error envelope, request/trace id, timeout, abort signal, mutation idempotency handoff
 - npm package metadata, MIT license, public export map, package file whitelist
-- 국가 공통 계산기 6종과 소상공인·무인매장 계산기 7종의 reviewed 정의, 숫자·반올림 정책과 공통 적합성 벡터, 안정 오류와 계약·엔진 버전 handoff
+- 국가 공통 계산기 6종, 소상공인·무인매장 계산기 7종, 글로벌 범용 계산기 4종의 reviewed 정의, 숫자·반올림 정책과 공통 적합성 벡터, 안정 오류와 계약·엔진 버전 handoff
 - 공통 함선 팩 catalog projection, checkout intent, 결제·지급 분리 상태와 일회용 복귀 receipt 계약
 
 ## 현재 제외
@@ -74,7 +74,7 @@ API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelo
 - webhook contract: signature verification, idempotency key, replay policy, dead-letter policy 기준
 - API catalog: 실제 route 정의가 들어올 때 `operation_id`, `service_id`, schema ref, method, success status가 표준 계약과 맞는지 확인하는 자리
 - SDK generation input: 활성 SDK target과 허용 target pool, route/error/webhook metadata, SDK가 소유하면 안 되는 runtime/token/final authorization 경계
-- calculator catalog: reviewed 계산기 13종, 값 종류·단위·오류 allowlist, 계약·엔진 버전, 화면 payload와 계산 함수 금지 경계
+- calculator catalog: reviewed 계산기 17종, 값 종류·단위·오류 allowlist, 계약·엔진 버전, 화면 payload와 계산 함수 금지 경계
 - calculator conformance: reviewed 계산기의 ASCII decimal 또는 strict calendar-date 입력, 한계, 반올림·정수 정책과 구현 중립 성공·오류 벡터
 
 route catalog는 `core-api` auth/session·access-decision과 `money-api` referral·credit-purchase 계약을 가진다. Core 계약은 `/v1/auth/registrations`, `/v1/auth/sessions`, `/v1/auth/sessions/refresh`, `/v1/auth/sessions/current`의 GET·DELETE, `/v1/auth/recovery/requests`, `/v1/auth/passkey/challenges`, `/v1/auth/passkey/assertions`, `/v1/auth/oauth/callbacks/{provider}`, `/v1/auth/product-link-challenges`의 create·complete·exchange와 `/v1/access/authorization-decisions`의 method, schema ref, session effect, audit event, idempotency, credential policy를 고정한다. GET current-session은 identity-only 조회고, access-decision은 Core가 session을 다시 검증해 별도 authorization 판정을 만들며, 데스크톱 product-link는 브라우저 session credential을 복사하지 않는 single-use handoff다. 이 경로들은 live endpoint가 아니라 `zdp-web-apps`, `zdp-auth-ui`, 설치형 제품 consumer의 route 승격 전제 조건이다.
@@ -85,7 +85,7 @@ binding, issuer expiry/revocation과 제품 transaction 안의 durable single-us
 completion, verify route와 live runtime은 별도 검토 전까지 정의하지 않는다.
 
 `money-api/credit-purchase.yaml`은 제품별 결제 UI가 가격과 지급량을 재계산하지 않도록 함선 팩 projection,
-checkout intent, 상태 조회와 일회용 return receipt 교환을 고정한다. 클라이언트 금액은 권위값이 아니며
+checkout intent, 상태 조회와 일회용 return receipt 교환을 고정한다. provider 결제 성공과 ledger issuance 성공을 분리하고, receipt 평문 대신 SHA-256 digest 저장과 exact retry만 허용한다. 클라이언트 금액은 권위값이 아니며
 success redirect는 결제 증거가 아니다. `payment_pending`, `credit_issuance_pending`, `completed`,
 `review_required`를 분리하고 제품은 완료 뒤 Money 잔액을 다시 읽는다.
 

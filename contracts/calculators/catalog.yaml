@@ -612,3 +612,330 @@ definitions:
       - non_positive_contribution_margin_returns_specific_error
       - break_even_quantity_is_total_monthly_fixed_cost_divided_by_contribution_margin
       - all_currency_inputs_must_match
+
+  - id: discount
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.x"
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - id: original_price
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal
+      - id: discount_rate_1
+        value_kind: decimal
+        unit_dimension: percent
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: percent_value_0_inclusive_100_exclusive
+      - id: discount_rate_2
+        value_kind: decimal
+        unit_dimension: percent
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: percent_value_0_inclusive_100_exclusive
+      - id: mode
+        value_kind: enum
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values:
+          - final-price
+          - original-price
+        required: true
+        domain: final_price_or_original_price
+    outputs:
+      - id: original_price
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+      - id: final_price
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+      - id: total_savings
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+      - id: total_discount_percent
+        value_kind: decimal
+        unit_dimension: percent
+        unit_policy: enumerated
+        unit_options:
+          - percent
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - discount_rates_are_percent_0_inclusive_100_exclusive
+      - consecutive_discounts_multiply_remaining_price
+      - second_discount_applies_after_first
+      - reverse_mode_divides_final_price_by_remaining_ratio
+      - reverse_mode_with_full_discount_returns_domain_error
+      - tax_and_vat_rules_not_applied
+
+  - id: age
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.x"
+    jurisdiction: global
+    precision_policy: exact_integer_calendar_days_years_0001_to_9999
+    rounding_policy: not_applicable_exact_integer
+    inputs:
+      - id: birth_date
+        value_kind: date
+        unit_dimension: date
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: strict_ascii_yyyy_mm_dd_proleptic_gregorian_years_0001_to_9999
+      - id: reference_date
+        value_kind: date
+        unit_dimension: date
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: strict_ascii_yyyy_mm_dd_proleptic_gregorian_years_0001_to_9999
+    outputs:
+      - id: age_years
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - years
+      - id: age_months
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - months
+      - id: age_days
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - days
+      - id: days_lived
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - days
+      - id: days_until_next_birthday
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - days
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - invalid_date_range
+    semantic_rules:
+      - inputs_match_ascii_yyyy_mm_dd_exactly
+      - supported_years_are_0001_through_9999_inclusive
+      - dates_use_the_proleptic_gregorian_calendar
+      - time_of_day_and_timezone_are_not_accepted
+      - reference_date_before_birth_date_returns_invalid_date_range
+      - age_is_completed_years_then_months_then_days
+      - february_29_birthdays_count_on_february_28_in_common_years
+      - days_lived_excludes_time_zone
+      - days_until_next_birthday_counts_to_next_observed_birthday
+      - legal_adult_determination_not_applied
+
+  - id: work-hours
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.x"
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - id: start_minutes
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - minutes
+        allowed_values: []
+        required: true
+        domain: canonical_unsigned_integer_clock_minutes_0_to_1439
+      - id: end_minutes
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - minutes
+        allowed_values: []
+        required: true
+        domain: canonical_unsigned_integer_clock_minutes_0_to_1439
+      - id: overnight
+        value_kind: enum
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values:
+          - "no"
+          - "yes"
+        required: true
+        domain: no_or_yes
+      - id: break_minutes
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - minutes
+        allowed_values: []
+        required: true
+        domain: canonical_unsigned_integer_not_exceeding_total_time
+    outputs:
+      - id: total_minutes
+        value_kind: integer
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - minutes
+      - id: decimal_hours
+        value_kind: decimal
+        unit_dimension: duration
+        unit_policy: enumerated
+        unit_options:
+          - hours
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - clock_inputs_are_minutes_since_midnight_0_to_1439
+      - overnight_shift_adds_twenty_four_hours
+      - end_before_start_without_overnight_returns_domain_error
+      - break_is_subtracted_from_total
+      - break_minutes_must_not_exceed_total_interval
+      - hours_minutes_display_is_derived_from_total_minutes
+      - wages_and_labor_law_not_applied
+
+  - id: fuel-cost
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions:
+      - "0.x"
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - id: distance
+        value_kind: decimal
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal
+      - id: economy
+        value_kind: decimal
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: positive_finite_decimal_or_zero_for_liters_per_100km
+      - id: fuel_price
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: non_negative_finite_decimal
+      - id: people_count
+        value_kind: integer
+        unit_dimension: count
+        unit_policy: enumerated
+        unit_options:
+          - people
+        allowed_values: []
+        required: true
+        domain: canonical_positive_integer_string
+      - id: economy_unit
+        value_kind: enum
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values:
+          - km_per_liter
+          - liters_per_100km
+          - miles_per_gallon
+        required: true
+        domain: km_per_liter_or_liters_per_100km_or_miles_per_gallon
+      - id: trip
+        value_kind: enum
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values:
+          - one-way
+          - round-trip
+        required: true
+        domain: one_way_or_round_trip
+    outputs:
+      - id: fuel_used
+        value_kind: decimal
+        unit_dimension: count
+        unit_policy: enumerated
+        unit_options:
+          - liters
+          - gallons
+      - id: total_cost
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+      - id: cost_per_person
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - fuel_is_distance_divided_by_economy_for_ratio_units
+      - fuel_is_distance_times_liters_per_100km_divided_by_100
+      - round_trip_doubles_distance
+      - mpg_uses_us_gallons
+      - economy_is_positive_for_ratio_units_and_zero_allowed_for_liters_per_100km
+      - people_count_is_positive
+      - fuel_price_is_caller_supplied
+      - live_fuel_price_lookup_not_performed
