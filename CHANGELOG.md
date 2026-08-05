@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.23.2
+
+### Fixed
+
+- credit-purchase 계약 설명이 이미 생성된 SDK metadata를 부정하지 않도록 고치고, generated SDK 존재와 live Money endpoint 활성화를 분리했다.
+
 ## 0.23.1
 
 ### Fixed

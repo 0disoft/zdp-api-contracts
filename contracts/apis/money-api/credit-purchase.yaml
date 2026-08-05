@@ -121,7 +121,7 @@ schema_bundle:
   service_id: money-api
   owner_boundary: money
   status: contract-only
-  purpose: define provider-neutral credit-pack catalog projection, checkout intent, status, and one-time return receipt exchange before live handlers or generated SDKs exist
+  purpose: define provider-neutral credit-pack catalog projection, checkout intent, status, and one-time return receipt exchange while live handlers remain unavailable; generated SDK metadata may consume this contract without activating endpoints
   common_envelope:
     required_request_metadata:
       - request_id
