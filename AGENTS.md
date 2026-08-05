@@ -43,7 +43,7 @@
 
 루트 command contract에 등록된 다음 intent 중 변경 범위를 덮는 가장 좁은 검증을 선택한다.
 
-- `zdp_architecture_validate_api_contracts_repository`: 이 저장소 루트가 중앙 architecture 정책을 따르는지 검증한다.
+- `zdp_architecture_validate_api_contracts_repository`: 이 저장소 루트가 중앙 architecture 정책을 따르는지 검증한다. 이 intent는 workspace-root orchestration 계약이 소유하므로 `zerodi-wd1` 루트에서 `--repo` 없이 실행한다. `--repo projects/zdp-platforms/contracts/zdp-api-contracts`를 붙이면 active command contract가 child fragment로 전환되어 이 root-owned intent를 찾을 수 없다.
 - `zdp_api_contracts_check`: TypeScript 계약, Bun tests, repo-local API contract checker를 검증한다.
 - `zdp_api_contracts_npm_pack_dry_run`: package file surface를 release 전 미리 확인한다.
 - `zdp_api_contracts_npm_publish_dry_run`: publish 승인 전 npm publish surface를 dry-run으로 확인한다.
