@@ -798,7 +798,7 @@ describe('api contract checker', () => {
     ).toMatchObject({
       precisionPolicy: 'exact_integer_calendar_days_years_0001_to_9999',
       roundingPolicy: 'not_applicable_exact_integer',
-      compatibleEngineVersions: ['0.4.0', '0.5.0']
+      compatibleEngineVersions: ['0.4.0', '0.5.0', '0.6.0']
     });
     expect(
       reviewed.find((definition) => definition.id === 'age')
@@ -812,7 +812,7 @@ describe('api contract checker', () => {
     expect(
       reviewed.find((definition) => definition.id === 'compound-interest')
     ).toMatchObject({
-      compatibleEngineVersions: ['0.4.0', '0.5.0'],
+      compatibleEngineVersions: ['0.4.0', '0.5.0', '0.6.0'],
       precisionPolicy: 'canonical_ascii_decimal_string_max_1000_digits',
       roundingPolicy: 'caller_decimal_places_0_to_100_half_away_from_zero'
     });
@@ -820,12 +820,20 @@ describe('api contract checker', () => {
       contracts.calculatorCatalog.definitions.find(
         (definition) => definition.id === 'data-transfer-time'
       )?.compatibleEngineVersions
-    ).toEqual(['0.3.0', '0.4.0', '0.5.0']);
+    ).toEqual(['0.3.0', '0.4.0', '0.5.0', '0.6.0']);
     expect(
       reviewed.every((definition) =>
         definition.compatibleEngineVersions.some(
           (version) => version === '0.x' || version === '0.5.0'
         )
+      )
+    ).toBe(true);
+    expect(
+      ['compound-interest', 'data-transfer-time', 'date-difference'].every(
+        (id) =>
+          contracts.calculatorCatalog.definitions
+            .find((definition) => definition.id === id)
+            ?.compatibleEngineVersions.includes('0.6.0')
       )
     ).toBe(true);
     expect(
