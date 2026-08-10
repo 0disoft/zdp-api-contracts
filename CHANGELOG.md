@@ -1,5 +1,17 @@
 # CHANGELOG.md
 
+## 0.24.0
+
+### Added
+
+- provider-neutral abuse challenge issue/redeem, 내부 verify/health route와 schema bundle을 추가했다.
+- exact product/environment/action binding, 짧은 TTL과 성공 시 단회 소비를 강제하는 verification receipt 계약을 추가했다.
+
+### Changed
+
+- challenge 성공을 인증, 권한, 결제 또는 제품 domain action 승인으로 사용할 수 없도록 parser, validator, SDK source와 문서 경계를 확장했다.
+- challenge solution, verification receipt, raw IP/fingerprint, provider payload와 request body의 저장·로그·노출을 금지했다.
+
 ## 0.23.2
 
 ### Fixed

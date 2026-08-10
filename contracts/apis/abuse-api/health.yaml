@@ -1,0 +1,39 @@
+schema_bundle:
+  service_id: abuse-api
+  owner_boundary: platform
+  status: contract-only
+  purpose: expose an authenticated safe health projection without provider secrets raw failures or customer payloads
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - raw_ip
+      - browser_fingerprint
+      - challenge_program
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - request_body
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: AbuseHealthGetRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: []
+    - id: AbuseHealthGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - status
+        - checked_at
+        - adapter_status
+        - state_store_status

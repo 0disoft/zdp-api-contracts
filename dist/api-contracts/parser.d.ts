@@ -1,4 +1,4 @@
-import type { AccessDecisionContract, ApiCatalogContract, ApiContracts, ApiSchemaBundleContract, CalculatorCatalogContract, CalculatorConformanceContract, CreditPurchaseContract, ErrorEnvelopeContract, OidcClientRegistryContract, OidcProductSessionContract, OidcProviderRuntimeContract, ProductLinkHandoffContract, RouteContract, SdkGenerationInputContract, SensitiveActionAuthorizationContract, WebhookContract } from './types.js';
+import type { AbuseChallengeContract, AccessDecisionContract, ApiCatalogContract, ApiContracts, ApiSchemaBundleContract, CalculatorCatalogContract, CalculatorConformanceContract, CreditPurchaseContract, ErrorEnvelopeContract, OidcClientRegistryContract, OidcProductSessionContract, OidcProviderRuntimeContract, ProductLinkHandoffContract, RouteContract, SdkGenerationInputContract, SensitiveActionAuthorizationContract, WebhookContract } from './types.js';
 interface ContractLoadFailure {
     readonly name: string;
     readonly file: string;
@@ -16,6 +16,7 @@ export declare class ApiContractLoadError extends Error {
  * risk: data_consistency
  */
 export declare function loadApiContracts(root?: string): Promise<ApiContracts>;
+export declare function parseAbuseChallengeContract(source: string): AbuseChallengeContract;
 export declare function parseCreditPurchaseContract(source: string): CreditPurchaseContract;
 export declare function parseOidcProductSessionContract(source: string): OidcProductSessionContract;
 export declare function parseOidcClientRegistryContract(source: string): OidcClientRegistryContract;

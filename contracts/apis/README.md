@@ -14,6 +14,13 @@ verify endpoint 또는 제품별 권한 handler를 활성화하지 않는다.
 
 생성된 OpenAPI, SDK source, published docs artifact는 이 디렉터리에 넣지 않는다.
 
+`abuse-api/challenge.yaml`은 브라우저 공개 surface를 provider-neutral issue/redeem으로 제한하고,
+제품 서버의 verify와 운영 health를 내부 인증 경로로 분리한다. Redeem 결과는 exact
+product/environment/action에 묶인 짧은 수명의 verification receipt이며 내부 verify 성공 시 한 번만
+소비한다. 이 증거는 인증, 권한, 결제 또는 제품 domain action의 승인·완료 증거가 아니다. Cap 같은
+provider 이름, challenge solution, raw provider payload와 raw IP/fingerprint는 제품 계약과 저장 경계에
+들어오지 않는다.
+
 `money-api/credit-purchase.yaml`은 공통 함선 팩 catalog projection, checkout intent, 상태 조회와 일회용
 return receipt 교환을 정의한다. live 결제 제공자나 base URL을 여는 계약이 아니며 제품이 보낸 금액,
 통화, 지급 귤, 보너스와 success redirect를 결제·지급 정본으로 사용하지 못하게 한다. Provider payment

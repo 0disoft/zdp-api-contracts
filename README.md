@@ -18,6 +18,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 | 데스크톱 제품 계정 연결 | `docs/contracts/desktop-product-link.md` |
 | 민감 행위 authorization receipt | `docs/contracts/sensitive-action-authorization.md` |
 | Core 접근 판정 | `docs/contracts/access-decision.md` |
+| 공통 abuse challenge | `docs/contracts/abuse-challenge.md` |
 | 웹 제품 OIDC 로그인 handoff | `docs/contracts/oidc-product-session.md` |
 | OIDC client registry와 첫 staging runtime | `docs/contracts/oidc-client-registry-and-runtime.md` |
 | 공통 귤 충전과 복귀 | `docs/contracts/credit-purchase.md` |
@@ -37,6 +38,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - 브라우저 승인을 session token 전달 없이 데스크톱 제품에 연결하는 single-use S256 product-link 계약
 - fresh 인증 assurance와 Core access 결정을 exact product/action/resource에 묶고 제품 도메인 guard와 함께 소비하는 민감 행위 authorization receipt 계약
 - verified current session과 정확한 product/action/resource/scope를 묶고 allow/deny, policy version, expiry, obligations와 비-bearer 증거 참조를 반환하는 Core access-decision 계약
+- provider-neutral public issue/redeem, private verify/health와 exact product/environment/action에 묶인 단회 verification receipt 계약
 - schema model handoff가 required field와 optional field를 분리해 SDK가 선택적 reference를 잃지 않게 하는 계약
 - typed fetch client가 읽어야 할 error envelope, request/trace id, timeout, abort signal, mutation idempotency handoff
 - npm package metadata, MIT license, public export map, package file whitelist
@@ -77,7 +79,7 @@ API 계약 검증기는 `contracts/route-contract.yaml`, `contracts/error-envelo
 - calculator catalog: reviewed 계산기 17종, 값 종류·단위·오류 allowlist, 계약·엔진 버전, 화면 payload와 계산 함수 금지 경계
 - calculator conformance: reviewed 계산기의 ASCII decimal 또는 strict calendar-date 입력, 한계, 반올림·정수 정책과 구현 중립 성공·오류 벡터
 
-route catalog는 `core-api` auth/session·access-decision과 `money-api` referral·credit-purchase 계약을 가진다. Core 계약은 `/v1/auth/registrations`, `/v1/auth/sessions`, `/v1/auth/sessions/refresh`, `/v1/auth/sessions/current`의 GET·DELETE, `/v1/auth/recovery/requests`, `/v1/auth/passkey/challenges`, `/v1/auth/passkey/assertions`, `/v1/auth/oauth/callbacks/{provider}`, `/v1/auth/product-link-challenges`의 create·complete·exchange와 `/v1/access/authorization-decisions`의 method, schema ref, session effect, audit event, idempotency, credential policy를 고정한다. GET current-session은 identity-only 조회고, access-decision은 Core가 session을 다시 검증해 별도 authorization 판정을 만들며, 데스크톱 product-link는 브라우저 session credential을 복사하지 않는 single-use handoff다. 이 경로들은 live endpoint가 아니라 `zdp-web-apps`, `zdp-auth-ui`, 설치형 제품 consumer의 route 승격 전제 조건이다.
+route catalog는 `core-api` auth/session·access-decision, `abuse-api` challenge와 `money-api` referral·credit-purchase 계약을 가진다. Core 계약은 `/v1/auth/registrations`, `/v1/auth/sessions`, `/v1/auth/sessions/refresh`, `/v1/auth/sessions/current`의 GET·DELETE, `/v1/auth/recovery/requests`, `/v1/auth/passkey/challenges`, `/v1/auth/passkey/assertions`, `/v1/auth/oauth/callbacks/{provider}`, `/v1/auth/product-link-challenges`의 create·complete·exchange와 `/v1/access/authorization-decisions`의 method, schema ref, session effect, audit event, idempotency, credential policy를 고정한다. GET current-session은 identity-only 조회고, access-decision은 Core가 session을 다시 검증해 별도 authorization 판정을 만들며, 데스크톱 product-link는 브라우저 session credential을 복사하지 않는 single-use handoff다. Abuse 계약은 public issue/redeem과 private verify/health를 분리하고 verification receipt가 제품 권위를 대신하지 못하게 한다. 이 경로들은 live endpoint가 아니라 각 runtime과 consumer의 route 승격 전제 조건이다.
 
 `sensitive-action-authorization.yaml`은 route catalog에 연결되지 않은 contract-only family다. Core의
 assurance와 플랫폼 정책 결정, audience 제품의 domain guard를 분리하고 opaque receipt의 exact

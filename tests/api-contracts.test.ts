@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import {
   ApiContractLoadError,
   loadApiContracts,
+  parseAbuseChallengeContract,
   parseAccessDecisionContract,
   parseApiCatalogContract,
   parseApiSchemaBundleContract,
@@ -35,6 +36,49 @@ describe('api contract checker', () => {
 
     expect(result.diagnostics).toEqual([]);
     expect(result.ok).toBe(true);
+  });
+
+  it('keeps abuse challenge evidence provider-neutral, single-use, and non-authoritative', () => {
+    const contracts = loadCommittedContracts();
+
+    expect(contracts.abuseChallenge.operationIds).toEqual([
+      'platform.abuse.challenges.issue',
+      'platform.abuse.challenges.redeem',
+      'platform.abuse.verifications.verify',
+      'platform.abuse.health.get'
+    ]);
+    expect(contracts.abuseChallenge.publicOperationIds).toEqual([
+      'platform.abuse.challenges.issue',
+      'platform.abuse.challenges.redeem'
+    ]);
+    expect(contracts.abuseChallenge.verificationReceiptSingleUse).toBe(true);
+    expect(contracts.abuseChallenge.productAuthorityPolicy).toBe(
+      'challenge_success_is_never_authentication_authorization_payment_or_domain_action_approval'
+    );
+    expect(contracts.abuseChallenge.providerAdapterOperations).toEqual([
+      'issue',
+      'verify',
+      'health'
+    ]);
+  });
+
+  it('rejects reusable abuse verification evidence and product-authority conflation', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      abuseChallenge: {
+        ...contracts.abuseChallenge,
+        verificationReceiptSingleUse: false,
+        productAuthorityPolicy: 'challenge_success_authorizes_product_write'
+      }
+    });
+
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_ABUSE_CHALLENGE_RECEIPT_POLICY_INVALID'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_ABUSE_CHALLENGE_AUTHORITY_CONFLATION'
+    );
   });
 
   it('keeps credit purchase on server-authoritative Money contracts', () => {
@@ -1115,7 +1159,11 @@ describe('api contract checker', () => {
       'money.credit_pack_catalog_projections.get',
       'money.credit_checkout_intents.create',
       'money.credit_checkout_intents.status.get',
-      'money.credit_checkout_return_receipts.exchange'
+      'money.credit_checkout_return_receipts.exchange',
+      'platform.abuse.challenges.issue',
+      'platform.abuse.challenges.redeem',
+      'platform.abuse.verifications.verify',
+      'platform.abuse.health.get'
     ]);
     const authRoutes = contracts.apiCatalog.routes.filter((route) =>
       route.operationId.startsWith('core.auth.')
@@ -1595,6 +1643,8 @@ describe('api contract checker', () => {
     const contracts = await loadApiContracts(process.cwd());
 
     expect(contracts.schemaBundles.map((bundle) => bundle.file)).toEqual([
+      'contracts/apis/abuse-api/challenge.yaml',
+      'contracts/apis/abuse-api/health.yaml',
       'contracts/apis/core-api/access-decision.yaml',
       'contracts/apis/core-api/auth-session-consumer.yaml',
       'contracts/apis/core-api/auth-session.yaml',
@@ -1674,22 +1724,27 @@ describe('api contract checker', () => {
 
   it('fails when a secret request field is echoed by the response schema', () => {
     const contracts = loadCommittedContracts();
-    const schemaBundle = schemaBundleAt(contracts, 1);
+    const schemaBundle = schemaBundleByFile(
+      contracts,
+      'contracts/apis/core-api/auth-session.yaml'
+    );
     const result = validateApiContracts({
       ...contracts,
-      schemaBundles: [
-        {
-          ...schemaBundle,
-          schemas: schemaBundle.schemas.map((schema) =>
-            schema.id === 'AuthSessionCreateResponse'
-              ? {
-                  ...schema,
-                  requiredFields: [...schema.requiredFields, 'verifier']
-                }
-              : schema
-          )
-        }
-      ]
+      schemaBundles: contracts.schemaBundles.map((bundle) =>
+        bundle.file === schemaBundle.file
+          ? {
+              ...schemaBundle,
+              schemas: schemaBundle.schemas.map((schema) =>
+                schema.id === 'AuthSessionCreateResponse'
+                  ? {
+                      ...schema,
+                      requiredFields: [...schema.requiredFields, 'verifier']
+                    }
+                  : schema
+              )
+            }
+          : bundle
+      )
     });
 
     expect(result.ok).toBe(false);
@@ -1826,22 +1881,26 @@ describe('api contract checker', () => {
 
   it('fails when an idempotent route schema drops idempotency metadata', () => {
     const contracts = loadCommittedContracts();
-    const schemaBundle = schemaBundleAt(contracts, 1);
+    const schemaBundle = schemaBundleByFile(
+      contracts,
+      'contracts/apis/core-api/auth-session.yaml'
+    );
     const result = validateApiContracts({
       ...contracts,
-      schemaBundles: [
-        {
-          ...schemaBundle,
-          commonEnvelope: {
-            ...schemaBundle.commonEnvelope,
-            requiredRequestMetadata:
-              schemaBundle.commonEnvelope.requiredRequestMetadata.filter(
-                (metadata) => metadata !== 'idempotency_key'
-              )
-          }
-        },
-        ...contracts.schemaBundles.slice(1)
-      ]
+      schemaBundles: contracts.schemaBundles.map((bundle) =>
+        bundle.file === schemaBundle.file
+          ? {
+              ...schemaBundle,
+              commonEnvelope: {
+                ...schemaBundle.commonEnvelope,
+                requiredRequestMetadata:
+                  schemaBundle.commonEnvelope.requiredRequestMetadata.filter(
+                    (metadata) => metadata !== 'idempotency_key'
+                  )
+              }
+            }
+          : bundle
+      )
     });
 
     expect(result.ok).toBe(false);
@@ -1852,7 +1911,10 @@ describe('api contract checker', () => {
 
   it('fails when a non-idempotent route schema requires idempotency metadata', () => {
     const contracts = loadCommittedContracts();
-    const schemaBundle = schemaBundleAt(contracts, 5);
+    const schemaBundle = schemaBundleByFile(
+      contracts,
+      'contracts/apis/money-api/referral-reward.yaml'
+    );
     const result = validateApiContracts({
       ...contracts,
       schemaBundles: contracts.schemaBundles.map((bundle) =>
@@ -1997,6 +2059,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    abuseChallenge: parseAbuseChallengeContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'abuse-api',
+          'challenge.yaml'
+        ),
+        'utf8'
+      )
+    ),
     creditPurchase: parseCreditPurchaseContract(
       readFileSync(
         join(
@@ -2082,6 +2156,32 @@ function loadCommittedContracts(): ApiContracts {
       )
     ),
     schemaBundles: [
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'abuse-api',
+            'challenge.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/abuse-api/challenge.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'abuse-api',
+            'health.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/abuse-api/health.yaml'
+      ),
       parseApiSchemaBundleContract(
         readFileSync(
           join(

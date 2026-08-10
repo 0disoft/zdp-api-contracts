@@ -6,6 +6,7 @@ export interface ApiContracts {
     readonly apiCatalog: ApiCatalogContract;
     readonly schemaBundles: readonly ApiSchemaBundleContract[];
     readonly creditPurchase: CreditPurchaseContract;
+    readonly abuseChallenge: AbuseChallengeContract;
     readonly accessDecision: AccessDecisionContract;
     readonly productLinkHandoff: ProductLinkHandoffContract;
     readonly sensitiveActionAuthorization: SensitiveActionAuthorizationContract;
@@ -14,6 +15,29 @@ export interface ApiContracts {
     readonly oidcProviderRuntime: OidcProviderRuntimeContract;
     readonly calculatorCatalog: CalculatorCatalogContract;
     readonly calculatorConformance: CalculatorConformanceContract;
+}
+export interface AbuseChallengeContract {
+    readonly schemaVersion: number;
+    readonly status: string;
+    readonly ownerBoundary: string;
+    readonly operationIds: readonly string[];
+    readonly publicOperationIds: readonly string[];
+    readonly privateOperationIds: readonly string[];
+    readonly requiredBindingFields: readonly string[];
+    readonly providerAdapterOperations: readonly string[];
+    readonly verificationReceiptSingleUse: boolean;
+    readonly verificationReceiptTtlPolicy: string;
+    readonly verificationReceiptBinding: string;
+    readonly verificationConsumptionPolicy: string;
+    readonly idempotencyPolicy: string;
+    readonly providerAbstractionPolicy: string;
+    readonly failurePolicy: string;
+    readonly productAuthorityPolicy: string;
+    readonly publicSurfacePolicy: string;
+    readonly healthSurfacePolicy: string;
+    readonly storagePolicy: string;
+    readonly forbiddenConsumerUses: readonly string[];
+    readonly forbiddenValues: readonly string[];
 }
 export interface CreditPurchaseContract {
     readonly schemaVersion: number;

@@ -20,6 +20,9 @@
 - session 관련 route는 `session_effect`를 명시한다.
 - credential 관련 route는 raw secret이나 provider payload를 싣지 않는다.
 - access-decision route는 current-session identity와 final authorization을 분리하고 request-supplied subject/session/tenant/role/decision을 권한 근거로 받지 않는다.
+- abuse challenge public route는 issue/redeem으로 한정하고 verify/health는 내부 인증 경로로 둔다.
+- challenge 결과는 인증, 권한, 결제 또는 제품 domain action 승인이 아니며 verification receipt는 exact product/environment/action에 묶어 짧은 수명으로 한 번만 소비한다.
+- challenge solution, verification receipt, raw IP, fingerprint, provider payload와 request body를 저장·로그·오류·metric label에 넣지 않는다.
 
 ## Error Envelope
 

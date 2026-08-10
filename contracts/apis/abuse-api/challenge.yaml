@@ -1,0 +1,144 @@
+abuse_challenge:
+  schema_version: 1
+  status: contract-only
+  owner_boundary: platform
+  operation_ids:
+    - platform.abuse.challenges.issue
+    - platform.abuse.challenges.redeem
+    - platform.abuse.verifications.verify
+    - platform.abuse.health.get
+  public_operation_ids:
+    - platform.abuse.challenges.issue
+    - platform.abuse.challenges.redeem
+  private_operation_ids:
+    - platform.abuse.verifications.verify
+    - platform.abuse.health.get
+  required_binding_fields:
+    - product_ref
+    - environment
+    - action
+  provider_adapter_operations:
+    - issue
+    - verify
+    - health
+  verification_receipt_single_use: true
+  verification_receipt_ttl_policy: short_lived_and_not_longer_than_challenge_or_product_request_window
+  verification_receipt_binding: exact_product_environment_action_and_challenge_redemption
+  verification_consumption_policy: successful_internal_verify_consumes_once_replay_or_mismatch_fails_closed
+  idempotency_policy: same_key_same_normalized_binding_replays_different_binding_conflicts
+  provider_abstraction_policy: provider_payload_and_failure_details_never_cross_product_contract
+  failure_policy: challenge_required_write_fails_closed_without_closing_unrelated_reads_or_authenticated_flows
+  product_authority_policy: challenge_success_is_never_authentication_authorization_payment_or_domain_action_approval
+  public_surface_policy: only_issue_and_redeem_are_public
+  health_surface_policy: private_authenticated_safe_projection_without_provider_secret_or_raw_failure
+  storage_policy: ttl_state_only_no_customer_truth_no_raw_ip_fingerprint_program_solution_token_or_request_body
+  forbidden_consumer_uses:
+    - verification_ref_as_authentication
+    - verification_ref_as_authorization
+    - verification_ref_as_payment_evidence
+    - verification_ref_as_domain_action_completion
+    - reuse_for_different_product_environment_or_action
+    - client_side_verification_as_final_product_decision
+  forbidden_values:
+    - raw_ip
+    - browser_fingerprint
+    - challenge_program
+    - challenge_solution
+    - verification_token
+    - provider_secret
+    - raw_provider_error
+    - raw_customer_payload
+    - request_body
+    - authorization_header
+    - cookie_header
+    - refresh_token_plaintext
+
+schema_bundle:
+  service_id: abuse-api
+  owner_boundary: platform
+  status: contract-only
+  purpose: issue and redeem provider-neutral abuse challenges while products consume a short-lived single-use verification receipt without delegating product authority
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+      - idempotency_key
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - raw_ip
+      - browser_fingerprint
+      - challenge_program
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - request_body
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: AbuseChallengeIssueRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - product_ref
+        - environment
+        - action
+    - id: AbuseChallengeIssueResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - challenge_ref
+        - challenge_kind
+        - widget_bootstrap
+        - expires_at
+    - id: AbuseChallengeRedeemRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: challenge_solution_input_only_never_echo_or_persist_plaintext
+      required_fields:
+        - product_ref
+        - environment
+        - action
+        - challenge_response
+      secret_fields:
+        - challenge_response
+    - id: AbuseChallengeRedeemResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - verification_ref
+        - product_ref
+        - environment
+        - action
+        - verified_at
+        - expires_at
+    - id: AbuseVerificationVerifyRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: verification_receipt_input_only_never_echo_or_persist_plaintext
+      required_fields:
+        - verification_ref
+        - product_ref
+        - environment
+        - action
+      secret_fields:
+        - verification_ref
+    - id: AbuseVerificationVerifyResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - verification_state
+        - product_ref
+        - environment
+        - action
+        - verified_at
+      optional_fields:
+        - consumed_at
+        - safe_reason_code

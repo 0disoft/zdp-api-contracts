@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+  parseAbuseChallengeContract,
   parseAccessDecisionContract,
   parseApiCatalogContract,
   parseApiSchemaBundleContract,
@@ -73,7 +74,11 @@ describe('api export plan', () => {
       'money.credit_pack_catalog_projections.get',
       'money.credit_checkout_intents.create',
       'money.credit_checkout_intents.status.get',
-      'money.credit_checkout_return_receipts.exchange'
+      'money.credit_checkout_return_receipts.exchange',
+      'platform.abuse.challenges.issue',
+      'platform.abuse.challenges.redeem',
+      'platform.abuse.verifications.verify',
+      'platform.abuse.health.get'
     ]);
     expect(plan.typedFetchOperationMap).toMatchObject({
       'core.auth.sessions.create': {
@@ -344,6 +349,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    abuseChallenge: parseAbuseChallengeContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'abuse-api',
+          'challenge.yaml'
+        ),
+        'utf8'
+      )
+    ),
     creditPurchase: parseCreditPurchaseContract(
       readFileSync(
         join(
@@ -441,6 +458,32 @@ function loadCommittedContracts(): ApiContracts {
       )
     ),
     schemaBundles: [
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'abuse-api',
+            'challenge.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/abuse-api/challenge.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'abuse-api',
+            'health.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/abuse-api/health.yaml'
+      ),
       parseApiSchemaBundleContract(
         readFileSync(
           join(

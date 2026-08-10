@@ -8,6 +8,7 @@
 | `service.yaml` | 운영 경계, release/version source, human review, policy gate |
 | `contracts/route-contract.yaml` | route별 필수 metadata와 forbidden shape |
 | `contracts/apis/catalog.yaml` | 실제 service route catalog 자리 |
+| `contracts/apis/abuse-api/challenge.yaml` | provider-neutral issue/redeem, 내부 verify/health와 단회 verification receipt 계약 |
 | `contracts/apis/core-api/auth-session.yaml` | auth/session promotion prerequisite |
 | `contracts/apis/core-api/sensitive-action-authorization.yaml` | 민감 행위 receipt의 assurance/access/product guard 분리와 상태·소비 계약 |
 | `contracts/apis/core-api/access-decision.yaml` | verified session과 exact product/action/resource/scope에 묶인 Core allow/deny 판정 계약 |
@@ -25,6 +26,7 @@
 - route change: `AGENTS.md` -> `CHECKLIST.md` -> `contracts/route-contract.yaml` -> `contracts/apis/catalog.yaml` -> related route catalog -> `VALIDATION.md`
 - sensitive-action authorization change: `AGENTS.md` -> `CHECKLIST.md` -> `contracts/apis/core-api/sensitive-action-authorization.yaml` -> `contracts/sdk-generation-input.yaml` -> parser/tests -> `docs/contracts/sensitive-action-authorization.md` -> `VALIDATION.md`
 - access-decision change: `AGENTS.md` -> `CHECKLIST.md` -> `contracts/apis/core-api/access-decision.yaml` -> `contracts/apis/catalog.yaml` -> parser/validator/tests -> `docs/contracts/access-decision.md` -> `VALIDATION.md`
+- abuse challenge change: `AGENTS.md` -> `CHECKLIST.md` -> `contracts/apis/abuse-api/challenge.yaml` -> `contracts/apis/catalog.yaml` -> parser/validator/tests -> `docs/contracts/abuse-challenge.md` -> `VALIDATION.md`
 - error change: `AGENTS.md` -> `contracts/error-envelope.yaml` -> `contracts/sdk-generation-input.yaml` -> validator tests -> `VALIDATION.md`
 - SDK handoff change: `AGENTS.md` -> `contracts/sdk-generation-input.yaml` -> `src/api-export-plan/*` -> `README.md`
 - package surface change: `package.json` -> `src/index.ts` -> README package section -> `VALIDATION.md`

@@ -551,3 +551,111 @@ routes:
       - product_mismatch
       - return_target_mismatch
       - idempotency_conflict
+  - operation_id: platform.abuse.challenges.issue
+    service_id: abuse-api
+    resource: abuse_challenge
+    action: issue
+    method: POST
+    path: /v1/abuse/challenges
+    success_statuses:
+      - 201
+    request_schema_ref: contracts/apis/abuse-api/challenge.yaml#AbuseChallengeIssueRequest
+    response_schema_ref: contracts/apis/abuse-api/challenge.yaml#AbuseChallengeIssueResponse
+    auth_required: false
+    permission_check: platform.abuse.public_challenge_entrypoint
+    audit_event: platform.abuse.challenge.issued
+    idempotency: required_idempotency_key
+    owner_boundary: platform
+    tenant_boundary: none
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - action_not_allowed
+      - provider_unavailable
+      - rate_limited
+      - idempotency_conflict
+  - operation_id: platform.abuse.challenges.redeem
+    service_id: abuse-api
+    resource: abuse_challenge
+    action: redeem
+    method: POST
+    path: /v1/abuse/challenges/{challenge_ref}/redeem
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/abuse-api/challenge.yaml#AbuseChallengeRedeemRequest
+    response_schema_ref: contracts/apis/abuse-api/challenge.yaml#AbuseChallengeRedeemResponse
+    auth_required: false
+    permission_check: platform.abuse.public_challenge_entrypoint
+    audit_event: platform.abuse.challenge.redeemed
+    idempotency: required_idempotency_key
+    owner_boundary: platform
+    tenant_boundary: none
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - challenge_invalid
+      - challenge_expired
+      - challenge_already_redeemed
+      - binding_mismatch
+      - provider_unavailable
+      - rate_limited
+      - idempotency_conflict
+  - operation_id: platform.abuse.verifications.verify
+    service_id: abuse-api
+    resource: abuse_verification
+    action: verify
+    method: POST
+    path: /internal/v1/abuse/verifications/verify
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/abuse-api/challenge.yaml#AbuseVerificationVerifyRequest
+    response_schema_ref: contracts/apis/abuse-api/challenge.yaml#AbuseVerificationVerifyResponse
+    auth_required: true
+    permission_check: platform.abuse.verification.consume
+    audit_event: platform.abuse.verification.consumed
+    idempotency: required_idempotency_key
+    owner_boundary: platform
+    tenant_boundary: none
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - scope_access_denied
+      - verification_invalid
+      - verification_expired
+      - verification_already_consumed
+      - binding_mismatch
+      - idempotency_conflict
+  - operation_id: platform.abuse.health.get
+    service_id: abuse-api
+    resource: abuse_health
+    action: get
+    method: GET
+    path: /internal/v1/abuse/health
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/abuse-api/health.yaml#AbuseHealthGetRequest
+    response_schema_ref: contracts/apis/abuse-api/health.yaml#AbuseHealthGetResponse
+    auth_required: true
+    permission_check: platform.abuse.health.read
+    audit_event: platform.abuse.health.read
+    idempotency: not_required
+    owner_boundary: platform
+    tenant_boundary: none
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - authentication_failed
+      - scope_access_denied
+      - provider_unavailable

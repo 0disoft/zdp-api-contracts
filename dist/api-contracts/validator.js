@@ -135,6 +135,35 @@ const REQUIRED_ROUTE_FIELDS = [
 const ALLOWED_ROUTE_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 const ALLOWED_SUCCESS_STATUSES = [200, 201, 202, 204];
 const NO_CONTENT_SUCCESS_STATUSES = [204];
+const ABUSE_CHALLENGE_FILE = 'contracts/apis/abuse-api/challenge.yaml';
+const ABUSE_CHALLENGE_OPERATION_IDS = [
+    'platform.abuse.challenges.issue',
+    'platform.abuse.challenges.redeem',
+    'platform.abuse.verifications.verify',
+    'platform.abuse.health.get'
+];
+const ABUSE_CHALLENGE_PUBLIC_OPERATION_IDS = [
+    'platform.abuse.challenges.issue',
+    'platform.abuse.challenges.redeem'
+];
+const ABUSE_CHALLENGE_PRIVATE_OPERATION_IDS = [
+    'platform.abuse.verifications.verify',
+    'platform.abuse.health.get'
+];
+const ABUSE_CHALLENGE_BINDINGS = [
+    'product_ref',
+    'environment',
+    'action'
+];
+const ABUSE_PROVIDER_ADAPTER_OPERATIONS = ['issue', 'verify', 'health'];
+const ABUSE_FORBIDDEN_CONSUMER_USES = [
+    'verification_ref_as_authentication',
+    'verification_ref_as_authorization',
+    'verification_ref_as_payment_evidence',
+    'verification_ref_as_domain_action_completion',
+    'reuse_for_different_product_environment_or_action',
+    'client_side_verification_as_final_product_decision'
+];
 const ACCESS_DECISION_FILE = 'contracts/apis/core-api/access-decision.yaml';
 const ACCESS_DECISION_OPERATION_ID = 'core.access.authorization_decisions.create';
 const ACCESS_DECISION_ROUTE_PATH = '/v1/access/authorization-decisions';
@@ -699,14 +728,20 @@ const ALLOWED_SECRET_MATERIAL_POLICIES = [
     'browser_assertion_only_never_echo',
     'provider_callback_code_only_never_store_plaintext',
     'proof_verifier_input_only_never_echo_or_persist_plaintext',
-    'one_time_receipt_input_only_never_echo_or_persist_plaintext'
+    'one_time_receipt_input_only_never_echo_or_persist_plaintext',
+    'challenge_solution_input_only_never_echo_or_persist_plaintext',
+    'verification_receipt_output_only_never_log_or_persist_plaintext',
+    'verification_receipt_input_only_never_echo_or_persist_plaintext'
 ];
 const REQUIRED_CREDENTIAL_POLICY_PARTS = [
     'no_refresh_token_plaintext',
     'no_provider_secret',
     'no_authorization_or_cookie_header_payload'
 ];
-const PUBLIC_AUTH_PERMISSION_CHECK = 'core.identity.public_auth_entrypoint';
+const PUBLIC_PERMISSION_CHECKS = [
+    'core.identity.public_auth_entrypoint',
+    'platform.abuse.public_challenge_entrypoint'
+];
 const ALLOWED_OWNER_BOUNDARIES = [
     'identity',
     'money',
@@ -762,6 +797,7 @@ export function validateApiContracts(contracts) {
     validateApiCatalogContract(contracts, schemaBundlesByFile, diagnostics);
     validateSchemaBundles(contracts, schemaBundlesByFile, diagnostics);
     validateCreditPurchase(contracts, schemaBundlesByFile, diagnostics);
+    validateAbuseChallenge(contracts, schemaBundlesByFile, diagnostics);
     validateAccessDecision(contracts, schemaBundlesByFile, diagnostics);
     validateOidcProductSession(contracts, diagnostics);
     validateOidcClientRegistry(contracts, diagnostics);
@@ -1139,6 +1175,91 @@ function validateCreditPurchase(contracts, schemaBundlesByFile, diagnostics) {
             'one_time_receipt_input_only_never_echo_or_persist_plaintext' ||
         !receiptRequest.secretFields.includes('return_receipt')) {
         push('API_CREDIT_PURCHASE_RETURN_RECEIPT_SECRET_POLICY_INVALID', 'schema_bundle.CreditCheckoutReturnReceiptExchangeRequest', 'Return receipt exchange must treat the one-time receipt as non-echoing secret input.');
+    }
+}
+function validateAbuseChallenge(contracts, schemaBundlesByFile, diagnostics) {
+    const contract = contracts.abuseChallenge;
+    const push = (code, path, message) => {
+        diagnostics.push({ code, file: ABUSE_CHALLENGE_FILE, path, message });
+    };
+    if (contract.schemaVersion !== 1 ||
+        contract.status !== 'contract-only' ||
+        contract.ownerBoundary !== 'platform') {
+        push('API_ABUSE_CHALLENGE_BOUNDARY_INVALID', 'abuse_challenge', 'Abuse challenge must remain a contract-only platform boundary at schema version 1.');
+    }
+    if (!hasExactStringValues(contract.operationIds, ABUSE_CHALLENGE_OPERATION_IDS) ||
+        !hasExactStringValues(contract.publicOperationIds, ABUSE_CHALLENGE_PUBLIC_OPERATION_IDS) ||
+        !hasExactStringValues(contract.privateOperationIds, ABUSE_CHALLENGE_PRIVATE_OPERATION_IDS)) {
+        push('API_ABUSE_CHALLENGE_SURFACE_INVALID', 'abuse_challenge.operation_ids', 'Abuse challenge must expose only public issue/redeem and private verify/health operations.');
+    }
+    if (!hasExactStringValues(contract.requiredBindingFields, ABUSE_CHALLENGE_BINDINGS) ||
+        contract.verificationReceiptBinding !==
+            'exact_product_environment_action_and_challenge_redemption') {
+        push('API_ABUSE_CHALLENGE_BINDING_INVALID', 'abuse_challenge.required_binding_fields', 'Challenge and verification evidence must bind the exact product, environment, action, and redemption.');
+    }
+    if (!hasExactStringValues(contract.providerAdapterOperations, ABUSE_PROVIDER_ADAPTER_OPERATIONS) ||
+        contract.providerAbstractionPolicy !==
+            'provider_payload_and_failure_details_never_cross_product_contract') {
+        push('API_ABUSE_CHALLENGE_PROVIDER_BOUNDARY_INVALID', 'abuse_challenge.provider_adapter_operations', 'The provider adapter must remain limited to issue, verify, and health without leaking provider payloads.');
+    }
+    if (!contract.verificationReceiptSingleUse ||
+        contract.verificationReceiptTtlPolicy !==
+            'short_lived_and_not_longer_than_challenge_or_product_request_window' ||
+        contract.verificationConsumptionPolicy !==
+            'successful_internal_verify_consumes_once_replay_or_mismatch_fails_closed') {
+        push('API_ABUSE_CHALLENGE_RECEIPT_POLICY_INVALID', 'abuse_challenge.verification_receipt_single_use', 'Verification evidence must be short-lived, exact-bound, and consumed once by internal verification.');
+    }
+    if (contract.idempotencyPolicy !==
+        'same_key_same_normalized_binding_replays_different_binding_conflicts' ||
+        contract.failurePolicy !==
+            'challenge_required_write_fails_closed_without_closing_unrelated_reads_or_authenticated_flows') {
+        push('API_ABUSE_CHALLENGE_FAILURE_POLICY_INVALID', 'abuse_challenge.failure_policy', 'Required writes must fail closed with exact idempotency while unrelated flows stay available.');
+    }
+    if (contract.productAuthorityPolicy !==
+        'challenge_success_is_never_authentication_authorization_payment_or_domain_action_approval' ||
+        !ABUSE_FORBIDDEN_CONSUMER_USES.every((value) => contract.forbiddenConsumerUses.includes(value))) {
+        push('API_ABUSE_CHALLENGE_AUTHORITY_CONFLATION', 'abuse_challenge.product_authority_policy', 'Challenge evidence must never become authentication, authorization, payment, or product completion authority.');
+    }
+    if (contract.publicSurfacePolicy !== 'only_issue_and_redeem_are_public' ||
+        contract.healthSurfacePolicy !==
+            'private_authenticated_safe_projection_without_provider_secret_or_raw_failure' ||
+        contract.storagePolicy !==
+            'ttl_state_only_no_customer_truth_no_raw_ip_fingerprint_program_solution_token_or_request_body') {
+        push('API_ABUSE_CHALLENGE_PRIVACY_SURFACE_INVALID', 'abuse_challenge.storage_policy', 'Only issue/redeem may be public and runtime state must remain TTL-only without raw identifying or challenge material.');
+    }
+    const routes = new Map(contracts.apiCatalog.routes
+        .filter((route) => contract.operationIds.includes(route.operationId))
+        .map((route) => [route.operationId, route]));
+    for (const operationId of ABUSE_CHALLENGE_OPERATION_IDS) {
+        const route = routes.get(operationId);
+        if (!route || route.serviceId !== 'abuse-api' || route.ownerBoundary !== 'platform') {
+            push('API_ABUSE_CHALLENGE_ROUTE_MISSING', 'abuse_challenge.operation_ids', `Canonical abuse route \`${operationId}\` must be present and owned by abuse-api.`);
+            continue;
+        }
+        const shouldBePublic = ABUSE_CHALLENGE_PUBLIC_OPERATION_IDS.includes(operationId);
+        if (route.authRequired === shouldBePublic) {
+            push('API_ABUSE_CHALLENGE_ROUTE_EXPOSURE_INVALID', 'abuse_challenge.operation_ids', `Abuse route \`${operationId}\` has the wrong public/private authentication boundary.`);
+        }
+    }
+    const bundle = schemaBundlesByFile.get(ABUSE_CHALLENGE_FILE);
+    const redeemRequest = bundle?.schemas.find((schema) => schema.id === 'AbuseChallengeRedeemRequest');
+    const redeemResponse = bundle?.schemas.find((schema) => schema.id === 'AbuseChallengeRedeemResponse');
+    const verifyRequest = bundle?.schemas.find((schema) => schema.id === 'AbuseVerificationVerifyRequest');
+    if (!bundle || !redeemRequest || !redeemResponse || !verifyRequest) {
+        push('API_ABUSE_CHALLENGE_SCHEMA_BUNDLE_INVALID', 'schema_bundle', 'Abuse redeem and internal verification schemas must exist.');
+        return;
+    }
+    if (!ABUSE_CHALLENGE_BINDINGS.every((field) => redeemRequest.requiredFields.includes(field)) ||
+        redeemRequest.secretMaterialPolicy !==
+            'challenge_solution_input_only_never_echo_or_persist_plaintext' ||
+        !redeemRequest.secretFields.includes('challenge_response')) {
+        push('API_ABUSE_CHALLENGE_REDEEM_SECRET_POLICY_INVALID', 'schema_bundle.schemas.AbuseChallengeRedeemRequest', 'Redeem must carry exact bindings and treat the challenge response as non-echoing, non-persisted secret input.');
+    }
+    if (!redeemResponse.requiredFields.includes('verification_ref') ||
+        verifyRequest.secretMaterialPolicy !==
+            'verification_receipt_input_only_never_echo_or_persist_plaintext' ||
+        !verifyRequest.secretFields.includes('verification_ref')) {
+        push('API_ABUSE_CHALLENGE_VERIFICATION_SECRET_POLICY_INVALID', 'schema_bundle.schemas.AbuseVerificationVerifyRequest', 'The short-lived verification receipt must never be logged, echoed, or persisted in plaintext.');
     }
 }
 function validateAccessDecision(contracts, schemaBundlesByFile, diagnostics) {
@@ -2213,12 +2334,12 @@ function validateRouteDefinition(route, index, contracts, schemaBundlesByFile, d
             message: `API route \`${route.operationId}\` credential policy must exactly match an allowed policy.`
         });
     }
-    if (!route.authRequired && route.permissionCheck !== PUBLIC_AUTH_PERMISSION_CHECK) {
+    if (!route.authRequired && !includesValue(PUBLIC_PERMISSION_CHECKS, route.permissionCheck)) {
         diagnostics.push({
             code: 'API_CATALOG_PUBLIC_ROUTE_PERMISSION_CHECK_INVALID',
             file: 'contracts/apis/catalog.yaml',
             path: `${routePath}.permission_check`,
-            message: `Public API route \`${route.operationId}\` must use \`${PUBLIC_AUTH_PERMISSION_CHECK}\`.`
+            message: `Public API route \`${route.operationId}\` must use a reviewed public entrypoint permission check.`
         });
     }
     if (!includesValue(ALLOWED_OWNER_BOUNDARIES, route.ownerBoundary)) {

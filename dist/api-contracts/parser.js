@@ -25,7 +25,7 @@ export class ApiContractLoadError extends Error {
  */
 export async function loadApiContracts(root = process.cwd()) {
     const contractsRoot = join(root, 'contracts');
-    const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog, calculatorCatalog, calculatorConformance, creditPurchase, accessDecision, productLinkHandoff, sensitiveActionAuthorization, oidcProductSession, oidcClientRegistry, oidcProviderRuntime] = await Promise.all([
+    const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog, calculatorCatalog, calculatorConformance, creditPurchase, abuseChallenge, accessDecision, productLinkHandoff, sensitiveActionAuthorization, oidcProductSession, oidcClientRegistry, oidcProviderRuntime] = await Promise.all([
         loadContract(contractsRoot, 'route', 'route-contract.yaml', parseRouteContract),
         loadContract(contractsRoot, 'error-envelope', 'error-envelope.yaml', parseErrorEnvelopeContract),
         loadContract(contractsRoot, 'webhook', 'webhook-contract.yaml', parseWebhookContract),
@@ -34,6 +34,7 @@ export async function loadApiContracts(root = process.cwd()) {
         loadContract(contractsRoot, 'calculator-catalog', join('calculators', 'catalog.yaml'), parseCalculatorCatalogContract),
         loadContract(contractsRoot, 'calculator-conformance', join('calculators', 'conformance.yaml'), parseCalculatorConformanceContract),
         loadContract(contractsRoot, 'credit-purchase', join('apis', 'money-api', 'credit-purchase.yaml'), parseCreditPurchaseContract),
+        loadContract(contractsRoot, 'abuse-challenge', join('apis', 'abuse-api', 'challenge.yaml'), parseAbuseChallengeContract),
         loadContract(contractsRoot, 'access-decision', join('apis', 'core-api', 'access-decision.yaml'), parseAccessDecisionContract),
         loadContract(contractsRoot, 'product-link-handoff', join('apis', 'core-api', 'product-link.yaml'), parseProductLinkHandoffContract),
         loadContract(contractsRoot, 'sensitive-action-authorization', join('apis', 'core-api', 'sensitive-action-authorization.yaml'), parseSensitiveActionAuthorizationContract),
@@ -50,6 +51,7 @@ export async function loadApiContracts(root = process.cwd()) {
         calculatorCatalog,
         calculatorConformance,
         creditPurchase,
+        abuseChallenge,
         accessDecision,
         productLinkHandoff,
         sensitiveActionAuthorization,
@@ -69,6 +71,7 @@ export async function loadApiContracts(root = process.cwd()) {
     const loadedCalculatorCatalog = requireLoadedContract(calculatorCatalog);
     const loadedCalculatorConformance = requireLoadedContract(calculatorConformance);
     const loadedCreditPurchase = requireLoadedContract(creditPurchase);
+    const loadedAbuseChallenge = requireLoadedContract(abuseChallenge);
     const loadedAccessDecision = requireLoadedContract(accessDecision);
     const loadedProductLinkHandoff = requireLoadedContract(productLinkHandoff);
     const loadedSensitiveActionAuthorization = requireLoadedContract(sensitiveActionAuthorization);
@@ -88,6 +91,7 @@ export async function loadApiContracts(root = process.cwd()) {
         apiCatalog: loadedApiCatalog.value,
         schemaBundles: schemaBundleResults.map((result) => requireLoadedContract(result).value),
         creditPurchase: loadedCreditPurchase.value,
+        abuseChallenge: loadedAbuseChallenge.value,
         accessDecision: loadedAccessDecision.value,
         productLinkHandoff: loadedProductLinkHandoff.value,
         sensitiveActionAuthorization: loadedSensitiveActionAuthorization.value,
@@ -96,6 +100,59 @@ export async function loadApiContracts(root = process.cwd()) {
         oidcProviderRuntime: loadedOidcProviderRuntime.value,
         calculatorCatalog: loadedCalculatorCatalog.value,
         calculatorConformance: loadedCalculatorConformance.value
+    };
+}
+export function parseAbuseChallengeContract(source) {
+    const file = 'contracts/apis/abuse-api/challenge.yaml';
+    const data = parseYamlObject(source, file);
+    assertOnlyKeys(data, ['abuse_challenge', 'schema_bundle'], file);
+    const contract = requiredObject(data, 'abuse_challenge', file);
+    const context = `${file}#abuse_challenge`;
+    assertOnlyKeys(contract, [
+        'schema_version',
+        'status',
+        'owner_boundary',
+        'operation_ids',
+        'public_operation_ids',
+        'private_operation_ids',
+        'required_binding_fields',
+        'provider_adapter_operations',
+        'verification_receipt_single_use',
+        'verification_receipt_ttl_policy',
+        'verification_receipt_binding',
+        'verification_consumption_policy',
+        'idempotency_policy',
+        'provider_abstraction_policy',
+        'failure_policy',
+        'product_authority_policy',
+        'public_surface_policy',
+        'health_surface_policy',
+        'storage_policy',
+        'forbidden_consumer_uses',
+        'forbidden_values'
+    ], context);
+    return {
+        schemaVersion: requiredNumber(contract, 'schema_version', context),
+        status: requiredString(contract, 'status', context),
+        ownerBoundary: requiredString(contract, 'owner_boundary', context),
+        operationIds: requiredStringList(contract, 'operation_ids', context),
+        publicOperationIds: requiredStringList(contract, 'public_operation_ids', context),
+        privateOperationIds: requiredStringList(contract, 'private_operation_ids', context),
+        requiredBindingFields: requiredStringList(contract, 'required_binding_fields', context),
+        providerAdapterOperations: requiredStringList(contract, 'provider_adapter_operations', context),
+        verificationReceiptSingleUse: requiredBoolean(contract, 'verification_receipt_single_use', context),
+        verificationReceiptTtlPolicy: requiredString(contract, 'verification_receipt_ttl_policy', context),
+        verificationReceiptBinding: requiredString(contract, 'verification_receipt_binding', context),
+        verificationConsumptionPolicy: requiredString(contract, 'verification_consumption_policy', context),
+        idempotencyPolicy: requiredString(contract, 'idempotency_policy', context),
+        providerAbstractionPolicy: requiredString(contract, 'provider_abstraction_policy', context),
+        failurePolicy: requiredString(contract, 'failure_policy', context),
+        productAuthorityPolicy: requiredString(contract, 'product_authority_policy', context),
+        publicSurfacePolicy: requiredString(contract, 'public_surface_policy', context),
+        healthSurfacePolicy: requiredString(contract, 'health_surface_policy', context),
+        storagePolicy: requiredString(contract, 'storage_policy', context),
+        forbiddenConsumerUses: requiredStringList(contract, 'forbidden_consumer_uses', context),
+        forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
     };
 }
 export function parseCreditPurchaseContract(source) {

@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse } from 'yaml';
 import type {
+  AbuseChallengeContract,
   AccessDecisionContract,
   ApiCatalogContract,
   ApiContracts,
@@ -98,6 +99,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     calculatorCatalog,
     calculatorConformance,
     creditPurchase,
+    abuseChallenge,
     accessDecision,
     productLinkHandoff,
     sensitiveActionAuthorization,
@@ -156,6 +158,12 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
       ),
       loadContract(
         contractsRoot,
+        'abuse-challenge',
+        join('apis', 'abuse-api', 'challenge.yaml'),
+        parseAbuseChallengeContract
+      ),
+      loadContract(
+        contractsRoot,
         'access-decision',
         join('apis', 'core-api', 'access-decision.yaml'),
         parseAccessDecisionContract
@@ -201,6 +209,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     calculatorCatalog,
     calculatorConformance,
     creditPurchase,
+    abuseChallenge,
     accessDecision,
     productLinkHandoff,
     sensitiveActionAuthorization,
@@ -223,6 +232,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     calculatorConformance
   );
   const loadedCreditPurchase = requireLoadedContract(creditPurchase);
+  const loadedAbuseChallenge = requireLoadedContract(abuseChallenge);
   const loadedAccessDecision = requireLoadedContract(accessDecision);
   const loadedProductLinkHandoff = requireLoadedContract(productLinkHandoff);
   const loadedSensitiveActionAuthorization = requireLoadedContract(
@@ -256,6 +266,7 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
       (result) => requireLoadedContract(result).value
     ),
     creditPurchase: loadedCreditPurchase.value,
+    abuseChallenge: loadedAbuseChallenge.value,
     accessDecision: loadedAccessDecision.value,
     productLinkHandoff: loadedProductLinkHandoff.value,
     sensitiveActionAuthorization: loadedSensitiveActionAuthorization.value,
@@ -264,6 +275,119 @@ export async function loadApiContracts(root = process.cwd()): Promise<ApiContrac
     oidcProviderRuntime: loadedOidcProviderRuntime.value,
     calculatorCatalog: loadedCalculatorCatalog.value,
     calculatorConformance: loadedCalculatorConformance.value
+  };
+}
+
+export function parseAbuseChallengeContract(
+  source: string
+): AbuseChallengeContract {
+  const file = 'contracts/apis/abuse-api/challenge.yaml';
+  const data = parseYamlObject(source, file);
+  assertOnlyKeys(data, ['abuse_challenge', 'schema_bundle'], file);
+  const contract = requiredObject(data, 'abuse_challenge', file);
+  const context = `${file}#abuse_challenge`;
+  assertOnlyKeys(
+    contract,
+    [
+      'schema_version',
+      'status',
+      'owner_boundary',
+      'operation_ids',
+      'public_operation_ids',
+      'private_operation_ids',
+      'required_binding_fields',
+      'provider_adapter_operations',
+      'verification_receipt_single_use',
+      'verification_receipt_ttl_policy',
+      'verification_receipt_binding',
+      'verification_consumption_policy',
+      'idempotency_policy',
+      'provider_abstraction_policy',
+      'failure_policy',
+      'product_authority_policy',
+      'public_surface_policy',
+      'health_surface_policy',
+      'storage_policy',
+      'forbidden_consumer_uses',
+      'forbidden_values'
+    ],
+    context
+  );
+
+  return {
+    schemaVersion: requiredNumber(contract, 'schema_version', context),
+    status: requiredString(contract, 'status', context),
+    ownerBoundary: requiredString(contract, 'owner_boundary', context),
+    operationIds: requiredStringList(contract, 'operation_ids', context),
+    publicOperationIds: requiredStringList(
+      contract,
+      'public_operation_ids',
+      context
+    ),
+    privateOperationIds: requiredStringList(
+      contract,
+      'private_operation_ids',
+      context
+    ),
+    requiredBindingFields: requiredStringList(
+      contract,
+      'required_binding_fields',
+      context
+    ),
+    providerAdapterOperations: requiredStringList(
+      contract,
+      'provider_adapter_operations',
+      context
+    ),
+    verificationReceiptSingleUse: requiredBoolean(
+      contract,
+      'verification_receipt_single_use',
+      context
+    ),
+    verificationReceiptTtlPolicy: requiredString(
+      contract,
+      'verification_receipt_ttl_policy',
+      context
+    ),
+    verificationReceiptBinding: requiredString(
+      contract,
+      'verification_receipt_binding',
+      context
+    ),
+    verificationConsumptionPolicy: requiredString(
+      contract,
+      'verification_consumption_policy',
+      context
+    ),
+    idempotencyPolicy: requiredString(contract, 'idempotency_policy', context),
+    providerAbstractionPolicy: requiredString(
+      contract,
+      'provider_abstraction_policy',
+      context
+    ),
+    failurePolicy: requiredString(contract, 'failure_policy', context),
+    productAuthorityPolicy: requiredString(
+      contract,
+      'product_authority_policy',
+      context
+    ),
+    publicSurfacePolicy: requiredString(
+      contract,
+      'public_surface_policy',
+      context
+    ),
+    healthSurfacePolicy: requiredString(
+      contract,
+      'health_surface_policy',
+      context
+    ),
+    storagePolicy: requiredString(contract, 'storage_policy', context),
+    forbiddenConsumerUses: requiredStringList(
+      contract,
+      'forbidden_consumer_uses',
+      context
+    ),
+    forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
   };
 }
 
