@@ -15,7 +15,9 @@ provider-neutral issue/redeem, 제품 서버용 verify, 운영 health와 짧은 
 - verify 성공은 receipt를 최초 consumer operation에 한 번 소비한다. 같은 operation ref의 재호출에는
   이전 성공을 replay하고, 다른 operation ref, 만료, binding mismatch와 불명확한 상태는 fail closed한다.
 - provider 검증 성공은 먼저 durable `verified` 상태와 receipt key ID로 기록한다. Receipt 최종화 또는
-  응답이 유실되면 같은 challenge redeem이 provider를 다시 호출하지 않고 canonical 성공을 복구한다.
+  응답이 유실되면 같은 idempotency key, normalized input과 exact binding의 challenge redeem만 provider를
+  다시 호출하지 않고 canonical 성공을 복구한다. 다른 key, solution input이나 binding은 bearer receipt를
+  받을 수 없다.
 - `/internal/v1/abuse/health`는 인증된 운영·서비스 경로에만 안전한 상태 projection을 제공한다.
 
 ## 권위 분리

@@ -1210,7 +1210,7 @@ function validateAbuseChallenge(contracts, schemaBundlesByFile, diagnostics) {
         contract.verificationConsumerOperationPolicy !==
             'same_consumer_operation_ref_replays_success_different_ref_fails_closed' ||
         contract.redeemRecoveryPolicy !==
-            'provider_success_persists_verified_state_before_finalization_and_same_redeem_replays_canonical_success' ||
+            'provider_success_persists_verified_state_before_finalization_and_same_idempotency_key_normalized_input_binding_replays_canonical_success' ||
         contract.verificationReceiptDerivationPolicy !==
             'keyed_deterministic_receipt_recoverable_by_key_id_without_plaintext_persistence') {
         push('API_ABUSE_CHALLENGE_RECEIPT_POLICY_INVALID', 'abuse_challenge.verification_receipt_single_use', 'Verification evidence must be short-lived, exact-bound, recoverable after redeem response loss, and replay success only for the same operation.');

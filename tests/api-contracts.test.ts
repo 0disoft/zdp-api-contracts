@@ -56,7 +56,7 @@ describe('api contract checker', () => {
       'same_consumer_operation_ref_replays_success_different_ref_fails_closed'
     );
     expect(contracts.abuseChallenge.redeemRecoveryPolicy).toBe(
-      'provider_success_persists_verified_state_before_finalization_and_same_redeem_replays_canonical_success'
+      'provider_success_persists_verified_state_before_finalization_and_same_idempotency_key_normalized_input_binding_replays_canonical_success'
     );
     expect(contracts.abuseChallenge.verificationReceiptDerivationPolicy).toBe(
       'keyed_deterministic_receipt_recoverable_by_key_id_without_plaintext_persistence'

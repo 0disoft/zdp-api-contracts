@@ -1,5 +1,17 @@
 # CHANGELOG.md
 
+## 0.26.2
+
+### Fixed
+
+- redeem 복구 identity에 normalized challenge response input을 함께 묶어 같은 idempotency key를 아는 다른 호출자도 원래 solution 없이 bearer receipt를 복구하지 못하게 했다.
+
+## 0.26.1
+
+### Fixed
+
+- redeem 복구를 최초 요청과 동일한 idempotency key 및 exact binding에 묶어 다른 공개 호출자가 이미 redeem된 challenge의 bearer receipt를 복구하지 못하게 했다.
+
 ## 0.26.0
 
 ### Changed
