@@ -12,6 +12,10 @@ provider-neutral issue/redeem, 제품 서버용 verify, 운영 health와 짧은 
   `/v1/abuse/challenges/{challenge_ref}/redeem`에서 solution을 제출한다.
 - 제품 서버만 `/internal/v1/abuse/verifications/verify`에서 verification receipt, 안정적인
   `consumer_operation_ref`와 정확한 `product_ref`, `environment`, `action`을 함께 검증한다.
+- 내부 verify의 service proof는 method, pathname, canonical request body SHA-256, idempotency key,
+  `platform.abuse.verification.consume` permission과 exact product/environment/action binding을 하나의
+  불변 authorization envelope로 검증한다. Header 인증만 통과하거나 proof를 다른 body에 재사용해서는
+  안 된다.
 - verify 성공은 receipt를 최초 consumer operation에 한 번 소비한다. 같은 operation ref의 재호출에는
   이전 성공을 replay하고, 다른 operation ref, 만료, binding mismatch와 불명확한 상태는 fail closed한다.
 - provider 검증 성공은 먼저 durable `verified` 상태와 receipt key ID로 기록한다. Receipt 최종화 또는

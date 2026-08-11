@@ -22,6 +22,7 @@
 - access-decision route는 current-session identity와 final authorization을 분리하고 request-supplied subject/session/tenant/role/decision을 권한 근거로 받지 않는다.
 - abuse challenge public route는 issue/redeem으로 한정하고 verify/health는 내부 인증 경로로 둔다.
 - challenge 결과는 인증, 권한, 결제 또는 제품 domain action 승인이 아니며 verification receipt는 exact product/environment/action과 consumer operation에 묶어 짧은 수명으로 소비하고 같은 operation만 성공 replay한다. Provider 성공은 durable verified 상태와 key ID로 기록해 같은 redeem이 canonical 성공을 복구해야 한다.
+- 내부 verification service proof는 method, path, canonical body digest, idempotency key, permission과 exact binding을 모두 검증하고 header-only 인증이나 다른 body로의 proof 재사용을 허용하지 않는다.
 - challenge solution, verification receipt, raw IP, fingerprint, provider payload와 request body를 저장·로그·오류·metric label에 넣지 않는다.
 
 ## Error Envelope

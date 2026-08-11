@@ -1760,6 +1760,16 @@ function validateAbuseChallenge(
     );
   }
   if (
+    contract.internalServiceProofPolicy !==
+    'signed_envelope_binds_method_path_canonical_body_sha256_idempotency_key_permission_and_exact_binding'
+  ) {
+    push(
+      'API_ABUSE_CHALLENGE_INTERNAL_PROOF_POLICY_INVALID',
+      'abuse_challenge.internal_service_proof_policy',
+      'Internal verification proof must bind the method, path, canonical body digest, idempotency key, permission, and exact challenge binding.'
+    );
+  }
+  if (
     contract.productAuthorityPolicy !==
       'challenge_success_is_never_authentication_authorization_payment_or_domain_action_approval' ||
     !ABUSE_FORBIDDEN_CONSUMER_USES.every((value) =>

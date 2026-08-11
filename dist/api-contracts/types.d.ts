@@ -32,6 +32,7 @@ export interface AbuseChallengeContract {
     readonly verificationConsumerOperationPolicy: string;
     readonly redeemRecoveryPolicy: string;
     readonly verificationReceiptDerivationPolicy: string;
+    readonly internalServiceProofPolicy: string;
     readonly idempotencyPolicy: string;
     readonly providerAbstractionPolicy: string;
     readonly failurePolicy: string;

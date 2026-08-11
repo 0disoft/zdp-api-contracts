@@ -56,6 +56,7 @@ agent-facing 문서에는 raw package command를 실행 권한처럼 적지 않�
 - access-decision이 current-session을 identity-only로 유지하고, exact product/action/resource/scope binding, deny 기본값, policy/data revision, expiry, obligations와 non-bearer decision ref를 잃지 않는지 확인한다.
 - abuse challenge catalog가 public issue/redeem과 private verify/health만 가지며 provider payload가 product contract로 새지 않는지 확인한다.
 - verification receipt가 exact product/environment/action binding, 짧은 TTL, consumer operation-bound 소비, 같은 operation의 성공 replay와 다른 operation의 fail-closed 거부를 유지하는지 확인한다. Provider 성공 후 verified 상태와 keyed deterministic receipt metadata가 durable하게 남아 redeem 응답 유실을 복구하는지도 확인한다.
+- 내부 verification service proof가 method, pathname, canonical body SHA-256, idempotency key, permission과 exact binding을 한 envelope에 묶으며 header-only proof로 후퇴하지 않는지 확인한다.
 - OIDC 제품 로그인 handoff가 Authorization Code Flow, RFC 9700, PKCE S256, exact redirect URI, 중앙 client registry, 제품 host-only session과 Core Access 재판단 경계를 유지하는지 확인한다.
 - 첫 staging client가 disabled BFF 경계와 exact callback에서 이탈하거나 provider runtime의 TTL·single-use·key rotation·revocation 상한이 느슨해지는지 확인한다.
 - 중앙 client registry가 revision compare-and-swap, 환경 격리, client ID 비재사용, 증거 기반 lifecycle, 보안 민감 변경 감사와 active 전 activation evidence 요구를 유지하는지 확인한다.

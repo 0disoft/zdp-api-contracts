@@ -38,7 +38,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - 브라우저 승인을 session token 전달 없이 데스크톱 제품에 연결하는 single-use S256 product-link 계약
 - fresh 인증 assurance와 Core access 결정을 exact product/action/resource에 묶고 제품 도메인 guard와 함께 소비하는 민감 행위 authorization receipt 계약
 - verified current session과 정확한 product/action/resource/scope를 묶고 allow/deny, policy version, expiry, obligations와 비-bearer 증거 참조를 반환하는 Core access-decision 계약
-- provider-neutral public issue/redeem, private verify/health와 exact product/environment/action 및 consumer operation에 묶이고 provider 성공 후 canonical redeem을 복구하는 verification receipt 계약
+- provider-neutral public issue/redeem, body-bound service proof를 요구하는 private verify/health와 exact product/environment/action 및 consumer operation에 묶이고 provider 성공 후 canonical redeem을 복구하는 verification receipt 계약
 - schema model handoff가 required field와 optional field를 분리해 SDK가 선택적 reference를 잃지 않게 하는 계약
 - typed fetch client가 읽어야 할 error envelope, request/trace id, timeout, abort signal, mutation idempotency handoff
 - npm package metadata, MIT license, public export map, package file whitelist

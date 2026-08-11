@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.27.0
+
+### Changed
+
+- 내부 abuse verification service proof가 method, pathname, canonical body SHA-256, idempotency key,
+  permission과 exact binding을 하나의 authorization envelope로 검증하도록 계약을 강화했다.
+
 ## 0.26.2
 
 ### Fixed

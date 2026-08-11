@@ -61,6 +61,9 @@ describe('api contract checker', () => {
     expect(contracts.abuseChallenge.verificationReceiptDerivationPolicy).toBe(
       'keyed_deterministic_receipt_recoverable_by_key_id_without_plaintext_persistence'
     );
+    expect(contracts.abuseChallenge.internalServiceProofPolicy).toBe(
+      'signed_envelope_binds_method_path_canonical_body_sha256_idempotency_key_permission_and_exact_binding'
+    );
     expect(contracts.abuseChallenge.productAuthorityPolicy).toBe(
       'challenge_success_is_never_authentication_authorization_payment_or_domain_action_approval'
     );
@@ -87,6 +90,7 @@ describe('api contract checker', () => {
           'different_consumer_operation_may_replay_success',
         redeemRecoveryPolicy: 'provider_success_may_be_forgotten',
         verificationReceiptDerivationPolicy: 'random_plaintext_only',
+        internalServiceProofPolicy: 'header_only_proof_may_ignore_request_body',
         productAuthorityPolicy: 'challenge_success_authorizes_product_write'
       }
     });
@@ -96,6 +100,9 @@ describe('api contract checker', () => {
     );
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
       'API_ABUSE_CHALLENGE_AUTHORITY_CONFLATION'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_ABUSE_CHALLENGE_INTERNAL_PROOF_POLICY_INVALID'
     );
   });
 
