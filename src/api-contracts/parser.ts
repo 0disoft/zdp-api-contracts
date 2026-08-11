@@ -302,6 +302,8 @@ export function parseAbuseChallengeContract(
       'verification_receipt_binding',
       'verification_consumption_policy',
       'verification_consumer_operation_policy',
+      'redeem_recovery_policy',
+      'verification_receipt_derivation_policy',
       'idempotency_policy',
       'provider_abstraction_policy',
       'failure_policy',
@@ -363,6 +365,16 @@ export function parseAbuseChallengeContract(
     verificationConsumerOperationPolicy: requiredString(
       contract,
       'verification_consumer_operation_policy',
+      context
+    ),
+    redeemRecoveryPolicy: requiredString(
+      contract,
+      'redeem_recovery_policy',
+      context
+    ),
+    verificationReceiptDerivationPolicy: requiredString(
+      contract,
+      'verification_receipt_derivation_policy',
       context
     ),
     idempotencyPolicy: requiredString(contract, 'idempotency_policy', context),

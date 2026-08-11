@@ -14,6 +14,8 @@ provider-neutral issue/redeem, 제품 서버용 verify, 운영 health와 짧은 
   `consumer_operation_ref`와 정확한 `product_ref`, `environment`, `action`을 함께 검증한다.
 - verify 성공은 receipt를 최초 consumer operation에 한 번 소비한다. 같은 operation ref의 재호출에는
   이전 성공을 replay하고, 다른 operation ref, 만료, binding mismatch와 불명확한 상태는 fail closed한다.
+- provider 검증 성공은 먼저 durable `verified` 상태와 receipt key ID로 기록한다. Receipt 최종화 또는
+  응답이 유실되면 같은 challenge redeem이 provider를 다시 호출하지 않고 canonical 성공을 복구한다.
 - `/internal/v1/abuse/health`는 인증된 운영·서비스 경로에만 안전한 상태 projection을 제공한다.
 
 ## 권위 분리
@@ -37,3 +39,6 @@ Challenge와 verification receipt는 TTL state이며 customer truth가 아니다
 idempotency key와 같은 normalized binding만 기존 결과를 replay하며 다른 binding은 conflict로 거부한다.
 `consumer_operation_ref`는 secret, 개인 식별자 또는 request body가 아닌 opaque operation identity여야 하며,
 제품 transaction의 durable idempotency record와 동일한 값으로 유지한다.
+Verification receipt는 challenge ref, claim version, exact binding과 key ID에 묶인 keyed deterministic
+derivation을 사용한다. Runtime은 key ID와 receipt digest만 TTL 상태에 저장하며 receipt plaintext나
+derivation key는 저장·로그·응답 재료 외 surface에 남기지 않는다.

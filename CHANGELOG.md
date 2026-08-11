@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.26.0
+
+### Changed
+
+- abuse redeem이 provider 성공을 durable `verified` 상태로 먼저 기록하고 같은 challenge 재시도에서 canonical 성공을 복구하도록 계약을 강화했다.
+- verification receipt를 key ID가 있는 keyed deterministic derivation으로 정의해 plaintext 저장 없이 최종화 실패와 응답 유실을 복구하도록 했다.
+
 ## 0.25.0
 
 ### Changed

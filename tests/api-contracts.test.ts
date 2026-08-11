@@ -55,6 +55,12 @@ describe('api contract checker', () => {
     expect(contracts.abuseChallenge.verificationConsumerOperationPolicy).toBe(
       'same_consumer_operation_ref_replays_success_different_ref_fails_closed'
     );
+    expect(contracts.abuseChallenge.redeemRecoveryPolicy).toBe(
+      'provider_success_persists_verified_state_before_finalization_and_same_redeem_replays_canonical_success'
+    );
+    expect(contracts.abuseChallenge.verificationReceiptDerivationPolicy).toBe(
+      'keyed_deterministic_receipt_recoverable_by_key_id_without_plaintext_persistence'
+    );
     expect(contracts.abuseChallenge.productAuthorityPolicy).toBe(
       'challenge_success_is_never_authentication_authorization_payment_or_domain_action_approval'
     );
@@ -79,6 +85,8 @@ describe('api contract checker', () => {
         verificationReceiptSingleUse: false,
         verificationConsumerOperationPolicy:
           'different_consumer_operation_may_replay_success',
+        redeemRecoveryPolicy: 'provider_success_may_be_forgotten',
+        verificationReceiptDerivationPolicy: 'random_plaintext_only',
         productAuthorityPolicy: 'challenge_success_authorizes_product_write'
       }
     });
