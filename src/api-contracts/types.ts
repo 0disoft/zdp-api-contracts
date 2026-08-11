@@ -26,6 +26,7 @@ export interface AbuseChallengeContract {
   readonly privateOperationIds: readonly string[];
   readonly requiredBindingFields: readonly string[];
   readonly providerAdapterOperations: readonly string[];
+  readonly internalCallerFamilies: readonly string[];
   readonly verificationReceiptSingleUse: boolean;
   readonly verificationReceiptTtlPolicy: string;
   readonly verificationReceiptBinding: string;
@@ -33,6 +34,9 @@ export interface AbuseChallengeContract {
   readonly verificationConsumerOperationPolicy: string;
   readonly redeemRecoveryPolicy: string;
   readonly verificationReceiptDerivationPolicy: string;
+  readonly publicOriginProtectionPolicy: string;
+  readonly internalCallerTopologyPolicy: string;
+  readonly credentialAmbiguityPolicy: string;
   readonly internalServiceProofPolicy: string;
   readonly idempotencyPolicy: string;
   readonly providerAbstractionPolicy: string;

@@ -185,6 +185,11 @@ const ABUSE_CHALLENGE_BINDINGS = [
   'action'
 ] as const;
 const ABUSE_PROVIDER_ADAPTER_OPERATIONS = ['issue', 'verify', 'health'] as const;
+const ABUSE_INTERNAL_CALLER_FAMILIES = [
+  'cloudflare_edge_gateway',
+  'private_hetzner_service',
+  'operator_health'
+] as const;
 const ABUSE_FORBIDDEN_CONSUMER_USES = [
   'verification_ref_as_authentication',
   'verification_ref_as_authorization',
@@ -1761,12 +1766,46 @@ function validateAbuseChallenge(
   }
   if (
     contract.internalServiceProofPolicy !==
-    'signed_envelope_binds_method_path_canonical_body_sha256_idempotency_key_permission_and_exact_binding'
+    'versioned_key_id_bounded_timestamp_single_use_nonce_and_signed_envelope_bind_method_path_request_id_canonical_body_sha256_idempotency_key_permission_and_exact_binding'
   ) {
     push(
       'API_ABUSE_CHALLENGE_INTERNAL_PROOF_POLICY_INVALID',
       'abuse_challenge.internal_service_proof_policy',
-      'Internal verification proof must bind the method, path, canonical body digest, idempotency key, permission, and exact challenge binding.'
+      'Internal Edge verification proof must validate key generation, bounded time, a single-use nonce, request identity, the full request envelope, permission, and exact challenge binding.'
+    );
+  }
+  if (
+    contract.publicOriginProtectionPolicy !==
+    'browser_uses_edge_only_origin_requires_transport_identity_and_versioned_request_proof_before_state_creation'
+  ) {
+    push(
+      'API_ABUSE_CHALLENGE_PUBLIC_ORIGIN_PROTECTION_INVALID',
+      'abuse_challenge.public_origin_protection_policy',
+      'Public challenge operations must enter through Edge and the origin must verify transport identity and a versioned request proof before creating state.'
+    );
+  }
+  if (
+    !hasExactStringValues(
+      contract.internalCallerFamilies,
+      ABUSE_INTERNAL_CALLER_FAMILIES
+    ) ||
+    contract.internalCallerTopologyPolicy !==
+      'cloudflare_bff_uses_edge_gateway_hetzner_api_uses_private_internal_service_credential_health_uses_separate_operator_principal'
+  ) {
+    push(
+      'API_ABUSE_CHALLENGE_CALLER_TOPOLOGY_INVALID',
+      'abuse_challenge.internal_caller_families',
+      'Cloudflare BFF, private Hetzner service, and operator health callers must keep distinct paths, principals, and credential families.'
+    );
+  }
+  if (
+    contract.credentialAmbiguityPolicy !==
+    'multiple_or_mismatched_credential_families_fail_closed_without_adapter_fallback'
+  ) {
+    push(
+      'API_ABUSE_CHALLENGE_CREDENTIAL_AMBIGUITY_INVALID',
+      'abuse_challenge.credential_ambiguity_policy',
+      'Multiple, mismatched, or failed credential families must fail closed without trying a weaker adapter.'
     );
   }
   if (

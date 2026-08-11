@@ -62,7 +62,21 @@ describe('api contract checker', () => {
       'keyed_deterministic_receipt_recoverable_by_key_id_without_plaintext_persistence'
     );
     expect(contracts.abuseChallenge.internalServiceProofPolicy).toBe(
-      'signed_envelope_binds_method_path_canonical_body_sha256_idempotency_key_permission_and_exact_binding'
+      'versioned_key_id_bounded_timestamp_single_use_nonce_and_signed_envelope_bind_method_path_request_id_canonical_body_sha256_idempotency_key_permission_and_exact_binding'
+    );
+    expect(contracts.abuseChallenge.internalCallerFamilies).toEqual([
+      'cloudflare_edge_gateway',
+      'private_hetzner_service',
+      'operator_health'
+    ]);
+    expect(contracts.abuseChallenge.publicOriginProtectionPolicy).toBe(
+      'browser_uses_edge_only_origin_requires_transport_identity_and_versioned_request_proof_before_state_creation'
+    );
+    expect(contracts.abuseChallenge.internalCallerTopologyPolicy).toBe(
+      'cloudflare_bff_uses_edge_gateway_hetzner_api_uses_private_internal_service_credential_health_uses_separate_operator_principal'
+    );
+    expect(contracts.abuseChallenge.credentialAmbiguityPolicy).toBe(
+      'multiple_or_mismatched_credential_families_fail_closed_without_adapter_fallback'
     );
     expect(contracts.abuseChallenge.productAuthorityPolicy).toBe(
       'challenge_success_is_never_authentication_authorization_payment_or_domain_action_approval'
@@ -90,6 +104,10 @@ describe('api contract checker', () => {
           'different_consumer_operation_may_replay_success',
         redeemRecoveryPolicy: 'provider_success_may_be_forgotten',
         verificationReceiptDerivationPolicy: 'random_plaintext_only',
+        publicOriginProtectionPolicy: 'browser_may_call_origin_directly',
+        internalCallerFamilies: ['shared_caller'],
+        internalCallerTopologyPolicy: 'all_callers_use_one_edge_key',
+        credentialAmbiguityPolicy: 'try_every_adapter_until_one_passes',
         internalServiceProofPolicy: 'header_only_proof_may_ignore_request_body',
         productAuthorityPolicy: 'challenge_success_authorizes_product_write'
       }
@@ -103,6 +121,15 @@ describe('api contract checker', () => {
     );
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
       'API_ABUSE_CHALLENGE_INTERNAL_PROOF_POLICY_INVALID'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_ABUSE_CHALLENGE_PUBLIC_ORIGIN_PROTECTION_INVALID'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_ABUSE_CHALLENGE_CALLER_TOPOLOGY_INVALID'
+    );
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'API_ABUSE_CHALLENGE_CREDENTIAL_AMBIGUITY_INVALID'
     );
   });
 

@@ -1,5 +1,16 @@
 # CHANGELOG.md
 
+## 0.28.0
+
+### Changed
+
+- 공개 abuse issue/redeem origin이 Edge transport identity와 versioned request proof 없이 상태를 만들지
+  않도록 direct-origin 우회 차단 계약을 추가했다.
+- Cloudflare BFF, private Hetzner service와 operator health caller family를 분리하고 ambiguous credential을
+  adapter fallback 없이 거부하도록 계약을 강화했다.
+- Edge proof에 versioned key ID, bounded timestamp, single-use nonce, request ID와 기존 exact envelope
+  binding을 함께 요구한다.
+
 ## 0.27.0
 
 ### Changed

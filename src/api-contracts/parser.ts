@@ -297,6 +297,7 @@ export function parseAbuseChallengeContract(
       'private_operation_ids',
       'required_binding_fields',
       'provider_adapter_operations',
+      'internal_caller_families',
       'verification_receipt_single_use',
       'verification_receipt_ttl_policy',
       'verification_receipt_binding',
@@ -304,6 +305,9 @@ export function parseAbuseChallengeContract(
       'verification_consumer_operation_policy',
       'redeem_recovery_policy',
       'verification_receipt_derivation_policy',
+      'public_origin_protection_policy',
+      'internal_caller_topology_policy',
+      'credential_ambiguity_policy',
       'internal_service_proof_policy',
       'idempotency_policy',
       'provider_abstraction_policy',
@@ -343,6 +347,11 @@ export function parseAbuseChallengeContract(
       'provider_adapter_operations',
       context
     ),
+    internalCallerFamilies: requiredStringList(
+      contract,
+      'internal_caller_families',
+      context
+    ),
     verificationReceiptSingleUse: requiredBoolean(
       contract,
       'verification_receipt_single_use',
@@ -376,6 +385,21 @@ export function parseAbuseChallengeContract(
     verificationReceiptDerivationPolicy: requiredString(
       contract,
       'verification_receipt_derivation_policy',
+      context
+    ),
+    publicOriginProtectionPolicy: requiredString(
+      contract,
+      'public_origin_protection_policy',
+      context
+    ),
+    internalCallerTopologyPolicy: requiredString(
+      contract,
+      'internal_caller_topology_policy',
+      context
+    ),
+    credentialAmbiguityPolicy: requiredString(
+      contract,
+      'credential_ambiguity_policy',
       context
     ),
     internalServiceProofPolicy: requiredString(
