@@ -24,7 +24,8 @@ abuse_challenge:
   verification_receipt_single_use: true
   verification_receipt_ttl_policy: short_lived_and_not_longer_than_challenge_or_product_request_window
   verification_receipt_binding: exact_product_environment_action_and_challenge_redemption
-  verification_consumption_policy: successful_internal_verify_consumes_once_replay_or_mismatch_fails_closed
+  verification_consumption_policy: successful_internal_verify_consumes_once_same_consumer_operation_replays_success_other_operation_or_mismatch_fails_closed
+  verification_consumer_operation_policy: same_consumer_operation_ref_replays_success_different_ref_fails_closed
   idempotency_policy: same_key_same_normalized_binding_replays_different_binding_conflicts
   provider_abstraction_policy: provider_payload_and_failure_details_never_cross_product_contract
   failure_policy: challenge_required_write_fails_closed_without_closing_unrelated_reads_or_authenticated_flows
@@ -124,6 +125,7 @@ schema_bundle:
       secret_material_policy: verification_receipt_input_only_never_echo_or_persist_plaintext
       required_fields:
         - verification_ref
+        - consumer_operation_ref
         - product_ref
         - environment
         - action

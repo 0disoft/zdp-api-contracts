@@ -52,6 +52,9 @@ describe('api contract checker', () => {
       'platform.abuse.challenges.redeem'
     ]);
     expect(contracts.abuseChallenge.verificationReceiptSingleUse).toBe(true);
+    expect(contracts.abuseChallenge.verificationConsumerOperationPolicy).toBe(
+      'same_consumer_operation_ref_replays_success_different_ref_fails_closed'
+    );
     expect(contracts.abuseChallenge.productAuthorityPolicy).toBe(
       'challenge_success_is_never_authentication_authorization_payment_or_domain_action_approval'
     );
@@ -60,6 +63,11 @@ describe('api contract checker', () => {
       'verify',
       'health'
     ]);
+    const verifyRequest = schemaBundleByFile(
+      contracts,
+      'contracts/apis/abuse-api/challenge.yaml'
+    ).schemas.find((schema) => schema.id === 'AbuseVerificationVerifyRequest');
+    expect(verifyRequest?.requiredFields).toContain('consumer_operation_ref');
   });
 
   it('rejects reusable abuse verification evidence and product-authority conflation', () => {
@@ -69,6 +77,8 @@ describe('api contract checker', () => {
       abuseChallenge: {
         ...contracts.abuseChallenge,
         verificationReceiptSingleUse: false,
+        verificationConsumerOperationPolicy:
+          'different_consumer_operation_may_replay_success',
         productAuthorityPolicy: 'challenge_success_authorizes_product_write'
       }
     });

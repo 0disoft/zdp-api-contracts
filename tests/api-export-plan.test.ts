@@ -179,6 +179,17 @@ describe('api export plan', () => {
         ]),
         sessionEffect: 'none'
       },
+      'contracts/apis/abuse-api/challenge.yaml#AbuseVerificationVerifyRequest': {
+        kind: 'request',
+        requiredFields: [
+          'verification_ref',
+          'consumer_operation_ref',
+          'product_ref',
+          'environment',
+          'action'
+        ],
+        secretFields: ['verification_ref']
+      },
       'contracts/apis/money-api/referral-reward.yaml#ReferralRewardStatusGetResponse': {
         schemaId: 'ReferralRewardStatusGetResponse',
         serviceId: 'money-api',

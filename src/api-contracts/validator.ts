@@ -1733,12 +1733,14 @@ function validateAbuseChallenge(
     contract.verificationReceiptTtlPolicy !==
       'short_lived_and_not_longer_than_challenge_or_product_request_window' ||
     contract.verificationConsumptionPolicy !==
-      'successful_internal_verify_consumes_once_replay_or_mismatch_fails_closed'
+      'successful_internal_verify_consumes_once_same_consumer_operation_replays_success_other_operation_or_mismatch_fails_closed' ||
+    contract.verificationConsumerOperationPolicy !==
+      'same_consumer_operation_ref_replays_success_different_ref_fails_closed'
   ) {
     push(
       'API_ABUSE_CHALLENGE_RECEIPT_POLICY_INVALID',
       'abuse_challenge.verification_receipt_single_use',
-      'Verification evidence must be short-lived, exact-bound, and consumed once by internal verification.'
+      'Verification evidence must be short-lived, exact-bound, and replay success only for the same consumer operation.'
     );
   }
   if (
@@ -1841,6 +1843,7 @@ function validateAbuseChallenge(
   }
   if (
     !redeemResponse.requiredFields.includes('verification_ref') ||
+    !verifyRequest.requiredFields.includes('consumer_operation_ref') ||
     verifyRequest.secretMaterialPolicy !==
       'verification_receipt_input_only_never_echo_or_persist_plaintext' ||
     !verifyRequest.secretFields.includes('verification_ref')
@@ -1848,7 +1851,7 @@ function validateAbuseChallenge(
     push(
       'API_ABUSE_CHALLENGE_VERIFICATION_SECRET_POLICY_INVALID',
       'schema_bundle.schemas.AbuseVerificationVerifyRequest',
-      'The short-lived verification receipt must never be logged, echoed, or persisted in plaintext.'
+      'The short-lived verification receipt must remain secret while a stable opaque consumer operation ref binds safe retry.'
     );
   }
 }

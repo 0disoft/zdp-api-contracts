@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## 0.25.0
+
+### Changed
+
+- 내부 abuse verification 요청에 opaque `consumer_operation_ref`를 필수로 추가했다.
+- 같은 consumer operation의 verify 재호출은 이전 성공을 replay하고 다른 operation은 fail closed하도록 receipt 소비 계약을 강화했다.
+- 제품 transaction이 verification consume과 동일한 operation ref를 durable idempotency identity로 사용하도록 handoff를 명시했다.
+
 ## 0.24.0
 
 ### Added
