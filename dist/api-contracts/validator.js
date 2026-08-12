@@ -156,6 +156,11 @@ const ABUSE_CHALLENGE_BINDINGS = [
     'action'
 ];
 const ABUSE_PROVIDER_ADAPTER_OPERATIONS = ['issue', 'verify', 'health'];
+const ABUSE_INTERNAL_CALLER_FAMILIES = [
+    'cloudflare_edge_gateway',
+    'private_hetzner_service',
+    'operator_health'
+];
 const ABUSE_FORBIDDEN_CONSUMER_USES = [
     'verification_ref_as_authentication',
     'verification_ref_as_authorization',
@@ -233,6 +238,67 @@ const ACCESS_DECISION_FORBIDDEN_VALUES = [
     'raw_customer_payload',
     'raw_policy_document',
     'raw_relationship_payload'
+];
+const CUSTOMER_POLICY_REGISTRY_FILE = 'contracts/apis/core-api/customer-policy-registry.yaml';
+const CUSTOMER_POLICY_OPERATION_IDS = [
+    'core.consent.policy_sets.resolve',
+    'core.consent.policy_documents.get',
+    'core.consent.policy_receipts.create',
+    'core.consent.policy_receipts.get'
+];
+const CUSTOMER_POLICY_DOCUMENT_KINDS = [
+    'common',
+    'product_addendum',
+    'jurisdiction_addendum',
+    'channel_addendum'
+];
+const CUSTOMER_POLICY_PUBLICATION_STATES = [
+    'draft',
+    'reviewed',
+    'published',
+    'superseded',
+    'retired'
+];
+const CUSTOMER_POLICY_RESOLUTION_STATUSES = [
+    'resolved',
+    'unavailable',
+    'review_required'
+];
+const CUSTOMER_POLICY_CHANGE_ACTION_CLASSES = [
+    'no_user_action',
+    'notice',
+    'acknowledgement',
+    'explicit_consent',
+    'feature_restriction'
+];
+const CUSTOMER_POLICY_RESOLUTION_BINDINGS = [
+    'product_ref',
+    'environment',
+    'capability',
+    'locale'
+];
+const CUSTOMER_POLICY_SERVER_AUTHORITY_FIELDS = [
+    'policy_set_id',
+    'policy_set_revision',
+    'ordered_document_revision_ids',
+    'ordered_content_digests',
+    'presentation_rule_version'
+];
+const CUSTOMER_POLICY_REQUEST_AUTHORITY_FIELDS = [
+    'policy_set_id',
+    'policy_set_revision',
+    'document_revision_ids',
+    'content_digests',
+    'canonical_path',
+    'publication_status',
+    'reviewer_ref'
+];
+const CUSTOMER_POLICY_FORBIDDEN_CONSUMER_USES = [
+    'policy_receipt_as_authorization_decision',
+    'policy_link_display_as_consent',
+    'latest_alias_in_receipt',
+    'client_selected_policy_documents',
+    'missing_required_policy_allows_signup_or_purchase'
 ];
 const CREDIT_PURCHASE_FILE = 'contracts/apis/money-api/credit-purchase.yaml';
 const CREDIT_PURCHASE_READ_FILE = 'contracts/apis/money-api/credit-purchase-read.yaml';
@@ -740,6 +806,7 @@ const REQUIRED_CREDENTIAL_POLICY_PARTS = [
 ];
 const PUBLIC_PERMISSION_CHECKS = [
     'core.identity.public_auth_entrypoint',
+    'core.consent.public_policy_resolution',
     'platform.abuse.public_challenge_entrypoint'
 ];
 const ALLOWED_OWNER_BOUNDARIES = [
@@ -796,6 +863,7 @@ export function validateApiContracts(contracts) {
     validateSdkGenerationInputContract(contracts, diagnostics);
     validateApiCatalogContract(contracts, schemaBundlesByFile, diagnostics);
     validateSchemaBundles(contracts, schemaBundlesByFile, diagnostics);
+    validateCustomerPolicyRegistry(contracts, schemaBundlesByFile, diagnostics);
     validateCreditPurchase(contracts, schemaBundlesByFile, diagnostics);
     validateAbuseChallenge(contracts, schemaBundlesByFile, diagnostics);
     validateAccessDecision(contracts, schemaBundlesByFile, diagnostics);
@@ -1067,6 +1135,85 @@ function validateRequiredOidcValues(actual, required, code, path, push) {
         }
     }
 }
+function validateCustomerPolicyRegistry(contracts, schemaBundlesByFile, diagnostics) {
+    const contract = contracts.customerPolicyRegistry;
+    const push = (code, path, message) => {
+        diagnostics.push({
+            code,
+            file: CUSTOMER_POLICY_REGISTRY_FILE,
+            path,
+            message
+        });
+    };
+    const requireExact = (actual, expected, code, path) => {
+        if (!hasExactStringValues(actual, expected)) {
+            push(code, path, `Customer-policy registry must use the canonical ${path} set.`);
+        }
+    };
+    if (contract.schemaVersion !== 1 ||
+        contract.status !== 'partial-staging-implementation' ||
+        contract.ownerBoundary !== 'consent' ||
+        contract.authority !== 'core_consent') {
+        push('API_CUSTOMER_POLICY_BOUNDARY_INVALID', 'customer_policy_registry', 'Customer-policy registry must expose only its reviewed partial staging implementation under Core consent authority.');
+    }
+    requireExact(contract.operationIds, CUSTOMER_POLICY_OPERATION_IDS, 'API_CUSTOMER_POLICY_OPERATION_SET_INVALID', 'customer_policy_registry.operation_ids');
+    requireExact(contract.stagingImplementedOperationIds, ['core.consent.policy_sets.resolve'], 'API_CUSTOMER_POLICY_STAGING_OPERATION_SET_INVALID', 'customer_policy_registry.staging_implemented_operation_ids');
+    requireExact(contract.contractOnlyOperationIds, [
+        'core.consent.policy_documents.get',
+        'core.consent.policy_receipts.create',
+        'core.consent.policy_receipts.get'
+    ], 'API_CUSTOMER_POLICY_CONTRACT_ONLY_OPERATION_SET_INVALID', 'customer_policy_registry.contract_only_operation_ids');
+    if (contract.resolveRoute !== 'POST /v1/customer-policy-sets/resolve' ||
+        contract.resolveTransportPolicy !==
+            'trusted_edge_exact_body_proof_and_staging_core_origin_only' ||
+        contract.productionRouteReady) {
+        push('API_CUSTOMER_POLICY_RESOLVE_RUNTIME_INVALID', 'customer_policy_registry.resolve_route', 'Policy resolution must remain a trusted-edge-only staging POST and cannot claim production readiness.');
+    }
+    requireExact(contract.documentKinds, CUSTOMER_POLICY_DOCUMENT_KINDS, 'API_CUSTOMER_POLICY_DOCUMENT_KIND_SET_INVALID', 'customer_policy_registry.document_kinds');
+    requireExact(contract.publicationStates, CUSTOMER_POLICY_PUBLICATION_STATES, 'API_CUSTOMER_POLICY_PUBLICATION_STATE_SET_INVALID', 'customer_policy_registry.publication_states');
+    requireExact(contract.resolutionStatuses, CUSTOMER_POLICY_RESOLUTION_STATUSES, 'API_CUSTOMER_POLICY_RESOLUTION_STATUS_SET_INVALID', 'customer_policy_registry.resolution_statuses');
+    requireExact(contract.changeActionClasses, CUSTOMER_POLICY_CHANGE_ACTION_CLASSES, 'API_CUSTOMER_POLICY_CHANGE_ACTION_SET_INVALID', 'customer_policy_registry.change_action_classes');
+    requireExact(contract.requiredResolutionBindings, CUSTOMER_POLICY_RESOLUTION_BINDINGS, 'API_CUSTOMER_POLICY_RESOLUTION_BINDING_SET_INVALID', 'customer_policy_registry.required_resolution_bindings');
+    requireExact(contract.serverAuthoritativeFields, CUSTOMER_POLICY_SERVER_AUTHORITY_FIELDS, 'API_CUSTOMER_POLICY_SERVER_AUTHORITY_SET_INVALID', 'customer_policy_registry.server_authoritative_fields');
+    requireExact(contract.forbiddenRequestAuthorityFields, CUSTOMER_POLICY_REQUEST_AUTHORITY_FIELDS, 'API_CUSTOMER_POLICY_REQUEST_AUTHORITY_SET_INVALID', 'customer_policy_registry.forbidden_request_authority_fields');
+    requireExact(contract.forbiddenConsumerUses, CUSTOMER_POLICY_FORBIDDEN_CONSUMER_USES, 'API_CUSTOMER_POLICY_FORBIDDEN_USE_SET_INVALID', 'customer_policy_registry.forbidden_consumer_uses');
+    for (const value of CANONICAL_FORBIDDEN_VALUES) {
+        if (!contract.forbiddenValues.includes(value)) {
+            push('API_CUSTOMER_POLICY_FORBIDDEN_VALUE_MISSING', 'customer_policy_registry.forbidden_values', `Customer-policy registry must forbid ${value}.`);
+        }
+    }
+    const policies = [
+        [contract.versionSelectionPolicy, 'server_only_exact_policy_set_resolution', 'version_selection_policy'],
+        [contract.receiptBindingPolicy, 'immutable_exact_ordered_policy_set_and_content_digests', 'receipt_binding_policy'],
+        [contract.missingDocumentPolicy, 'fail_closed_for_target_high_risk_capability_only', 'missing_document_policy'],
+        [contract.rightsSurfaceAvailabilityPolicy, 'support_refund_export_deletion_and_policy_browsing_remain_available', 'rights_surface_availability_policy'],
+        [contract.optionalConsentPolicy, 'separate_from_required_policy_acceptance', 'optional_consent_policy'],
+        [contract.receiptStoragePolicy, 'immutable_append_only_receipt_no_latest_alias', 'receipt_storage_policy'],
+        [contract.clientAuthorityPolicy, 'client_version_url_document_list_and_digest_are_non_authoritative', 'client_authority_policy'],
+        [contract.contentDigestAlgorithm, 'sha256', 'content_digest_algorithm']
+    ];
+    for (const [actual, expected, field] of policies) {
+        if (actual !== expected) {
+            push('API_CUSTOMER_POLICY_SEMANTIC_POLICY_INVALID', `customer_policy_registry.${field}`, `Customer-policy registry ${field} must remain ${expected}.`);
+        }
+    }
+    const bundle = schemaBundlesByFile.get(CUSTOMER_POLICY_REGISTRY_FILE);
+    const resolveRequest = bundle?.schemas.find((schema) => schema.id === 'CustomerPolicySetResolveRequest');
+    const receiptRequest = bundle?.schemas.find((schema) => schema.id === 'CustomerPolicyReceiptCreateRequest');
+    if (!resolveRequest || !receiptRequest) {
+        push('API_CUSTOMER_POLICY_REQUEST_SCHEMA_MISSING', 'schema_bundle.schemas', 'Policy-set resolution and receipt-create request schemas must exist.');
+        return;
+    }
+    requireExact(resolveRequest.requiredFields, CUSTOMER_POLICY_RESOLUTION_BINDINGS, 'API_CUSTOMER_POLICY_RESOLVE_REQUEST_INVALID', 'schema_bundle.CustomerPolicySetResolveRequest.required_fields');
+    for (const request of [resolveRequest, receiptRequest]) {
+        const fields = new Set([...request.requiredFields, ...request.optionalFields]);
+        for (const field of CUSTOMER_POLICY_REQUEST_AUTHORITY_FIELDS) {
+            if (fields.has(field)) {
+                push('API_CUSTOMER_POLICY_CLIENT_AUTHORITY_FIELD_FORBIDDEN', `schema_bundle.${request.id}`, `Customer-policy request must not accept client-authoritative field ${field}.`);
+            }
+        }
+    }
+}
 function validateCreditPurchase(contracts, schemaBundlesByFile, diagnostics) {
     const contract = contracts.creditPurchase;
     const push = (code, path, message) => {
@@ -1222,8 +1369,21 @@ function validateAbuseChallenge(contracts, schemaBundlesByFile, diagnostics) {
         push('API_ABUSE_CHALLENGE_FAILURE_POLICY_INVALID', 'abuse_challenge.failure_policy', 'Required writes must fail closed with exact idempotency while unrelated flows stay available.');
     }
     if (contract.internalServiceProofPolicy !==
-        'signed_envelope_binds_method_path_canonical_body_sha256_idempotency_key_permission_and_exact_binding') {
-        push('API_ABUSE_CHALLENGE_INTERNAL_PROOF_POLICY_INVALID', 'abuse_challenge.internal_service_proof_policy', 'Internal verification proof must bind the method, path, canonical body digest, idempotency key, permission, and exact challenge binding.');
+        'versioned_key_id_bounded_timestamp_single_use_nonce_and_signed_envelope_bind_method_path_request_id_canonical_body_sha256_idempotency_key_permission_and_exact_binding') {
+        push('API_ABUSE_CHALLENGE_INTERNAL_PROOF_POLICY_INVALID', 'abuse_challenge.internal_service_proof_policy', 'Internal Edge verification proof must validate key generation, bounded time, a single-use nonce, request identity, the full request envelope, permission, and exact challenge binding.');
+    }
+    if (contract.publicOriginProtectionPolicy !==
+        'browser_uses_edge_only_origin_requires_transport_identity_and_versioned_request_proof_before_state_creation') {
+        push('API_ABUSE_CHALLENGE_PUBLIC_ORIGIN_PROTECTION_INVALID', 'abuse_challenge.public_origin_protection_policy', 'Public challenge operations must enter through Edge and the origin must verify transport identity and a versioned request proof before creating state.');
+    }
+    if (!hasExactStringValues(contract.internalCallerFamilies, ABUSE_INTERNAL_CALLER_FAMILIES) ||
+        contract.internalCallerTopologyPolicy !==
+            'cloudflare_bff_uses_edge_gateway_hetzner_api_uses_private_internal_service_credential_health_uses_separate_operator_principal') {
+        push('API_ABUSE_CHALLENGE_CALLER_TOPOLOGY_INVALID', 'abuse_challenge.internal_caller_families', 'Cloudflare BFF, private Hetzner service, and operator health callers must keep distinct paths, principals, and credential families.');
+    }
+    if (contract.credentialAmbiguityPolicy !==
+        'multiple_or_mismatched_credential_families_fail_closed_without_adapter_fallback') {
+        push('API_ABUSE_CHALLENGE_CREDENTIAL_AMBIGUITY_INVALID', 'abuse_challenge.credential_ambiguity_policy', 'Multiple, mismatched, or failed credential families must fail closed without trying a weaker adapter.');
     }
     if (contract.productAuthorityPolicy !==
         'challenge_success_is_never_authentication_authorization_payment_or_domain_action_approval' ||

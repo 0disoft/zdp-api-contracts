@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import { parse } from 'yaml';
 const REQUIRED_CORE_API_SCHEMA_BUNDLE_FILES = [
     'contracts/apis/core-api/auth-session.yaml',
-    'contracts/apis/core-api/sensitive-action-authorization.yaml'
+    'contracts/apis/core-api/sensitive-action-authorization.yaml',
+    'contracts/apis/core-api/customer-policy-registry.yaml'
 ];
 export class ApiContractLoadError extends Error {
     failures;
@@ -25,7 +26,7 @@ export class ApiContractLoadError extends Error {
  */
 export async function loadApiContracts(root = process.cwd()) {
     const contractsRoot = join(root, 'contracts');
-    const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog, calculatorCatalog, calculatorConformance, creditPurchase, abuseChallenge, accessDecision, productLinkHandoff, sensitiveActionAuthorization, oidcProductSession, oidcClientRegistry, oidcProviderRuntime] = await Promise.all([
+    const [route, errorEnvelope, webhook, sdkGenerationInput, apiCatalog, calculatorCatalog, calculatorConformance, creditPurchase, customerPolicyRegistry, abuseChallenge, accessDecision, productLinkHandoff, sensitiveActionAuthorization, oidcProductSession, oidcClientRegistry, oidcProviderRuntime] = await Promise.all([
         loadContract(contractsRoot, 'route', 'route-contract.yaml', parseRouteContract),
         loadContract(contractsRoot, 'error-envelope', 'error-envelope.yaml', parseErrorEnvelopeContract),
         loadContract(contractsRoot, 'webhook', 'webhook-contract.yaml', parseWebhookContract),
@@ -34,6 +35,7 @@ export async function loadApiContracts(root = process.cwd()) {
         loadContract(contractsRoot, 'calculator-catalog', join('calculators', 'catalog.yaml'), parseCalculatorCatalogContract),
         loadContract(contractsRoot, 'calculator-conformance', join('calculators', 'conformance.yaml'), parseCalculatorConformanceContract),
         loadContract(contractsRoot, 'credit-purchase', join('apis', 'money-api', 'credit-purchase.yaml'), parseCreditPurchaseContract),
+        loadContract(contractsRoot, 'customer-policy-registry', join('apis', 'core-api', 'customer-policy-registry.yaml'), parseCustomerPolicyRegistryContract),
         loadContract(contractsRoot, 'abuse-challenge', join('apis', 'abuse-api', 'challenge.yaml'), parseAbuseChallengeContract),
         loadContract(contractsRoot, 'access-decision', join('apis', 'core-api', 'access-decision.yaml'), parseAccessDecisionContract),
         loadContract(contractsRoot, 'product-link-handoff', join('apis', 'core-api', 'product-link.yaml'), parseProductLinkHandoffContract),
@@ -51,6 +53,7 @@ export async function loadApiContracts(root = process.cwd()) {
         calculatorCatalog,
         calculatorConformance,
         creditPurchase,
+        customerPolicyRegistry,
         abuseChallenge,
         accessDecision,
         productLinkHandoff,
@@ -71,6 +74,7 @@ export async function loadApiContracts(root = process.cwd()) {
     const loadedCalculatorCatalog = requireLoadedContract(calculatorCatalog);
     const loadedCalculatorConformance = requireLoadedContract(calculatorConformance);
     const loadedCreditPurchase = requireLoadedContract(creditPurchase);
+    const loadedCustomerPolicyRegistry = requireLoadedContract(customerPolicyRegistry);
     const loadedAbuseChallenge = requireLoadedContract(abuseChallenge);
     const loadedAccessDecision = requireLoadedContract(accessDecision);
     const loadedProductLinkHandoff = requireLoadedContract(productLinkHandoff);
@@ -91,6 +95,7 @@ export async function loadApiContracts(root = process.cwd()) {
         apiCatalog: loadedApiCatalog.value,
         schemaBundles: schemaBundleResults.map((result) => requireLoadedContract(result).value),
         creditPurchase: loadedCreditPurchase.value,
+        customerPolicyRegistry: loadedCustomerPolicyRegistry.value,
         abuseChallenge: loadedAbuseChallenge.value,
         accessDecision: loadedAccessDecision.value,
         productLinkHandoff: loadedProductLinkHandoff.value,
@@ -113,10 +118,16 @@ export function parseAbuseChallengeContract(source) {
         'status',
         'owner_boundary',
         'operation_ids',
+        'staging_implemented_operation_ids',
+        'contract_only_operation_ids',
+        'resolve_route',
+        'resolve_transport_policy',
+        'production_route_ready',
         'public_operation_ids',
         'private_operation_ids',
         'required_binding_fields',
         'provider_adapter_operations',
+        'internal_caller_families',
         'verification_receipt_single_use',
         'verification_receipt_ttl_policy',
         'verification_receipt_binding',
@@ -124,6 +135,9 @@ export function parseAbuseChallengeContract(source) {
         'verification_consumer_operation_policy',
         'redeem_recovery_policy',
         'verification_receipt_derivation_policy',
+        'public_origin_protection_policy',
+        'internal_caller_topology_policy',
+        'credential_ambiguity_policy',
         'internal_service_proof_policy',
         'idempotency_policy',
         'provider_abstraction_policy',
@@ -144,6 +158,7 @@ export function parseAbuseChallengeContract(source) {
         privateOperationIds: requiredStringList(contract, 'private_operation_ids', context),
         requiredBindingFields: requiredStringList(contract, 'required_binding_fields', context),
         providerAdapterOperations: requiredStringList(contract, 'provider_adapter_operations', context),
+        internalCallerFamilies: requiredStringList(contract, 'internal_caller_families', context),
         verificationReceiptSingleUse: requiredBoolean(contract, 'verification_receipt_single_use', context),
         verificationReceiptTtlPolicy: requiredString(contract, 'verification_receipt_ttl_policy', context),
         verificationReceiptBinding: requiredString(contract, 'verification_receipt_binding', context),
@@ -151,6 +166,9 @@ export function parseAbuseChallengeContract(source) {
         verificationConsumerOperationPolicy: requiredString(contract, 'verification_consumer_operation_policy', context),
         redeemRecoveryPolicy: requiredString(contract, 'redeem_recovery_policy', context),
         verificationReceiptDerivationPolicy: requiredString(contract, 'verification_receipt_derivation_policy', context),
+        publicOriginProtectionPolicy: requiredString(contract, 'public_origin_protection_policy', context),
+        internalCallerTopologyPolicy: requiredString(contract, 'internal_caller_topology_policy', context),
+        credentialAmbiguityPolicy: requiredString(contract, 'credential_ambiguity_policy', context),
         internalServiceProofPolicy: requiredString(contract, 'internal_service_proof_policy', context),
         idempotencyPolicy: requiredString(contract, 'idempotency_policy', context),
         providerAbstractionPolicy: requiredString(contract, 'provider_abstraction_policy', context),
@@ -238,6 +256,73 @@ export function parseCreditPurchaseContract(source) {
         balanceRefreshPolicy: requiredString(contract, 'balance_refresh_policy', context),
         unknownOutcomePolicy: requiredString(contract, 'unknown_outcome_policy', context),
         forbiddenUrlValues: requiredStringList(contract, 'forbidden_url_values', context),
+        forbiddenConsumerUses: requiredStringList(contract, 'forbidden_consumer_uses', context),
+        forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
+    };
+}
+export function parseCustomerPolicyRegistryContract(source) {
+    const file = 'contracts/apis/core-api/customer-policy-registry.yaml';
+    const data = parseYamlObject(source, file);
+    assertOnlyKeys(data, ['customer_policy_registry', 'schema_bundle'], file);
+    const contract = requiredObject(data, 'customer_policy_registry', file);
+    const context = `${file}#customer_policy_registry`;
+    assertOnlyKeys(contract, [
+        'schema_version',
+        'status',
+        'owner_boundary',
+        'authority',
+        'operation_ids',
+        'staging_implemented_operation_ids',
+        'contract_only_operation_ids',
+        'resolve_route',
+        'resolve_transport_policy',
+        'production_route_ready',
+        'document_kinds',
+        'publication_states',
+        'resolution_statuses',
+        'change_action_classes',
+        'required_resolution_bindings',
+        'server_authoritative_fields',
+        'immutable_revision_fields',
+        'version_selection_policy',
+        'receipt_binding_policy',
+        'missing_document_policy',
+        'rights_surface_availability_policy',
+        'optional_consent_policy',
+        'receipt_storage_policy',
+        'client_authority_policy',
+        'content_digest_algorithm',
+        'forbidden_request_authority_fields',
+        'forbidden_consumer_uses',
+        'forbidden_values'
+    ], context);
+    return {
+        schemaVersion: requiredNumber(contract, 'schema_version', context),
+        status: requiredString(contract, 'status', context),
+        ownerBoundary: requiredString(contract, 'owner_boundary', context),
+        authority: requiredString(contract, 'authority', context),
+        operationIds: requiredStringList(contract, 'operation_ids', context),
+        stagingImplementedOperationIds: requiredStringList(contract, 'staging_implemented_operation_ids', context),
+        contractOnlyOperationIds: requiredStringList(contract, 'contract_only_operation_ids', context),
+        resolveRoute: requiredString(contract, 'resolve_route', context),
+        resolveTransportPolicy: requiredString(contract, 'resolve_transport_policy', context),
+        productionRouteReady: requiredBoolean(contract, 'production_route_ready', context),
+        documentKinds: requiredStringList(contract, 'document_kinds', context),
+        publicationStates: requiredStringList(contract, 'publication_states', context),
+        resolutionStatuses: requiredStringList(contract, 'resolution_statuses', context),
+        changeActionClasses: requiredStringList(contract, 'change_action_classes', context),
+        requiredResolutionBindings: requiredStringList(contract, 'required_resolution_bindings', context),
+        serverAuthoritativeFields: requiredStringList(contract, 'server_authoritative_fields', context),
+        immutableRevisionFields: requiredStringList(contract, 'immutable_revision_fields', context),
+        versionSelectionPolicy: requiredString(contract, 'version_selection_policy', context),
+        receiptBindingPolicy: requiredString(contract, 'receipt_binding_policy', context),
+        missingDocumentPolicy: requiredString(contract, 'missing_document_policy', context),
+        rightsSurfaceAvailabilityPolicy: requiredString(contract, 'rights_surface_availability_policy', context),
+        optionalConsentPolicy: requiredString(contract, 'optional_consent_policy', context),
+        receiptStoragePolicy: requiredString(contract, 'receipt_storage_policy', context),
+        clientAuthorityPolicy: requiredString(contract, 'client_authority_policy', context),
+        contentDigestAlgorithm: requiredString(contract, 'content_digest_algorithm', context),
+        forbiddenRequestAuthorityFields: requiredStringList(contract, 'forbidden_request_authority_fields', context),
         forbiddenConsumerUses: requiredStringList(contract, 'forbidden_consumer_uses', context),
         forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
     };
