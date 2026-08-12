@@ -11,6 +11,7 @@ sdk_generation_input:
     - contracts/apis/core-api/access-decision.yaml
     - contracts/apis/core-api/auth-session-consumer.yaml
     - contracts/apis/core-api/auth-session.yaml
+    - contracts/apis/core-api/customer-policy-registry.yaml
     - contracts/apis/core-api/oidc-client-registry.yaml
     - contracts/apis/core-api/oidc-product-session.yaml
     - contracts/apis/core-api/oidc-provider-runtime.yaml

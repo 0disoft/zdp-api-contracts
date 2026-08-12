@@ -1,0 +1,183 @@
+customer_policy_registry:
+  schema_version: 1
+  status: contract-only
+  owner_boundary: consent
+  authority: core_consent
+  operation_ids:
+    - core.consent.policy_sets.resolve
+    - core.consent.policy_documents.get
+    - core.consent.policy_receipts.create
+    - core.consent.policy_receipts.get
+  document_kinds:
+    - common
+    - product_addendum
+    - jurisdiction_addendum
+    - channel_addendum
+  publication_states:
+    - draft
+    - reviewed
+    - published
+    - superseded
+    - retired
+  resolution_statuses:
+    - resolved
+    - unavailable
+    - review_required
+  change_action_classes:
+    - no_user_action
+    - notice
+    - acknowledgement
+    - explicit_consent
+    - feature_restriction
+  required_resolution_bindings:
+    - product_ref
+    - environment
+    - capability
+    - locale
+  server_authoritative_fields:
+    - policy_set_id
+    - policy_set_revision
+    - ordered_document_revision_ids
+    - ordered_content_digests
+    - presentation_rule_version
+  immutable_revision_fields:
+    - policy_document_id
+    - policy_revision_id
+    - document_kind
+    - locale
+    - content_digest
+    - canonical_path
+    - published_at
+    - effective_at
+    - supersedes_revision_id
+    - owner_ref
+    - reviewer_ref
+  version_selection_policy: server_only_exact_policy_set_resolution
+  receipt_binding_policy: immutable_exact_ordered_policy_set_and_content_digests
+  missing_document_policy: fail_closed_for_target_high_risk_capability_only
+  rights_surface_availability_policy: support_refund_export_deletion_and_policy_browsing_remain_available
+  optional_consent_policy: separate_from_required_policy_acceptance
+  receipt_storage_policy: immutable_append_only_receipt_no_latest_alias
+  client_authority_policy: client_version_url_document_list_and_digest_are_non_authoritative
+  content_digest_algorithm: sha256
+  forbidden_request_authority_fields:
+    - policy_set_id
+    - policy_set_revision
+    - document_revision_ids
+    - content_digests
+    - canonical_path
+    - publication_status
+    - reviewer_ref
+  forbidden_consumer_uses:
+    - policy_receipt_as_authorization_decision
+    - policy_link_display_as_consent
+    - latest_alias_in_receipt
+    - client_selected_policy_documents
+    - missing_required_policy_allows_signup_or_purchase
+  forbidden_values:
+    - raw_customer_payload
+    - raw_provider_error
+    - provider_secret
+    - authorization_header
+    - cookie_header
+    - refresh_token_plaintext
+    - stack_trace
+    - screen_component_payload
+
+schema_bundle:
+  service_id: core-api
+  owner_boundary: consent
+  status: contract-only
+  purpose: resolve and project exact common and product-specific customer policy sets and record immutable consent receipts without client-selected policy authority
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+      - idempotency_key
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - raw_customer_payload
+      - raw_provider_error
+      - provider_secret
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: CustomerPolicySetResolveRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - product_ref
+        - environment
+        - capability
+        - locale
+      optional_fields:
+        - jurisdiction_profile_ref
+        - channel_ref
+        - seller_role_ref
+    - id: CustomerPolicySetResolveResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - policy_set_resolution_ref
+        - resolution_status
+        - required_user_action
+        - policy_set_id
+        - policy_set_revision
+        - ordered_document_revision_ids
+        - ordered_content_digests
+        - presentation_rule_version
+        - document_projections
+        - resolved_at
+    - id: CustomerPolicyDocumentProjectionGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - policy_document_id
+        - policy_revision_id
+        - document_kind
+        - locale
+        - title
+        - canonical_path
+        - content_digest
+        - published_at
+        - effective_at
+    - id: CustomerPolicyReceiptCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - policy_set_resolution_ref
+        - decision
+        - source_surface
+    - id: CustomerPolicyReceiptCreateResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - policy_receipt_ref
+        - subject_ref
+        - policy_set_id
+        - policy_set_revision
+        - ordered_document_revision_ids
+        - ordered_content_digests
+        - decision
+        - recorded_at
+    - id: CustomerPolicyReceiptGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - policy_receipt_ref
+        - subject_ref
+        - policy_set_id
+        - policy_set_revision
+        - ordered_document_revision_ids
+        - ordered_content_digests
+        - decision
+        - recorded_at

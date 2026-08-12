@@ -9,6 +9,7 @@ import {
   parseCalculatorCatalogContract,
   parseCalculatorConformanceContract,
   parseCreditPurchaseContract,
+  parseCustomerPolicyRegistryContract,
   parseErrorEnvelopeContract,
   parseOidcClientRegistryContract,
   parseOidcProductSessionContract,
@@ -384,6 +385,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    customerPolicyRegistry: parseCustomerPolicyRegistryContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'customer-policy-registry.yaml'
+        ),
+        'utf8'
+      )
+    ),
     accessDecision: parseAccessDecisionContract(
       readFileSync(
         join(
@@ -566,6 +579,19 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/core-api/sensitive-action-authorization.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'customer-policy-registry.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/customer-policy-registry.yaml'
       ),
       parseApiSchemaBundleContract(
         readFileSync(

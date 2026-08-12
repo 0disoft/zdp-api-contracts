@@ -20,6 +20,7 @@ agent-facing 문서에는 raw package command를 실행 권한처럼 적지 않�
 - core auth/session route source: `contracts/apis/core-api/auth-session.yaml`
 - sensitive-action authorization source: `contracts/apis/core-api/sensitive-action-authorization.yaml`
 - Core access-decision source: `contracts/apis/core-api/access-decision.yaml`
+- Core customer-policy registry source: `contracts/apis/core-api/customer-policy-registry.yaml`
 - abuse challenge source: `contracts/apis/abuse-api/challenge.yaml`
 - standard error source: `contracts/error-envelope.yaml`
 - webhook source: `contracts/webhook-contract.yaml`

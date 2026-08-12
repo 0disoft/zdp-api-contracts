@@ -12,6 +12,7 @@ import {
   parseCalculatorCatalogContract,
   parseCalculatorConformanceContract,
   parseCreditPurchaseContract,
+  parseCustomerPolicyRegistryContract,
   parseErrorEnvelopeContract,
   parseOidcClientRegistryContract,
   parseOidcProductSessionContract,
@@ -273,6 +274,54 @@ describe('api contract checker', () => {
         }),
         expect.objectContaining({
           code: 'API_CREDIT_PURCHASE_CLIENT_AUTHORITY_FIELD_FORBIDDEN'
+        })
+      ])
+    );
+  });
+
+  it('keeps customer policy selection server-authoritative and receipt-bound', () => {
+    const contracts = loadCommittedContracts();
+    const registry = contracts.customerPolicyRegistry;
+
+    expect(registry.status).toBe('contract-only');
+    expect(registry.authority).toBe('core_consent');
+    expect(registry.requiredResolutionBindings).toEqual([
+      'product_ref',
+      'environment',
+      'capability',
+      'locale'
+    ]);
+    expect(registry.versionSelectionPolicy).toBe(
+      'server_only_exact_policy_set_resolution'
+    );
+    expect(registry.rightsSurfaceAvailabilityPolicy).toBe(
+      'support_refund_export_deletion_and_policy_browsing_remain_available'
+    );
+  });
+
+  it('rejects client-selected policy versions in resolve and receipt requests', () => {
+    const contracts = loadCommittedContracts();
+    const file = 'contracts/apis/core-api/customer-policy-registry.yaml';
+    const bundle = schemaBundleByFile(contracts, file);
+    const schemas = bundle.schemas.map((schema) =>
+      schema.id === 'CustomerPolicySetResolveRequest'
+        ? {
+            ...schema,
+            optionalFields: [...schema.optionalFields, 'policy_set_revision']
+          }
+        : schema
+    );
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: contracts.schemaBundles.map((candidate) =>
+        candidate.file === file ? { ...candidate, schemas } : candidate
+      )
+    });
+
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'API_CUSTOMER_POLICY_CLIENT_AUTHORITY_FIELD_FORBIDDEN'
         })
       ])
     );
@@ -1700,6 +1749,7 @@ describe('api contract checker', () => {
       'contracts/apis/core-api/access-decision.yaml',
       'contracts/apis/core-api/auth-session-consumer.yaml',
       'contracts/apis/core-api/auth-session.yaml',
+      'contracts/apis/core-api/customer-policy-registry.yaml',
       'contracts/apis/core-api/product-link.yaml',
       'contracts/apis/core-api/referral.yaml',
       'contracts/apis/core-api/sensitive-action-authorization.yaml',
@@ -2135,6 +2185,18 @@ function loadCommittedContracts(): ApiContracts {
         'utf8'
       )
     ),
+    customerPolicyRegistry: parseCustomerPolicyRegistryContract(
+      readFileSync(
+        join(
+          process.cwd(),
+          'contracts',
+          'apis',
+          'core-api',
+          'customer-policy-registry.yaml'
+        ),
+        'utf8'
+      )
+    ),
     accessDecision: parseAccessDecisionContract(
       readFileSync(
         join(
@@ -2292,6 +2354,19 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/core-api/sensitive-action-authorization.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'customer-policy-registry.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/customer-policy-registry.yaml'
       ),
       parseApiSchemaBundleContract(
         readFileSync(

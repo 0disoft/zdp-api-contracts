@@ -22,6 +22,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 | 웹 제품 OIDC 로그인 handoff | `docs/contracts/oidc-product-session.md` |
 | OIDC client registry와 첫 staging runtime | `docs/contracts/oidc-client-registry-and-runtime.md` |
 | 공통 귤 충전과 복귀 | `docs/contracts/credit-purchase.md` |
+| 공통 고객 정책 레지스트리 | `docs/contracts/customer-policy-registry.md` |
 | package surface | `docs/ops/package-surface.md` |
 
 ## 현재 범위
@@ -44,6 +45,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - npm package metadata, MIT license, public export map, package file whitelist
 - 국가 공통 계산기 6종, 소상공인·무인매장 계산기 7종, 글로벌 범용 계산기 4종의 reviewed 정의, 숫자·반올림 정책과 공통 적합성 벡터, 안정 오류와 계약·엔진 버전 handoff
 - 공통 함선 팩 catalog projection, checkout intent, 결제·지급 분리 상태와 일회용 복귀 receipt 계약
+- 공통 정책과 제품·관할·채널 addendum을 정확한 revision set으로 resolve하고 불변 consent receipt로 묶는 계약
 
 ## 현재 제외
 
@@ -85,6 +87,12 @@ route catalog는 `core-api` auth/session·access-decision, `abuse-api` challenge
 assurance와 플랫폼 정책 결정, audience 제품의 domain guard를 분리하고 opaque receipt의 exact
 binding, issuer expiry/revocation과 제품 transaction 안의 durable single-use 소비를 고정한다. Issue,
 completion, verify route와 live runtime은 별도 검토 전까지 정의하지 않는다.
+
+`customer-policy-registry.yaml`도 route catalog에 연결되지 않은 contract-only family다. Core consent가
+제품·환경·기능·locale에 맞는 공통 문서와 addendum의 정확한 ordered revision set을 결정하고, 가입과
+결제가 동일한 resolution reference로 불변 receipt를 만들게 한다. 클라이언트가 문서 version, URL,
+목록 또는 digest를 권위값으로 제출할 수 없고, 문서 누락 시 해당 고위험 기능만 닫으며 고객 권리
+surface는 계속 열어 둔다.
 
 `money-api/credit-purchase.yaml`은 제품별 결제 UI가 가격과 지급량을 재계산하지 않도록 함선 팩 projection,
 checkout intent, 상태 조회와 일회용 return receipt 교환을 고정한다. provider 결제 성공과 ledger issuance 성공을 분리하고, receipt 평문 대신 SHA-256 digest 저장과 exact retry만 허용한다. 클라이언트 금액은 권위값이 아니며

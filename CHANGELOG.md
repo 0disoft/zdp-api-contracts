@@ -1,5 +1,16 @@
 # CHANGELOG.md
 
+## 0.29.0
+
+### Added
+
+- 공통 정책과 제품·관할·판매 채널 addendum을 exact ordered revision set으로 resolve하는 Core consent 계약을 추가했다.
+- 가입과 결제가 client-selected version이나 URL 대신 server resolution reference로 불변 consent receipt를 만들도록 schema와 검증을 추가했다.
+
+### Changed
+
+- 필수 정책 누락은 대상 고위험 기능만 fail closed하고 정책 열람, 고객지원, 환불, 데이터 권리 surface는 계속 열어 두도록 경계를 명시했다.
+
 ## 0.28.0
 
 ### Changed

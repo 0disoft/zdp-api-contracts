@@ -6,6 +6,7 @@ export interface ApiContracts {
   readonly apiCatalog: ApiCatalogContract;
   readonly schemaBundles: readonly ApiSchemaBundleContract[];
   readonly creditPurchase: CreditPurchaseContract;
+  readonly customerPolicyRegistry: CustomerPolicyRegistryContract;
   readonly abuseChallenge: AbuseChallengeContract;
   readonly accessDecision: AccessDecisionContract;
   readonly productLinkHandoff: ProductLinkHandoffContract;
@@ -15,6 +16,32 @@ export interface ApiContracts {
   readonly oidcProviderRuntime: OidcProviderRuntimeContract;
   readonly calculatorCatalog: CalculatorCatalogContract;
   readonly calculatorConformance: CalculatorConformanceContract;
+}
+
+export interface CustomerPolicyRegistryContract {
+  readonly schemaVersion: number;
+  readonly status: string;
+  readonly ownerBoundary: string;
+  readonly authority: string;
+  readonly operationIds: readonly string[];
+  readonly documentKinds: readonly string[];
+  readonly publicationStates: readonly string[];
+  readonly resolutionStatuses: readonly string[];
+  readonly changeActionClasses: readonly string[];
+  readonly requiredResolutionBindings: readonly string[];
+  readonly serverAuthoritativeFields: readonly string[];
+  readonly immutableRevisionFields: readonly string[];
+  readonly versionSelectionPolicy: string;
+  readonly receiptBindingPolicy: string;
+  readonly missingDocumentPolicy: string;
+  readonly rightsSurfaceAvailabilityPolicy: string;
+  readonly optionalConsentPolicy: string;
+  readonly receiptStoragePolicy: string;
+  readonly clientAuthorityPolicy: string;
+  readonly contentDigestAlgorithm: string;
+  readonly forbiddenRequestAuthorityFields: readonly string[];
+  readonly forbiddenConsumerUses: readonly string[];
+  readonly forbiddenValues: readonly string[];
 }
 
 export interface AbuseChallengeContract {

@@ -20,7 +20,8 @@
 | 웹 제품 OIDC 로그인 handoff | `contracts/oidc-product-session.md` |
 | OIDC client registry와 첫 staging runtime | `contracts/oidc-client-registry-and-runtime.md` |
 | 공통 귤 충전과 복귀 | `contracts/credit-purchase.md` |
+| 공통 고객 정책 레지스트리 | `contracts/customer-policy-registry.md` |
 
 ## Boundary
 
-이 저장소는 API 계약 skeleton, route metadata, error envelope, webhook handoff, SDK generation input, export plan, Core 접근 판정, 공통 abuse challenge, 공통 귤 충전, 데스크톱 제품 계정 연결, OIDC client/runtime Proposed profile과 교차 제품 계산기 정의 계약을 소유한다. live API endpoint, backend handler, challenge provider 구현, 최종 authorization 구현, generated SDK source, 계산 함수, product screen payload는 소유하지 않는다.
+이 저장소는 API 계약 skeleton, route metadata, error envelope, webhook handoff, SDK generation input, export plan, Core 접근 판정, 공통 abuse challenge, 공통 귤 충전, 공통 고객 정책 레지스트리, 데스크톱 제품 계정 연결, OIDC client/runtime Proposed profile과 교차 제품 계산기 정의 계약을 소유한다. live API endpoint, backend handler, challenge provider 구현, 최종 authorization 구현, generated SDK source, 계산 함수, product screen payload는 소유하지 않는다.
