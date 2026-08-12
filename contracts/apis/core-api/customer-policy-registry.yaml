@@ -1,6 +1,6 @@
 customer_policy_registry:
   schema_version: 1
-  status: contract-only
+  status: partial-staging-implementation
   owner_boundary: consent
   authority: core_consent
   operation_ids:
@@ -8,6 +8,15 @@ customer_policy_registry:
     - core.consent.policy_documents.get
     - core.consent.policy_receipts.create
     - core.consent.policy_receipts.get
+  staging_implemented_operation_ids:
+    - core.consent.policy_sets.resolve
+  contract_only_operation_ids:
+    - core.consent.policy_documents.get
+    - core.consent.policy_receipts.create
+    - core.consent.policy_receipts.get
+  resolve_route: POST /v1/customer-policy-sets/resolve
+  resolve_transport_policy: trusted_edge_exact_body_proof_and_staging_core_origin_only
+  production_route_ready: false
   document_kinds:
     - common
     - product_addendum

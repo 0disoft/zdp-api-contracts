@@ -870,6 +870,7 @@ const REQUIRED_CREDENTIAL_POLICY_PARTS = [
 
 const PUBLIC_PERMISSION_CHECKS = [
   'core.identity.public_auth_entrypoint',
+  'core.consent.public_policy_resolution',
   'platform.abuse.public_challenge_entrypoint'
 ] as const;
 
@@ -1550,14 +1551,14 @@ function validateCustomerPolicyRegistry(
 
   if (
     contract.schemaVersion !== 1 ||
-    contract.status !== 'contract-only' ||
+    contract.status !== 'partial-staging-implementation' ||
     contract.ownerBoundary !== 'consent' ||
     contract.authority !== 'core_consent'
   ) {
     push(
       'API_CUSTOMER_POLICY_BOUNDARY_INVALID',
       'customer_policy_registry',
-      'Customer-policy registry must remain contract-only under Core consent authority.'
+      'Customer-policy registry must expose only its reviewed partial staging implementation under Core consent authority.'
     );
   }
 
@@ -1567,6 +1568,34 @@ function validateCustomerPolicyRegistry(
     'API_CUSTOMER_POLICY_OPERATION_SET_INVALID',
     'customer_policy_registry.operation_ids'
   );
+  requireExact(
+    contract.stagingImplementedOperationIds,
+    ['core.consent.policy_sets.resolve'],
+    'API_CUSTOMER_POLICY_STAGING_OPERATION_SET_INVALID',
+    'customer_policy_registry.staging_implemented_operation_ids'
+  );
+  requireExact(
+    contract.contractOnlyOperationIds,
+    [
+      'core.consent.policy_documents.get',
+      'core.consent.policy_receipts.create',
+      'core.consent.policy_receipts.get'
+    ],
+    'API_CUSTOMER_POLICY_CONTRACT_ONLY_OPERATION_SET_INVALID',
+    'customer_policy_registry.contract_only_operation_ids'
+  );
+  if (
+    contract.resolveRoute !== 'POST /v1/customer-policy-sets/resolve' ||
+    contract.resolveTransportPolicy !==
+      'trusted_edge_exact_body_proof_and_staging_core_origin_only' ||
+    contract.productionRouteReady
+  ) {
+    push(
+      'API_CUSTOMER_POLICY_RESOLVE_RUNTIME_INVALID',
+      'customer_policy_registry.resolve_route',
+      'Policy resolution must remain a trusted-edge-only staging POST and cannot claim production readiness.'
+    );
+  }
   requireExact(
     contract.documentKinds,
     CUSTOMER_POLICY_DOCUMENT_KINDS,

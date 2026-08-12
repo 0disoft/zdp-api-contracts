@@ -57,6 +57,7 @@ describe('api export plan', () => {
       requiredMutationIdempotencyPolicy: 'required_idempotency_key'
     });
     expect(plan.operationIds).toEqual([
+      'core.consent.policy_sets.resolve',
       'core.auth.registrations.create',
       'core.auth.sessions.create',
       'core.auth.sessions.refresh',

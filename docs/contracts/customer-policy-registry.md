@@ -2,6 +2,8 @@
 
 100개 제품이 이용약관·개인정보·크레딧·환불 정책을 각각 복제하면 문서 변경 시점과 동의 증거가 갈라진다. `contracts/apis/core-api/customer-policy-registry.yaml`은 Core consent가 제품·환경·기능·로케일에 맞는 정확한 정책 세트를 결정하고, 제품은 그 결과를 표시·수락하는 경계를 고정한다.
 
+현재 runtime 연결은 staging trusted-edge 뒤의 `POST /v1/customer-policy-sets/resolve` 하나뿐이다. 문서 단건 조회와 receipt 생성·조회, production route는 아직 contract-only다.
+
 ## 정책 조합
 
 정책 문서는 공통 문서와 `product_addendum`, `jurisdiction_addendum`, `channel_addendum`으로 조합한다. 각 revision은 내용 digest, canonical path, 발행·효력 시각, 선행 revision, owner와 reviewer를 가진 불변 기록이다. 정책 세트는 ordered revision과 digest를 묶으므로 제목이나 `latest` 링크만으로 동의 대상을 추정하지 않는다.

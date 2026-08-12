@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.29.1
+
+### Changed
+
+- Core customer-policy set resolve operation을 staging trusted-edge 구현으로 분류하고 `POST /v1/customer-policy-sets/resolve` route metadata를 추가했다.
+- 문서 단건 조회와 policy receipt 생성·조회 operation은 계속 contract-only이며 production readiness는 열지 않는다.
+
 ## 0.29.0
 
 ### Added

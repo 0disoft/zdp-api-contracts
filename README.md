@@ -88,7 +88,7 @@ assurance와 플랫폼 정책 결정, audience 제품의 domain guard를 분리�
 binding, issuer expiry/revocation과 제품 transaction 안의 durable single-use 소비를 고정한다. Issue,
 completion, verify route와 live runtime은 별도 검토 전까지 정의하지 않는다.
 
-`customer-policy-registry.yaml`도 route catalog에 연결되지 않은 contract-only family다. Core consent가
+`customer-policy-registry.yaml`은 route catalog의 `POST /v1/customer-policy-sets/resolve`와 연결된다. 이 operation만 trusted-edge proof와 staging Core origin 뒤의 partial staging implementation이고, 문서 단건 조회와 receipt 생성·조회는 계속 contract-only다. Core consent가
 제품·환경·기능·locale에 맞는 공통 문서와 addendum의 정확한 ordered revision set을 결정하고, 가입과
 결제가 동일한 resolution reference로 불변 receipt를 만들게 한다. 클라이언트가 문서 version, URL,
 목록 또는 digest를 권위값으로 제출할 수 없고, 문서 누락 시 해당 고위험 기능만 닫으며 고객 권리

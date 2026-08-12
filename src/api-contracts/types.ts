@@ -24,6 +24,11 @@ export interface CustomerPolicyRegistryContract {
   readonly ownerBoundary: string;
   readonly authority: string;
   readonly operationIds: readonly string[];
+  readonly stagingImplementedOperationIds: readonly string[];
+  readonly contractOnlyOperationIds: readonly string[];
+  readonly resolveRoute: string;
+  readonly resolveTransportPolicy: string;
+  readonly productionRouteReady: boolean;
   readonly documentKinds: readonly string[];
   readonly publicationStates: readonly string[];
   readonly resolutionStatuses: readonly string[];

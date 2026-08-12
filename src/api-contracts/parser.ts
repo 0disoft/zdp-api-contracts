@@ -307,6 +307,11 @@ export function parseAbuseChallengeContract(
       'status',
       'owner_boundary',
       'operation_ids',
+      'staging_implemented_operation_ids',
+      'contract_only_operation_ids',
+      'resolve_route',
+      'resolve_transport_policy',
+      'production_route_ready',
       'public_operation_ids',
       'private_operation_ids',
       'required_binding_fields',
@@ -652,6 +657,11 @@ export function parseCustomerPolicyRegistryContract(
       'owner_boundary',
       'authority',
       'operation_ids',
+      'staging_implemented_operation_ids',
+      'contract_only_operation_ids',
+      'resolve_route',
+      'resolve_transport_policy',
+      'production_route_ready',
       'document_kinds',
       'publication_states',
       'resolution_statuses',
@@ -680,6 +690,27 @@ export function parseCustomerPolicyRegistryContract(
     ownerBoundary: requiredString(contract, 'owner_boundary', context),
     authority: requiredString(contract, 'authority', context),
     operationIds: requiredStringList(contract, 'operation_ids', context),
+    stagingImplementedOperationIds: requiredStringList(
+      contract,
+      'staging_implemented_operation_ids',
+      context
+    ),
+    contractOnlyOperationIds: requiredStringList(
+      contract,
+      'contract_only_operation_ids',
+      context
+    ),
+    resolveRoute: requiredString(contract, 'resolve_route', context),
+    resolveTransportPolicy: requiredString(
+      contract,
+      'resolve_transport_policy',
+      context
+    ),
+    productionRouteReady: requiredBoolean(
+      contract,
+      'production_route_ready',
+      context
+    ),
     documentKinds: requiredStringList(contract, 'document_kinds', context),
     publicationStates: requiredStringList(
       contract,

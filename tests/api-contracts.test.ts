@@ -283,7 +283,19 @@ describe('api contract checker', () => {
     const contracts = loadCommittedContracts();
     const registry = contracts.customerPolicyRegistry;
 
-    expect(registry.status).toBe('contract-only');
+    expect(registry.status).toBe('partial-staging-implementation');
+    expect(registry.stagingImplementedOperationIds).toEqual([
+      'core.consent.policy_sets.resolve'
+    ]);
+    expect(registry.contractOnlyOperationIds).toEqual([
+      'core.consent.policy_documents.get',
+      'core.consent.policy_receipts.create',
+      'core.consent.policy_receipts.get'
+    ]);
+    expect(registry.resolveRoute).toBe(
+      'POST /v1/customer-policy-sets/resolve'
+    );
+    expect(registry.productionRouteReady).toBe(false);
     expect(registry.authority).toBe('core_consent');
     expect(registry.requiredResolutionBindings).toEqual([
       'product_ref',
@@ -1242,6 +1254,7 @@ describe('api contract checker', () => {
 
     expect(contracts.apiCatalog.status).toBe('route-catalog-contract-only');
     expect(contracts.apiCatalog.routes.map((route) => route.operationId)).toEqual([
+      'core.consent.policy_sets.resolve',
       'core.auth.registrations.create',
       'core.auth.sessions.create',
       'core.auth.sessions.refresh',
@@ -1525,8 +1538,8 @@ describe('api contract checker', () => {
 
   it('enforces explicit bodyless contracts for 204 responses', () => {
     const contracts = loadCommittedContracts();
-    const revokeRoute = routeAt(contracts, 3);
-    const bodyRoute = routeAt(contracts, 1);
+    const revokeRoute = routeAt(contracts, 4);
+    const bodyRoute = routeAt(contracts, 2);
 
     expect(contracts.route.noContentSuccessStatuses).toEqual([204]);
 
@@ -1548,13 +1561,13 @@ describe('api contract checker', () => {
       apiCatalog: {
         ...contracts.apiCatalog,
         routes: [
-          ...contracts.apiCatalog.routes.slice(0, 3),
+          ...contracts.apiCatalog.routes.slice(0, 4),
           {
             ...revokeRoute,
             responseSchemaRef:
               'contracts/apis/core-api/auth-session.yaml#AuthSessionRefreshResponse'
           },
-          ...contracts.apiCatalog.routes.slice(4)
+          ...contracts.apiCatalog.routes.slice(5)
         ]
       }
     });
@@ -1567,9 +1580,9 @@ describe('api contract checker', () => {
       apiCatalog: {
         ...contracts.apiCatalog,
         routes: [
-          contracts.apiCatalog.routes[0]!,
+          ...contracts.apiCatalog.routes.slice(0, 2),
           { ...bodyRoute, responseSchemaRef: null },
-          ...contracts.apiCatalog.routes.slice(2)
+          ...contracts.apiCatalog.routes.slice(3)
         ]
       }
     });

@@ -32,6 +32,33 @@ api_catalog:
     - screen_component_payload
 
 routes:
+  - operation_id: core.consent.policy_sets.resolve
+    service_id: core-api
+    resource: customer_policy_set
+    action: resolve
+    method: POST
+    path: /v1/customer-policy-sets/resolve
+    success_statuses:
+      - 200
+      - 201
+    request_schema_ref: contracts/apis/core-api/customer-policy-registry.yaml#CustomerPolicySetResolveRequest
+    response_schema_ref: contracts/apis/core-api/customer-policy-registry.yaml#CustomerPolicySetResolveResponse
+    auth_required: false
+    permission_check: core.consent.public_policy_resolution
+    audit_event: core.consent.policy_set.resolved
+    idempotency: required_idempotency_key
+    owner_boundary: consent
+    tenant_boundary: pending_identity_or_organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - invalid_policy_resolution_request
+      - invalid_trusted_edge_proof
+      - policy_set_unavailable
+      - policy_resolution_conflict
+      - policy_resolution_unavailable
   - operation_id: core.auth.registrations.create
     service_id: core-api
     resource: auth_registration
