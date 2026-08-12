@@ -5,6 +5,7 @@
 ### Changed
 
 - Core customer-policy set resolve operation을 staging trusted-edge 구현으로 분류하고 `POST /v1/customer-policy-sets/resolve` route metadata를 추가했다.
+- 소비자가 resolution 유효기간을 추정하지 않도록 응답에 서버 권위 `expires_at`을 요구한다.
 - 문서 단건 조회와 policy receipt 생성·조회 operation은 계속 contract-only이며 production readiness는 열지 않는다.
 
 ## 0.29.0

@@ -296,6 +296,15 @@ describe('api contract checker', () => {
       'POST /v1/customer-policy-sets/resolve'
     );
     expect(registry.productionRouteReady).toBe(false);
+    const policyBundle = schemaBundleByFile(
+      contracts,
+      'contracts/apis/core-api/customer-policy-registry.yaml'
+    );
+    expect(
+      policyBundle.schemas.find(
+        (schema) => schema.id === 'CustomerPolicySetResolveResponse'
+      )?.requiredFields
+    ).toContain('expires_at');
     expect(registry.authority).toBe('core_consent');
     expect(registry.requiredResolutionBindings).toEqual([
       'product_ref',

@@ -143,6 +143,7 @@ schema_bundle:
         - presentation_rule_version
         - document_projections
         - resolved_at
+        - expires_at
     - id: CustomerPolicyDocumentProjectionGetResponse
       kind: response
       carries_secret_material: false
