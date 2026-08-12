@@ -28,7 +28,7 @@ schema_bundle:
       required_fields:
         - login_id
         - password
-        - terms_consent_ref
+        - policy_set_resolution_ref
       optional_fields:
         - locale
       secret_fields:

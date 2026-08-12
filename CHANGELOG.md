@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## 0.29.2
+
+### Changed
+
+- staging password registration이 client-selected 약관 버전 대신 Core가 발급한
+  `policy_set_resolution_ref`를 요구하도록 가입 요청 계약을 전환했다.
+- 가입과 정책 영수증을 같은 Core 트랜잭션에서 기록할 수 있도록 해석 스냅샷을
+  가입 명령의 유일한 정책 권위로 둔다.
+
 ## 0.29.1
 
 ### Changed

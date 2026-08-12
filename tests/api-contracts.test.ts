@@ -358,7 +358,7 @@ describe('api contract checker', () => {
     expect(registration).toMatchObject({
       carriesSecretMaterial: true,
       secretMaterialPolicy: 'password_verifier_input_only_never_echo',
-      requiredFields: ['login_id', 'password', 'terms_consent_ref'],
+      requiredFields: ['login_id', 'password', 'policy_set_resolution_ref'],
       optionalFields: ['locale'],
       secretFields: ['password']
     });
