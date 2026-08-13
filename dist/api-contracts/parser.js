@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { parse } from 'yaml';
 const REQUIRED_CORE_API_SCHEMA_BUNDLE_FILES = [
     'contracts/apis/core-api/auth-session.yaml',
@@ -890,12 +890,21 @@ export function parseApiSchemaBundleContract(source, file = 'contracts/apis/<ser
 }
 async function loadContract(contractsRoot, name, fileName, parse) {
     const file = `contracts/${fileName.replaceAll('\\', '/')}`;
+    const resolvedRoot = resolve(contractsRoot);
+    const resolvedFile = resolve(contractsRoot, fileName);
     try {
+        const relativeFile = relative(resolvedRoot, resolvedFile);
+        if (relativeFile.startsWith('..') ||
+            relativeFile.includes(':') ||
+            relativeFile.startsWith('/') ||
+            relativeFile.startsWith('\\')) {
+            throw new Error(`Contract path \`${file}\` must remain under the contracts root.`);
+        }
         return {
             ok: true,
             name,
             file,
-            value: parse(await readFile(join(contractsRoot, fileName), 'utf8'))
+            value: parse(await readFile(resolvedFile, 'utf8'))
         };
     }
     catch (error) {
@@ -919,6 +928,9 @@ function schemaBundleFilesFromCatalog(catalog) {
     ]);
 }
 function schemaBundleFileFromRef(schemaRef) {
+    if (!/^contracts\/apis\/[a-z0-9-]+\/[a-z0-9-]+\.yaml#[A-Z][A-Za-z0-9]+$/.test(schemaRef)) {
+        throw new Error(`Schema ref \`${schemaRef}\` must use contracts/apis/<service>/<file>.yaml#PascalCaseSchema.`);
+    }
     const hashIndex = schemaRef.indexOf('#');
     return hashIndex === -1 ? schemaRef : schemaRef.slice(0, hashIndex);
 }
@@ -957,6 +969,7 @@ function parseApiRouteDefinition(route, index) {
         sessionEffect: requiredString(route, 'session_effect', context),
         credentialPolicy: requiredString(route, 'credential_policy', context),
         exportPolicy: optionalString(route, 'export_policy', context),
+        authorizationPolicy: optionalString(route, 'authorization_policy', context),
         errorCodes: requiredStringList(route, 'error_codes', context)
     };
 }
