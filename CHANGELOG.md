@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## 0.31.0
+
+### Added
+
+- 운영자 사유·감사·멱등성·expected source version을 요구하는 문의 상태 변경과 답변 생성 계약을 추가했다.
+- 답변 생성은 source record와 Comm 전달 outbox의 원자적 기록을 전제로 한다.
+- 임의 `account_ref`가 회신 검증을 우회하지 못하도록 single-use verification receipt 소비 계약을 추가했다.
+
 ## 0.30.0
 
 ### Added

@@ -879,7 +879,8 @@ const PUBLIC_PERMISSION_CHECKS = [
   'core.identity.public_auth_entrypoint',
   'core.consent.public_policy_resolution',
   'platform.abuse.public_challenge_entrypoint',
-  'platform.support.public_case_create'
+  'platform.support.public_case_create',
+  'platform.support.public_reply_address_verify'
 ] as const;
 
 const ALLOWED_OWNER_BOUNDARIES = [
@@ -4209,6 +4210,18 @@ function validateRouteDefinition(
       file: 'contracts/apis/catalog.yaml',
       path: `${routePath}.export_policy`,
       message: 'The staging trusted-edge policy resolver must remain excluded from SDK and public documentation exports.'
+    });
+  }
+
+  if (
+    route.operationId === 'platform.support.reply_address_verifications.create' &&
+    route.exportPolicy !== 'comm_verification_handoff_only_not_general_public_sdk'
+  ) {
+    diagnostics.push({
+      code: 'API_SUPPORT_REPLY_ADDRESS_VERIFY_EXPORT_POLICY_INVALID',
+      file: 'contracts/apis/catalog.yaml',
+      path: `${routePath}.export_policy`,
+      message: 'Reply-address verification handoff must remain excluded from general public SDK and documentation exports.'
     });
   }
 

@@ -1394,6 +1394,9 @@ describe('api contract checker', () => {
     expect(contracts.apiCatalog.routes.map((route) => route.operationId)).toEqual([
       'platform.support.cases.create',
       'platform.support.case_detail_reads.create',
+      'platform.support.case_status_changes.create',
+      'platform.support.case_replies.create',
+      'platform.support.reply_address_verifications.create',
       'core.consent.policy_sets.resolve',
       'core.auth.registrations.create',
       'core.auth.sessions.create',
@@ -1428,6 +1431,14 @@ describe('api contract checker', () => {
       permissionCheck: 'platform.support.public_case_create',
       tenantBoundary: 'pending_identity_or_organization',
       exportPolicy: 'edge_bff_only_transport_proof_and_deployment_registered_organization_not_direct_origin'
+    });
+    const replyAddressVerification = contracts.apiCatalog.routes.find(
+      (route) => route.operationId === 'platform.support.reply_address_verifications.create'
+    );
+    expect(replyAddressVerification).toMatchObject({
+      authRequired: false,
+      permissionCheck: 'platform.support.public_reply_address_verify',
+      exportPolicy: 'comm_verification_handoff_only_not_general_public_sdk'
     });
     const supportSchema = schemaBundleByFile(
       contracts,

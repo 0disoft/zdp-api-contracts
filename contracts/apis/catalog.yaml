@@ -88,6 +88,90 @@ routes:
       - support_case_detail_read_denied
       - idempotency_conflict
       - support_source_unavailable
+  - operation_id: platform.support.case_status_changes.create
+    service_id: support-intake-api
+    resource: support_case_status_change
+    action: create
+    method: POST
+    path: /v1/support/cases/{case_id}/status-changes
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/support-api/intake.yaml#SupportCaseStatusChangeRequest
+    response_schema_ref: contracts/apis/support-api/intake.yaml#SupportCaseStatusChangeResponse
+    auth_required: true
+    permission_check: platform.support.case_status.change
+    audit_event: platform.support.case.status_changed
+    idempotency: required_idempotency_key
+    owner_boundary: platform
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - support_case_not_found
+      - support_case_version_stale
+      - support_case_status_change_denied
+      - invalid_status_transition
+      - idempotency_conflict
+      - support_source_unavailable
+  - operation_id: platform.support.case_replies.create
+    service_id: support-intake-api
+    resource: support_case_reply
+    action: create
+    method: POST
+    path: /v1/support/cases/{case_id}/replies
+    success_statuses:
+      - 201
+    request_schema_ref: contracts/apis/support-api/intake.yaml#SupportCaseReplyCreateRequest
+    response_schema_ref: contracts/apis/support-api/intake.yaml#SupportCaseReplyCreateResponse
+    auth_required: true
+    permission_check: platform.support.case_reply.create
+    audit_event: platform.support.case.reply_created
+    idempotency: required_idempotency_key
+    owner_boundary: platform
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - support_case_not_found
+      - support_case_version_stale
+      - support_case_reply_denied
+      - reply_address_unverified
+      - idempotency_conflict
+      - support_source_unavailable
+  - operation_id: platform.support.reply_address_verifications.create
+    service_id: support-intake-api
+    resource: support_case_reply_address_verification
+    action: create
+    method: POST
+    path: /v1/support/cases/{case_id}/reply-address-verifications
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/support-api/intake.yaml#SupportCaseReplyAddressVerifyRequest
+    response_schema_ref: contracts/apis/support-api/intake.yaml#SupportCaseReplyAddressVerifyResponse
+    auth_required: false
+    permission_check: platform.support.public_reply_address_verify
+    audit_event: platform.support.case.reply_address_verified
+    idempotency: required_idempotency_key
+    owner_boundary: platform
+    tenant_boundary: pending_identity_or_organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    export_policy: comm_verification_handoff_only_not_general_public_sdk
+    error_codes:
+      - validation_failed
+      - verification_receipt_invalid
+      - support_case_not_found
+      - support_source_unavailable
   - operation_id: core.consent.policy_sets.resolve
     service_id: core-api
     resource: customer_policy_set

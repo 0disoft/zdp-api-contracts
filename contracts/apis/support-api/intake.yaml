@@ -75,3 +75,61 @@ schema_bundle:
       optional_fields:
         - product_id
         - privacy_action
+    - id: SupportCaseStatusChangeRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - expected_source_version
+        - target_state
+        - reason
+        - audit_request_id
+        - audit_policy_version
+    - id: SupportCaseStatusChangeResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - case_id
+        - source_version
+        - source_state
+        - changed_at
+        - replayed
+    - id: SupportCaseReplyCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - expected_source_version
+        - message
+        - reason
+        - audit_request_id
+        - audit_policy_version
+    - id: SupportCaseReplyCreateResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - case_id
+        - reply_id
+        - source_version
+        - source_state
+        - delivery_state
+        - created_at
+        - replayed
+    - id: SupportCaseReplyAddressVerifyRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: verification_receipt_input_only_never_echo_or_persist_plaintext
+      required_fields:
+        - verification_ref
+      secret_fields:
+        - verification_ref
+    - id: SupportCaseReplyAddressVerifyResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - case_id
+        - source_version
+        - source_state
+        - changed_at
+        - replayed

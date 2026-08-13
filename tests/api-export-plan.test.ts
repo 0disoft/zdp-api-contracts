@@ -58,6 +58,8 @@ describe('api export plan', () => {
     });
     expect(plan.operationIds).toEqual([
       'platform.support.case_detail_reads.create',
+      'platform.support.case_status_changes.create',
+      'platform.support.case_replies.create',
       'core.auth.registrations.create',
       'core.auth.sessions.create',
       'core.auth.sessions.refresh',
