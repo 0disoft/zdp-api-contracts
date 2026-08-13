@@ -32,6 +32,62 @@ api_catalog:
     - screen_component_payload
 
 routes:
+  - operation_id: platform.support.cases.create
+    service_id: support-intake-api
+    resource: support_case
+    action: create
+    method: POST
+    path: /v1/support/cases
+    success_statuses:
+      - 201
+    request_schema_ref: contracts/apis/support-api/intake.yaml#SupportCaseCreateRequest
+    response_schema_ref: contracts/apis/support-api/intake.yaml#SupportCaseCreateResponse
+    auth_required: false
+    permission_check: platform.support.public_case_create
+    audit_event: platform.support.case.received
+    idempotency: required_idempotency_key
+    owner_boundary: platform
+    tenant_boundary: pending_identity_or_organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    export_policy: edge_bff_only_transport_proof_and_deployment_registered_organization_not_direct_origin
+    error_codes:
+      - validation_failed
+      - origin_proof_failed
+      - abuse_verification_failed
+      - rate_limited
+      - idempotency_conflict
+      - support_intake_unavailable
+  - operation_id: platform.support.case_detail_reads.create
+    service_id: support-intake-api
+    resource: support_case_detail_read
+    action: create
+    method: POST
+    path: /v1/support/cases/{case_id}/detail-reads
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/support-api/intake.yaml#SupportCaseDetailReadRequest
+    response_schema_ref: contracts/apis/support-api/intake.yaml#SupportCaseDetailReadResponse
+    auth_required: true
+    permission_check: platform.support.case_detail.read
+    audit_event: platform.support.case_detail.read
+    idempotency: required_idempotency_key
+    owner_boundary: platform
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - validation_failed
+      - authentication_failed
+      - support_case_not_found
+      - support_case_version_stale
+      - support_case_detail_read_denied
+      - idempotency_conflict
+      - support_source_unavailable
   - operation_id: core.consent.policy_sets.resolve
     service_id: core-api
     resource: customer_policy_set

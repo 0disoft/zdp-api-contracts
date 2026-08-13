@@ -984,7 +984,7 @@ describe('api contract checker', () => {
 
   it('rejects sensitive-action route promotion and boundary drift', () => {
     const contracts = loadCommittedContracts();
-    const route = routeAt(contracts, 1);
+    const route = routeByOperation(contracts, 'core.auth.registrations.create');
     const result = validateApiContracts({
       ...contracts,
       sensitiveActionAuthorization: {
@@ -1387,11 +1387,13 @@ describe('api contract checker', () => {
     );
   });
 
-  it('keeps core auth session routes explicit in the API catalog with referral and money reward routes', () => {
+  it('keeps core auth session routes explicit in the API catalog with money, abuse, and support routes', () => {
     const contracts = loadCommittedContracts();
 
     expect(contracts.apiCatalog.status).toBe('route-catalog-contract-only');
     expect(contracts.apiCatalog.routes.map((route) => route.operationId)).toEqual([
+      'platform.support.cases.create',
+      'platform.support.case_detail_reads.create',
       'core.consent.policy_sets.resolve',
       'core.auth.registrations.create',
       'core.auth.sessions.create',
@@ -1417,6 +1419,23 @@ describe('api contract checker', () => {
       'platform.abuse.verifications.verify',
       'platform.abuse.health.get'
     ]);
+    const supportCreate = contracts.apiCatalog.routes.find(
+      (route) => route.operationId === 'platform.support.cases.create'
+    );
+    expect(supportCreate).toMatchObject({
+      method: 'POST',
+      authRequired: false,
+      permissionCheck: 'platform.support.public_case_create',
+      tenantBoundary: 'pending_identity_or_organization',
+      exportPolicy: 'edge_bff_only_transport_proof_and_deployment_registered_organization_not_direct_origin'
+    });
+    const supportSchema = schemaBundleByFile(
+      contracts,
+      'contracts/apis/support-api/intake.yaml'
+    ).schemas.find((schema) => schema.id === 'SupportCaseCreateRequest');
+    expect(supportSchema?.requiredFields).not.toContain('organization_ref');
+    expect(supportSchema?.requiredFields).not.toContain('edge_origin_proof');
+    expect(supportSchema?.secretFields).toEqual(['abuse_verification_ref']);
     const authRoutes = contracts.apiCatalog.routes.filter((route) =>
       route.operationId.startsWith('core.auth.')
     );
@@ -1676,8 +1695,8 @@ describe('api contract checker', () => {
 
   it('enforces explicit bodyless contracts for 204 responses', () => {
     const contracts = loadCommittedContracts();
-    const revokeRoute = routeAt(contracts, 4);
-    const bodyRoute = routeAt(contracts, 2);
+    const revokeRoute = routeByOperation(contracts, 'core.auth.sessions.revoke_current');
+    const bodyRoute = routeByOperation(contracts, 'core.auth.sessions.create');
 
     expect(contracts.route.noContentSuccessStatuses).toEqual([204]);
 
@@ -1698,15 +1717,15 @@ describe('api contract checker', () => {
       ...contracts,
       apiCatalog: {
         ...contracts.apiCatalog,
-        routes: [
-          ...contracts.apiCatalog.routes.slice(0, 4),
-          {
-            ...revokeRoute,
-            responseSchemaRef:
-              'contracts/apis/core-api/auth-session.yaml#AuthSessionRefreshResponse'
-          },
-          ...contracts.apiCatalog.routes.slice(5)
-        ]
+        routes: contracts.apiCatalog.routes.map((route) =>
+          route.operationId === revokeRoute.operationId
+            ? {
+                ...route,
+                responseSchemaRef:
+                  'contracts/apis/core-api/auth-session.yaml#AuthSessionRefreshResponse'
+              }
+            : route
+        )
       }
     });
     expect(
@@ -1717,11 +1736,11 @@ describe('api contract checker', () => {
       ...contracts,
       apiCatalog: {
         ...contracts.apiCatalog,
-        routes: [
-          ...contracts.apiCatalog.routes.slice(0, 2),
-          { ...bodyRoute, responseSchemaRef: null },
-          ...contracts.apiCatalog.routes.slice(3)
-        ]
+        routes: contracts.apiCatalog.routes.map((route) =>
+          route.operationId === bodyRoute.operationId
+            ? { ...route, responseSchemaRef: null }
+            : route
+        )
       }
     });
     expect(
@@ -1732,11 +1751,11 @@ describe('api contract checker', () => {
       ...contracts,
       apiCatalog: {
         ...contracts.apiCatalog,
-        routes: [
-          ...contracts.apiCatalog.routes.slice(0, 3),
-          { ...revokeRoute, successStatuses: [200, 204] },
-          ...contracts.apiCatalog.routes.slice(4)
-        ]
+        routes: contracts.apiCatalog.routes.map((route) =>
+          route.operationId === revokeRoute.operationId
+            ? { ...route, successStatuses: [200, 204] }
+            : route
+        )
       }
     });
     expect(
@@ -1906,7 +1925,8 @@ describe('api contract checker', () => {
       'contracts/apis/core-api/sensitive-action-authorization.yaml',
       'contracts/apis/money-api/credit-purchase-read.yaml',
       'contracts/apis/money-api/credit-purchase.yaml',
-      'contracts/apis/money-api/referral-reward.yaml'
+      'contracts/apis/money-api/referral-reward.yaml',
+      'contracts/apis/support-api/intake.yaml'
     ]);
     expect(
       schemaBundleByFile(
@@ -1950,6 +1970,12 @@ describe('api contract checker', () => {
         'contracts/apis/money-api/referral-reward.yaml'
       ).schemas.map((schema) => schema.id)
     ).toContain('ReferralRewardStatusGetResponse');
+    expect(
+      schemaBundleByFile(
+        contracts,
+        'contracts/apis/support-api/intake.yaml'
+      ).schemas.map((schema) => schema.id)
+    ).toContain('SupportCaseDetailReadResponse');
   });
 
   it('rejects traversing schema refs before reading outside contracts', async () => {
@@ -1971,7 +1997,7 @@ describe('api contract checker', () => {
 
   it('fails when a catalog route references a missing schema id', () => {
     const contracts = loadCommittedContracts();
-    const route = routeAt(contracts, 0);
+    const route = routeByOperation(contracts, 'core.auth.registrations.create');
     const result = validateApiContracts({
       ...contracts,
       apiCatalog: {
@@ -2025,7 +2051,7 @@ describe('api contract checker', () => {
 
   it('fails when credential policy adds unsafe suffix text', () => {
     const contracts = loadCommittedContracts();
-    const route = routeAt(contracts, 0);
+    const route = routeByOperation(contracts, 'core.auth.registrations.create');
     const result = validateApiContracts({
       ...contracts,
       apiCatalog: {
@@ -2072,7 +2098,7 @@ describe('api contract checker', () => {
 
   it('fails when route operation ids or method paths are duplicated', () => {
     const contracts = loadCommittedContracts();
-    const route = routeAt(contracts, 1);
+    const route = routeByOperation(contracts, 'core.auth.registrations.create');
     const duplicate = {
       ...route,
       requestSchemaRef:
@@ -2099,7 +2125,7 @@ describe('api contract checker', () => {
 
   it('fails when a public auth route uses a private permission check', () => {
     const contracts = loadCommittedContracts();
-    const route = routeAt(contracts, 0);
+    const route = routeByOperation(contracts, 'core.auth.registrations.create');
     const result = validateApiContracts({
       ...contracts,
       apiCatalog: {
@@ -2121,7 +2147,7 @@ describe('api contract checker', () => {
 
   it('fails when route boundary or idempotency values are outside the allowed set', () => {
     const contracts = loadCommittedContracts();
-    const route = routeAt(contracts, 0);
+    const route = routeByOperation(contracts, 'core.auth.registrations.create');
     const result = validateApiContracts({
       ...contracts,
       apiCatalog: {
@@ -2263,10 +2289,15 @@ describe('api contract checker', () => {
   });
 });
 
-function routeAt(contracts: ApiContracts, index: number): ApiRouteDefinition {
-  const route = contracts.apiCatalog.routes[index];
+function routeByOperation(
+  contracts: ApiContracts,
+  operationId: string
+): ApiRouteDefinition {
+  const route = contracts.apiCatalog.routes.find(
+    (candidate) => candidate.operationId === operationId
+  );
   if (!route) {
-    throw new Error(`Expected committed route at index ${index}.`);
+    throw new Error(`Expected committed route \`${operationId}\`.`);
   }
   return route;
 }
@@ -2587,6 +2618,13 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/money-api/credit-purchase.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(process.cwd(), 'contracts', 'apis', 'support-api', 'intake.yaml'),
+          'utf8'
+        ),
+        'contracts/apis/support-api/intake.yaml'
       )
     ],
     calculatorCatalog: parseCalculatorCatalogContract(

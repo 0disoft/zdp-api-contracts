@@ -46,6 +46,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - 국가 공통 계산기 6종, 소상공인·무인매장 계산기 7종, 글로벌 범용 계산기 4종의 reviewed 정의, 숫자·반올림 정책과 공통 적합성 벡터, 안정 오류와 계약·엔진 버전 handoff
 - 공통 함선 팩 catalog projection, checkout intent, 결제·지급 분리 상태와 일회용 복귀 receipt 계약
 - 공통 정책과 제품·관할·채널 addendum을 정확한 revision set으로 resolve하고 불변 consent receipt로 묶는 계약
+- 모든 제품이 재사용하는 공개 문의 접수와 운영자 감사형 source detail read 계약
 
 ## 현재 제외
 

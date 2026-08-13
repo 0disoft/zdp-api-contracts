@@ -57,6 +57,7 @@ describe('api export plan', () => {
       requiredMutationIdempotencyPolicy: 'required_idempotency_key'
     });
     expect(plan.operationIds).toEqual([
+      'platform.support.case_detail_reads.create',
       'core.auth.registrations.create',
       'core.auth.sessions.create',
       'core.auth.sessions.refresh',
@@ -635,6 +636,13 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/money-api/credit-purchase.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(process.cwd(), 'contracts', 'apis', 'support-api', 'intake.yaml'),
+          'utf8'
+        ),
+        'contracts/apis/support-api/intake.yaml'
       )
     ]
   };

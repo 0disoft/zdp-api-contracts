@@ -878,7 +878,8 @@ const REQUIRED_CREDENTIAL_POLICY_PARTS = [
 const PUBLIC_PERMISSION_CHECKS = [
   'core.identity.public_auth_entrypoint',
   'core.consent.public_policy_resolution',
-  'platform.abuse.public_challenge_entrypoint'
+  'platform.abuse.public_challenge_entrypoint',
+  'platform.support.public_case_create'
 ] as const;
 
 const ALLOWED_OWNER_BOUNDARIES = [

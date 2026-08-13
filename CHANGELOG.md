@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## 0.30.0
+
+### Added
+
+- 공통 공개 문의 접수와 운영자 감사형 상세 조회 계약을 추가했다.
+- 접수 transaction, 멱등 재시도, Edge origin proof, abuse verification, 회신 식별과 보존 경계를 고정했다.
+- 관리자 projection에 원문을 복제하지 않고 source가 정제 본문과 마스킹된 회신 주소만 반환하도록 했다.
+
 ## 0.29.4
 
 ### Fixed

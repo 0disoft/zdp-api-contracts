@@ -1,0 +1,77 @@
+schema_bundle:
+  service_id: support-intake-api
+  owner_boundary: platform
+  status: contract-only
+  purpose: accept reusable public customer inquiries and provide audited sanitized source detail reads without copying inquiry content into the admin projection
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+      - idempotency_key
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - raw_customer_payload
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - payment_credential
+      - identity_document
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: SupportCaseCreateRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: verification_receipt_input_only_never_echo_or_persist_plaintext
+      required_fields:
+        - request_kind
+        - reply_address
+        - message
+        - locale
+        - abuse_verification_ref
+      optional_fields:
+        - product_id
+        - privacy_action
+        - account_ref
+      secret_fields:
+        - abuse_verification_ref
+    - id: SupportCaseCreateResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - case_id
+        - received_at
+        - verification_state
+        - next_step
+    - id: SupportCaseDetailReadRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - expected_source_version
+        - purpose
+        - reason
+        - audit_request_id
+        - audit_policy_version
+    - id: SupportCaseDetailReadResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - case_id
+        - source_version
+        - request_kind
+        - source_state
+        - sanitized_message
+        - masked_reply_address
+        - locale
+        - opened_at
+        - last_activity_at
+        - content_access
+      optional_fields:
+        - product_id
+        - privacy_action
