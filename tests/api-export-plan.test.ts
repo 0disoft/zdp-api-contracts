@@ -569,6 +569,19 @@ function loadCommittedContracts(): ApiContracts {
       ),
       parseApiSchemaBundleContract(
         readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'operator-session-context.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/operator-session-context.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
           join(process.cwd(), 'contracts', 'apis', 'core-api', 'referral.yaml'),
           'utf8'
         ),

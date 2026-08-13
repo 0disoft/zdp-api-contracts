@@ -1,0 +1,41 @@
+schema_bundle:
+  service_id: core-api
+  owner_boundary: access
+  status: contract-only
+  purpose: expose the minimum current operator context to trusted internal admin services after Core revalidates the separate operator session and current platform role
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - operator_session_token
+      - login_identifier
+      - contact_value
+      - credential_material
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: OperatorSessionContextGetRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: []
+    - id: OperatorSessionContextGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - operator_ref
+        - organization_ref
+        - role
+        - capabilities
+        - expires_at
+        - policy_version

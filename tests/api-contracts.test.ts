@@ -1403,6 +1403,7 @@ describe('api contract checker', () => {
       'core.auth.sessions.refresh',
       'core.auth.sessions.revoke_current',
       'core.auth.sessions.get_current',
+      'core.admin.operator_session_context.get',
       'core.access.authorization_decisions.create',
       'core.auth.product_link_challenges.create',
       'core.auth.product_link_challenges.complete',
@@ -1483,6 +1484,21 @@ describe('api contract checker', () => {
       successStatuses: [204],
       responseSchemaRef: null,
       sessionEffect: 'revoke'
+    });
+    expect(
+      contracts.apiCatalog.routes.find(
+        (route) => route.operationId === 'core.admin.operator_session_context.get'
+      )
+    ).toMatchObject({
+      method: 'GET',
+      path: '/v1/admin/session-context',
+      authRequired: true,
+      idempotency: 'not_required',
+      permissionCheck: 'core.admin.operator_session.context.read',
+      ownerBoundary: 'access',
+      tenantBoundary: 'organization',
+      exportPolicy: 'internal_admin_service_only_not_public_sdk',
+      sessionEffect: 'none'
     });
     expect(
       contracts.apiCatalog.routes.find(
@@ -1931,6 +1947,7 @@ describe('api contract checker', () => {
       'contracts/apis/core-api/auth-session-consumer.yaml',
       'contracts/apis/core-api/auth-session.yaml',
       'contracts/apis/core-api/customer-policy-registry.yaml',
+      'contracts/apis/core-api/operator-session-context.yaml',
       'contracts/apis/core-api/product-link.yaml',
       'contracts/apis/core-api/referral.yaml',
       'contracts/apis/core-api/sensitive-action-authorization.yaml',
@@ -2531,6 +2548,19 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/core-api/auth-session.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'operator-session-context.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/operator-session-context.yaml'
       ),
       parseApiSchemaBundleContract(
         readFileSync(

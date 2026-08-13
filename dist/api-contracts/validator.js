@@ -2934,6 +2934,7 @@ function validateSchemaDefinition(schemaBundle, schema, index, diagnostics) {
     }
     const allowedEmptyRequestSchemas = new Set([
         'AuthSessionCurrentGetRequest',
+        'OperatorSessionContextGetRequest',
         'AbuseHealthGetRequest'
     ]);
     if (schema.requiredFields.length === 0 &&

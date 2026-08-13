@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.32.0
+
+### Added
+
+- Core가 별도 운영자 세션과 현재 platform 역할을 다시 검증한 뒤 내부 Admin 서비스에 최소 operator context와 capability만 제공하는 계약을 추가했다.
+- 운영자 credential, 로그인 ID, 연락처와 고객 payload는 응답 및 SDK 공개 범위에서 제외했다.
+
 ## 0.31.0
 
 ### Added

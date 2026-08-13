@@ -333,6 +333,34 @@ routes:
       - session_expired
       - session_compromised
       - account_restricted
+  - operation_id: core.admin.operator_session_context.get
+    service_id: core-api
+    resource: operator_session_context
+    action: get
+    method: GET
+    path: /v1/admin/session-context
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/core-api/operator-session-context.yaml#OperatorSessionContextGetRequest
+    response_schema_ref: contracts/apis/core-api/operator-session-context.yaml#OperatorSessionContextGetResponse
+    auth_required: true
+    permission_check: core.admin.operator_session.context.read
+    audit_event: core.admin.operator_session.context.read
+    idempotency: not_required
+    owner_boundary: access
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    export_policy: internal_admin_service_only_not_public_sdk
+    error_codes:
+      - operator_session_required
+      - operator_session_revoked
+      - operator_session_expired
+      - account_restricted
+      - operator_permission_denied
+      - operator_context_unavailable
   - operation_id: core.access.authorization_decisions.create
     service_id: core-api
     resource: authorization_decision
