@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## 0.29.4
+
+### Fixed
+
+- catalog schema ref를 읽기 전에 canonical `contracts/apis/**` 형식과 contracts-root containment를 검증한다.
+- sensitive-action schema의 route 승격, product-link의 추가 transition/ref, 일반 schema의 빈 required field를 거부한다.
+- referral use의 account·campaign binding을 서버 권위로 옮기고 reward status에 current-session ownership 정책을 요구한다.
+- authenticated route의 permission과 모든 route의 audit event가 구체적인 값을 갖도록 semantic gate를 강화한다.
+
 ## 0.29.3
 
 ### Fixed

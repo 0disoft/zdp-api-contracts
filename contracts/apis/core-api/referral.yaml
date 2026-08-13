@@ -26,8 +26,6 @@ schema_bundle:
       carries_secret_material: false
       required_fields:
         - referral_code
-        - campaign_ref
-        - referred_account_ref
     - id: ReferralUseCreateResponse
       kind: response
       carries_secret_material: false

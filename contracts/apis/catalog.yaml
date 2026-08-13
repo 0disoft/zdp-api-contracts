@@ -431,6 +431,7 @@ routes:
     trace_id_required: true
     session_effect: none
     credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    authorization_policy: verified_session_account_and_referral_code_campaign_binding
     error_codes:
       - validation_failed
       - authentication_failed
@@ -457,6 +458,7 @@ routes:
     trace_id_required: true
     session_effect: none
     credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    authorization_policy: verified_session_owns_referral_use
     error_codes:
       - validation_failed
       - authentication_failed

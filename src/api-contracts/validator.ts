@@ -967,6 +967,8 @@ export function validateApiContracts(
   validateOidcClientRegistry(contracts, diagnostics);
   validateOidcProviderRuntime(contracts, diagnostics);
   validateProductLinkHandoff(contracts, diagnostics);
+  validateSensitiveActionAuthorization(contracts, diagnostics);
+  validateReferralContracts(contracts, schemaBundlesByFile, diagnostics);
   validateCalculatorCatalog(contracts, diagnostics);
   validateCalculatorConformance(contracts, diagnostics);
 
@@ -2538,19 +2540,17 @@ function validateProductLinkHandoff(
   ) {
     push('API_PRODUCT_LINK_PROOF_POLICY_INVALID', 'product_link_handoff.proof_method', 'Product-link proof must use the contracted S256 verifier binding.');
   }
-  validateRequiredProductLinkValues(contract.lifecycleStates, PRODUCT_LINK_STATES, 'API_PRODUCT_LINK_STATE_MISSING', 'product_link_handoff.lifecycle_states', push);
-  validateRequiredProductLinkValues(contract.terminalStates, PRODUCT_LINK_TERMINAL_STATES, 'API_PRODUCT_LINK_TERMINAL_STATE_MISSING', 'product_link_handoff.terminal_states', push);
-  validateRequiredProductLinkValues(contract.requiredBindings, PRODUCT_LINK_REQUIRED_BINDINGS, 'API_PRODUCT_LINK_BINDING_MISSING', 'product_link_handoff.required_bindings', push);
-  validateRequiredProductLinkValues(contract.exchangeResponseRefs, PRODUCT_LINK_EXCHANGE_REFS, 'API_PRODUCT_LINK_RESPONSE_REF_MISSING', 'product_link_handoff.exchange_response_refs', push);
-  validateRequiredProductLinkValues(contract.forbiddenValues, PRODUCT_LINK_FORBIDDEN_VALUES, 'API_PRODUCT_LINK_FORBIDDEN_VALUE_MISSING', 'product_link_handoff.forbidden_values', push);
+  validateExactProductLinkValues(contract.lifecycleStates, PRODUCT_LINK_STATES, 'API_PRODUCT_LINK_STATE_SET_INVALID', 'product_link_handoff.lifecycle_states', push);
+  validateExactProductLinkValues(contract.terminalStates, PRODUCT_LINK_TERMINAL_STATES, 'API_PRODUCT_LINK_TERMINAL_STATE_SET_INVALID', 'product_link_handoff.terminal_states', push);
+  validateExactProductLinkValues(contract.requiredBindings, PRODUCT_LINK_REQUIRED_BINDINGS, 'API_PRODUCT_LINK_BINDING_SET_INVALID', 'product_link_handoff.required_bindings', push);
+  validateExactProductLinkValues(contract.exchangeResponseRefs, PRODUCT_LINK_EXCHANGE_REFS, 'API_PRODUCT_LINK_RESPONSE_REF_SET_INVALID', 'product_link_handoff.exchange_response_refs', push);
+  validateExactProductLinkValues(contract.forbiddenValues, PRODUCT_LINK_FORBIDDEN_VALUES, 'API_PRODUCT_LINK_FORBIDDEN_VALUE_SET_INVALID', 'product_link_handoff.forbidden_values', push);
 
   const transitions = new Set(
     contract.transitions.map((transition) => `${transition.from}:${transition.event}:${transition.to}`)
   );
-  for (const transition of PRODUCT_LINK_TRANSITIONS) {
-    if (!transitions.has(transition)) {
-      push('API_PRODUCT_LINK_TRANSITION_MISSING', 'product_link_handoff.allowed_transitions', `Product-link handoff must declare transition \`${transition}\`.`);
-    }
+  if (!hasExactStringValues([...transitions], PRODUCT_LINK_TRANSITIONS)) {
+    push('API_PRODUCT_LINK_TRANSITION_SET_INVALID', 'product_link_handoff.allowed_transitions', 'Product-link handoff must declare exactly the reviewed transition set.');
   }
   if (!contract.singleUseExchange) {
     push('API_PRODUCT_LINK_SINGLE_USE_REQUIRED', 'product_link_handoff.single_use_exchange', 'Product-link exchange must be single use.');
@@ -2563,17 +2563,80 @@ function validateProductLinkHandoff(
   }
 }
 
-function validateRequiredProductLinkValues(
+function validateExactProductLinkValues(
   actual: readonly string[],
   required: readonly string[],
   code: string,
   path: string,
   push: (code: string, path: string, message: string) => void
 ): void {
-  for (const value of required) {
-    if (!actual.includes(value)) {
-      push(code, path, `Product-link handoff must include \`${value}\`.`);
-    }
+  if (!hasExactStringValues(actual, required)) {
+    push(code, path, 'Product-link handoff must use exactly the reviewed value set.');
+  }
+}
+
+function validateSensitiveActionAuthorization(
+  contracts: ApiContracts,
+  diagnostics: ApiContractDiagnostic[]
+): void {
+  const contract = contracts.sensitiveActionAuthorization;
+  const file = 'contracts/apis/core-api/sensitive-action-authorization.yaml';
+  const push = (code: string, path: string, message: string) =>
+    diagnostics.push({ code, file, path, message });
+  if (
+    contract.schemaVersion !== 1 ||
+    contract.status !== 'contract-only-no-live-route' ||
+    contract.receiptFormat !== 'opaque_reference' ||
+    contract.routeStatus !== 'no_route_defined'
+  ) {
+    push('API_SENSITIVE_ACTION_BOUNDARY_INVALID', 'sensitive_action_authorization', 'Sensitive-action authorization must remain an opaque contract-only receipt with no live route.');
+  }
+  if (
+    contracts.apiCatalog.routes.some((route) =>
+      [route.requestSchemaRef, route.responseSchemaRef].some((ref) =>
+        ref?.startsWith(`${file}#`)
+      )
+    )
+  ) {
+    push('API_SENSITIVE_ACTION_ROUTE_FORBIDDEN', 'sensitive_action_authorization.route_status', 'Sensitive-action schemas must not be referenced by the route catalog before activation review.');
+  }
+  const requiredControls = [
+    'server_to_server_verification',
+    'exact_binding_match',
+    'current_product_domain_guard',
+    'durable_unique_receipt_ref',
+    'domain_mutation_receipt_consumption_idempotency_and_audit_one_transaction',
+    'same_idempotency_same_binding_stored_replay',
+    'changed_binding_or_receipt_reuse_conflict',
+    'failed_domain_transaction_does_not_consume_receipt'
+  ];
+  if (!hasExactStringValues(contract.requiredConsumerControls, requiredControls)) {
+    push('API_SENSITIVE_ACTION_CONSUMER_CONTROL_SET_INVALID', 'sensitive_action_authorization.required_consumer_controls', 'Sensitive-action consumers must retain the exact reviewed verification and single-use control set.');
+  }
+}
+
+function validateReferralContracts(
+  contracts: ApiContracts,
+  schemaBundlesByFile: ReadonlyMap<string, ApiSchemaBundleContract>,
+  diagnostics: ApiContractDiagnostic[]
+): void {
+  const create = schemaBundlesByFile.get('contracts/apis/core-api/referral.yaml')
+    ?.schemas.find((schema) => schema.id === 'ReferralUseCreateRequest');
+  if (!create || !hasExactStringValues(create.requiredFields, ['referral_code']) || create.optionalFields.length > 0) {
+    diagnostics.push({
+      code: 'API_REFERRAL_USE_CLIENT_AUTHORITY_INVALID',
+      file: 'contracts/apis/core-api/referral.yaml',
+      path: 'schema_bundle.ReferralUseCreateRequest',
+      message: 'Referral use creation may accept only referral_code; campaign and referred account are server-derived.'
+    });
+  }
+  const createRoute = contracts.apiCatalog.routes.find((route) => route.operationId === 'core.referral.uses.create');
+  const statusRoute = contracts.apiCatalog.routes.find((route) => route.operationId === 'money.referral_rewards.status.get');
+  if (createRoute?.authorizationPolicy !== 'verified_session_account_and_referral_code_campaign_binding') {
+    diagnostics.push({ code: 'API_REFERRAL_USE_AUTHORIZATION_POLICY_INVALID', file: 'contracts/apis/catalog.yaml', path: 'core.referral.uses.create.authorization_policy', message: 'Referral use creation must bind the referred account to the verified session and derive campaign from the referral code.' });
+  }
+  if (statusRoute?.authorizationPolicy !== 'verified_session_owns_referral_use') {
+    diagnostics.push({ code: 'API_REFERRAL_STATUS_AUTHORIZATION_POLICY_INVALID', file: 'contracts/apis/catalog.yaml', path: 'money.referral_rewards.status.get.authorization_policy', message: 'Referral reward status must verify that the current session owns the referral use.' });
   }
 }
 
@@ -4119,6 +4182,22 @@ function validateRouteDefinition(
       message: `Public API route \`${route.operationId}\` must use a reviewed public entrypoint permission check.`
     });
   }
+  if (route.authRequired && (route.permissionCheck === 'none' || route.permissionCheck.trim().length === 0)) {
+    diagnostics.push({
+      code: 'API_CATALOG_ROUTE_PERMISSION_CHECK_INVALID',
+      file: 'contracts/apis/catalog.yaml',
+      path: `${routePath}.permission_check`,
+      message: `Authenticated API route \`${route.operationId}\` must declare a concrete permission check.`
+    });
+  }
+  if (route.auditEvent === 'none' || route.auditEvent.trim().length === 0) {
+    diagnostics.push({
+      code: 'API_CATALOG_ROUTE_AUDIT_EVENT_INVALID',
+      file: 'contracts/apis/catalog.yaml',
+      path: `${routePath}.audit_event`,
+      message: `API route \`${route.operationId}\` must declare a concrete audit event.`
+    });
+  }
 
   if (
     route.operationId === 'core.consent.policy_sets.resolve' &&
@@ -4543,6 +4622,22 @@ function validateSchemaDefinition(
         message: `Schema \`${schema.id}\` required field \`${field}\` must be snake_case.`
       });
     }
+  }
+
+  const allowedEmptyRequestSchemas = new Set([
+    'AuthSessionCurrentGetRequest',
+    'AbuseHealthGetRequest'
+  ]);
+  if (
+    schema.requiredFields.length === 0 &&
+    !(schema.kind === 'request' && allowedEmptyRequestSchemas.has(schema.id))
+  ) {
+    diagnostics.push({
+      code: 'API_SCHEMA_REQUIRED_FIELDS_EMPTY',
+      file: schemaBundle.file,
+      path: `${path}.required_fields`,
+      message: `Schema \`${schema.id}\` must declare at least one required field unless it is an explicitly bodyless request.`
+    });
   }
 
   for (const field of schema.optionalFields) {

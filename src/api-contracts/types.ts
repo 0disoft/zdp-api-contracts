@@ -493,6 +493,7 @@ export interface ApiRouteDefinition {
   readonly sessionEffect: string;
   readonly credentialPolicy: string;
   readonly exportPolicy?: string | null;
+  readonly authorizationPolicy?: string | null;
   readonly errorCodes: readonly string[];
 }
 

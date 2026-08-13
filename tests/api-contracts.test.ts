@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -958,6 +958,74 @@ describe('api contract checker', () => {
     );
   });
 
+  it('rejects extra product-link transitions and response refs', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      productLinkHandoff: {
+        ...contracts.productLinkHandoff,
+        transitions: [
+          ...contracts.productLinkHandoff.transitions,
+          { from: 'consumed', event: 'exchange', to: 'approved' }
+        ],
+        exchangeResponseRefs: [
+          ...contracts.productLinkHandoff.exchangeResponseRefs,
+          'access_token'
+        ]
+      }
+    });
+    expect(result.diagnostics.map((item) => item.code)).toContain(
+      'API_PRODUCT_LINK_TRANSITION_SET_INVALID'
+    );
+    expect(result.diagnostics.map((item) => item.code)).toContain(
+      'API_PRODUCT_LINK_RESPONSE_REF_SET_INVALID'
+    );
+  });
+
+  it('rejects sensitive-action route promotion and boundary drift', () => {
+    const contracts = loadCommittedContracts();
+    const route = routeAt(contracts, 1);
+    const result = validateApiContracts({
+      ...contracts,
+      sensitiveActionAuthorization: {
+        ...contracts.sensitiveActionAuthorization,
+        routeStatus: 'live_route_ready'
+      },
+      apiCatalog: {
+        ...contracts.apiCatalog,
+        routes: [{
+          ...route,
+          requestSchemaRef: 'contracts/apis/core-api/sensitive-action-authorization.yaml#SensitiveActionAuthorizationReceiptVerifyRequest',
+          responseSchemaRef: 'contracts/apis/core-api/sensitive-action-authorization.yaml#SensitiveActionAuthorizationReceiptVerifyResponse',
+          ownerBoundary: 'access'
+        }]
+      }
+    });
+    const codes = result.diagnostics.map((item) => item.code);
+    expect(codes).toContain('API_SENSITIVE_ACTION_BOUNDARY_INVALID');
+    expect(codes).toContain('API_SENSITIVE_ACTION_ROUTE_FORBIDDEN');
+  });
+
+  it('rejects empty fields outside explicit bodyless request schemas', () => {
+    const contracts = loadCommittedContracts();
+    const file = 'contracts/apis/core-api/auth-session-consumer.yaml';
+    const bundle = schemaBundleByFile(contracts, file);
+    const schemas = bundle.schemas.map((schema) =>
+      schema.id === 'AuthSessionCurrentGetResponse'
+        ? { ...schema, requiredFields: [] }
+        : schema
+    );
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: contracts.schemaBundles.map((candidate) =>
+        candidate.file === file ? { ...candidate, schemas } : candidate
+      )
+    });
+    expect(result.diagnostics.map((item) => item.code)).toContain(
+      'API_SCHEMA_REQUIRED_FIELDS_EMPTY'
+    );
+  });
+
   it('loads the reviewed global calculator batch with stable contract metadata', () => {
     const contracts = loadCommittedContracts();
 
@@ -1882,6 +1950,23 @@ describe('api contract checker', () => {
         'contracts/apis/money-api/referral-reward.yaml'
       ).schemas.map((schema) => schema.id)
     ).toContain('ReferralRewardStatusGetResponse');
+  });
+
+  it('rejects traversing schema refs before reading outside contracts', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'zdp-api-contracts-traversal-'));
+    const contractsRoot = join(root, 'contracts');
+    cpSync(join(process.cwd(), 'contracts'), contractsRoot, { recursive: true });
+    writeFileSync(
+      join(contractsRoot, 'apis', 'catalog.yaml'),
+      readFileSync(join(process.cwd(), 'contracts', 'apis', 'catalog.yaml'), 'utf8')
+        .replace(
+          'contracts/apis/core-api/customer-policy-registry.yaml#CustomerPolicySetResolveRequest',
+          'contracts/apis/../../../outside.yaml#OutsideRequest'
+        )
+    );
+    await expect(loadApiContracts(root)).rejects.toThrow(
+      'must use contracts/apis/<service>/<file>.yaml#PascalCaseSchema'
+    );
   });
 
   it('fails when a catalog route references a missing schema id', () => {
