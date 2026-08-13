@@ -279,6 +279,31 @@ describe('api contract checker', () => {
     );
   });
 
+  it('rejects extra credit-purchase request fields', () => {
+    const contracts = loadCommittedContracts();
+    const file = 'contracts/apis/money-api/credit-purchase.yaml';
+    const bundle = schemaBundleByFile(contracts, file);
+    const schemas = bundle.schemas.map((schema) =>
+      schema.id === 'CreditCheckoutIntentCreateRequest'
+        ? { ...schema, optionalFields: ['return_url', 'total_price'] }
+        : schema.id === 'CreditCheckoutReturnReceiptExchangeRequest'
+          ? { ...schema, optionalFields: ['provider_return_url'] }
+          : schema
+    );
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: contracts.schemaBundles.map((candidate) =>
+        candidate.file === file ? { ...candidate, schemas } : candidate
+      )
+    });
+    expect(result.diagnostics.map((item) => item.code)).toContain(
+      'API_CREDIT_PURCHASE_INTENT_SCHEMA_FIELD_SET_INVALID'
+    );
+    expect(result.diagnostics.map((item) => item.code)).toContain(
+      'API_CREDIT_PURCHASE_RETURN_RECEIPT_SECRET_POLICY_INVALID'
+    );
+  });
+
   it('keeps customer policy selection server-authoritative and receipt-bound', () => {
     const contracts = loadCommittedContracts();
     const registry = contracts.customerPolicyRegistry;
@@ -345,6 +370,26 @@ describe('api contract checker', () => {
           code: 'API_CUSTOMER_POLICY_CLIENT_AUTHORITY_FIELD_FORBIDDEN'
         })
       ])
+    );
+  });
+
+  it('rejects ordered policy digest fields in requests', () => {
+    const contracts = loadCommittedContracts();
+    const file = 'contracts/apis/core-api/customer-policy-registry.yaml';
+    const bundle = schemaBundleByFile(contracts, file);
+    const schemas = bundle.schemas.map((schema) =>
+      schema.id === 'CustomerPolicySetResolveRequest'
+        ? { ...schema, optionalFields: [...schema.optionalFields, 'ordered_content_digests'] }
+        : schema
+    );
+    const result = validateApiContracts({
+      ...contracts,
+      schemaBundles: contracts.schemaBundles.map((candidate) =>
+        candidate.file === file ? { ...candidate, schemas } : candidate
+      )
+    });
+    expect(result.diagnostics.map((item) => item.code)).toContain(
+      'API_CUSTOMER_POLICY_CLIENT_AUTHORITY_FIELD_FORBIDDEN'
     );
   });
 
@@ -499,6 +544,22 @@ describe('api contract checker', () => {
         'API_OIDC_CLIENT_REGISTRY_CLIENT_ID_DUPLICATE',
         'API_OIDC_CLIENT_REGISTRY_ENTRY_BOUNDARY_INVALID'
       ])
+    );
+  });
+
+  it('fails closed for active OIDC clients without modeled evidence binding', () => {
+    const contracts = loadCommittedContracts();
+    const client = contracts.oidcClientRegistry.entries[0];
+    if (client === undefined) throw new Error('Expected staging OIDC fixture.');
+    const result = validateApiContracts({
+      ...contracts,
+      oidcClientRegistry: {
+        ...contracts.oidcClientRegistry,
+        entries: [{ ...client, status: 'active', activationEvidenceRefs: ['placeholder'] }]
+      }
+    });
+    expect(result.diagnostics.map((item) => item.code)).toContain(
+      'API_OIDC_CLIENT_REGISTRY_ACTIVE_CLIENT_UNSUPPORTED'
     );
   });
 

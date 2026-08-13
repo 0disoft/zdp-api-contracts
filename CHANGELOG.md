@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## 0.29.3
+
+### Fixed
+
+- published package의 registry signature와 provenance를 확인한 뒤에만 consumer import를 실행한다.
+- proposed staging OIDC registry가 evidence binding을 표현하기 전에는 active client를 인증하지 못하도록 fail closed 처리했다.
+- staging trusted-edge policy resolver를 SDK와 public docs operation export에서 제외하고 ordered policy authority field를 request에서 거부한다.
+- abuse verification receipt를 output-only secret으로 분류하고 Money credit-purchase request schema를 정확한 field set으로 제한한다.
+
 ## 0.29.2
 
 ### Changed

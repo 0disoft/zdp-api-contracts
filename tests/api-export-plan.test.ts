@@ -57,7 +57,6 @@ describe('api export plan', () => {
       requiredMutationIdempotencyPolicy: 'required_idempotency_key'
     });
     expect(plan.operationIds).toEqual([
-      'core.consent.policy_sets.resolve',
       'core.auth.registrations.create',
       'core.auth.sessions.create',
       'core.auth.sessions.refresh',
@@ -190,6 +189,10 @@ describe('api export plan', () => {
           'environment',
           'action'
         ],
+        secretFields: ['verification_ref']
+      },
+      'contracts/apis/abuse-api/challenge.yaml#AbuseChallengeRedeemResponse': {
+        carriesSecretMaterial: true,
         secretFields: ['verification_ref']
       },
       'contracts/apis/money-api/referral-reward.yaml#ReferralRewardStatusGetResponse': {

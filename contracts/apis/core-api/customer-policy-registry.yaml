@@ -74,6 +74,8 @@ customer_policy_registry:
     - policy_set_revision
     - document_revision_ids
     - content_digests
+    - ordered_document_revision_ids
+    - ordered_content_digests
     - canonical_path
     - publication_status
     - reviewer_ref

@@ -120,7 +120,8 @@ schema_bundle:
         - challenge_response
     - id: AbuseChallengeRedeemResponse
       kind: response
-      carries_secret_material: false
+      carries_secret_material: true
+      secret_material_policy: verification_receipt_output_only_never_log_or_persist_plaintext
       session_effect: none
       required_fields:
         - verification_ref
@@ -129,6 +130,8 @@ schema_bundle:
         - action
         - verified_at
         - expires_at
+      secret_fields:
+        - verification_ref
     - id: AbuseVerificationVerifyRequest
       kind: request
       carries_secret_material: true

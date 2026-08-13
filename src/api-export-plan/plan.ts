@@ -130,6 +130,9 @@ export function buildApiExportPlan(
     }
   ];
 
+  const exportableRoutes = contracts.apiCatalog.routes.filter(
+    (route) => route.exportPolicy === null || route.exportPolicy === undefined
+  );
   const plan: ApiExportPlan = {
     status: 'plan-only',
     writesArtifacts: false,
@@ -143,9 +146,9 @@ export function buildApiExportPlan(
     noContentSuccessStatuses: [
       ...contracts.route.noContentSuccessStatuses
     ],
-    operationIds: contracts.apiCatalog.routes.map((route) => route.operationId),
+    operationIds: exportableRoutes.map((route) => route.operationId),
     typedFetchOperationMap: buildTypedFetchOperationMap(
-      contracts.apiCatalog.routes
+      exportableRoutes
     ),
     schemaModelMap: buildSchemaModelMap(contracts.schemaBundles),
     mutatingMethodsRequiringIdempotency: [

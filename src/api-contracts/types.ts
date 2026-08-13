@@ -492,6 +492,7 @@ export interface ApiRouteDefinition {
   readonly traceIdRequired: boolean;
   readonly sessionEffect: string;
   readonly credentialPolicy: string;
+  readonly exportPolicy?: string | null;
   readonly errorCodes: readonly string[];
 }
 

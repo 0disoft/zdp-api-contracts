@@ -2135,6 +2135,7 @@ function parseApiRouteDefinition(
     traceIdRequired: requiredBoolean(route, 'trace_id_required', context),
     sessionEffect: requiredString(route, 'session_effect', context),
     credentialPolicy: requiredString(route, 'credential_policy', context),
+    exportPolicy: optionalString(route, 'export_policy', context),
     errorCodes: requiredStringList(route, 'error_codes', context)
   };
 }

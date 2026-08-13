@@ -53,6 +53,7 @@ routes:
     trace_id_required: true
     session_effect: none
     credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    export_policy: staging_trusted_edge_only_not_sdk_or_public_docs
     error_codes:
       - invalid_policy_resolution_request
       - invalid_trusted_edge_proof

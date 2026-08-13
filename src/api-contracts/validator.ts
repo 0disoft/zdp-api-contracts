@@ -322,6 +322,8 @@ const CUSTOMER_POLICY_REQUEST_AUTHORITY_FIELDS = [
   'policy_set_revision',
   'document_revision_ids',
   'content_digests',
+  'ordered_document_revision_ids',
+  'ordered_content_digests',
   'canonical_path',
   'publication_status',
   'reviewer_ref'
@@ -395,6 +397,11 @@ const CREDIT_PURCHASE_INTENT_BINDINGS = [
   'scope_ref',
   'environment',
   'locale',
+  'return_target_id'
+] as const;
+const CREDIT_PURCHASE_RETURN_RECEIPT_BINDINGS = [
+  'return_receipt',
+  'product_ref',
   'return_target_id'
 ] as const;
 const CREDIT_PURCHASE_SERVER_REVALIDATED_CLAIMS = [
@@ -1300,6 +1307,13 @@ function validateOidcClientRegistry(
         'An active OIDC client must reference reviewed activation evidence; declaring requirements alone is not proof.'
       );
     }
+    if (client.status === 'active') {
+      push(
+        'API_OIDC_CLIENT_REGISTRY_ACTIVE_CLIENT_UNSUPPORTED',
+        `${path}.status`,
+        'This proposed staging registry cannot certify active clients until evidence bindings are represented and reviewed by the contract.'
+      );
+    }
   });
 
   const firstFixture = contract.entries.find(
@@ -1878,12 +1892,20 @@ function validateCreditPurchase(
       'Credit checkout intent request schema must exist.'
     );
   } else {
-    requireValues(
-      intentRequest.requiredFields,
-      CREDIT_PURCHASE_INTENT_BINDINGS,
-      'API_CREDIT_PURCHASE_INTENT_SCHEMA_BINDING_MISSING',
-      'schema_bundle.CreditCheckoutIntentCreateRequest.required_fields'
-    );
+    if (!hasExactStringValues(intentRequest.requiredFields, CREDIT_PURCHASE_INTENT_BINDINGS)) {
+      push(
+        'API_CREDIT_PURCHASE_INTENT_SCHEMA_FIELD_SET_INVALID',
+        'schema_bundle.CreditCheckoutIntentCreateRequest.required_fields',
+        'Checkout intent request must use exactly the canonical binding field set.'
+      );
+    }
+    if (intentRequest.optionalFields.length > 0) {
+      push(
+        'API_CREDIT_PURCHASE_INTENT_SCHEMA_FIELD_SET_INVALID',
+        'schema_bundle.CreditCheckoutIntentCreateRequest.optional_fields',
+        'Checkout intent request must not add fields outside the canonical binding set.'
+      );
+    }
     const declaredFields = new Set([
       ...intentRequest.requiredFields,
       ...intentRequest.optionalFields
@@ -1907,7 +1929,9 @@ function validateCreditPurchase(
     !receiptRequest.carriesSecretMaterial ||
     receiptRequest.secretMaterialPolicy !==
       'one_time_receipt_input_only_never_echo_or_persist_plaintext' ||
-    !receiptRequest.secretFields.includes('return_receipt')
+    !hasExactStringValues(receiptRequest.requiredFields, CREDIT_PURCHASE_RETURN_RECEIPT_BINDINGS) ||
+    receiptRequest.optionalFields.length > 0 ||
+    !hasExactStringValues(receiptRequest.secretFields, ['return_receipt'])
   ) {
     push(
       'API_CREDIT_PURCHASE_RETURN_RECEIPT_SECRET_POLICY_INVALID',
@@ -2146,6 +2170,10 @@ function validateAbuseChallenge(
   }
   if (
     !redeemResponse.requiredFields.includes('verification_ref') ||
+    !redeemResponse.carriesSecretMaterial ||
+    redeemResponse.secretMaterialPolicy !==
+      'verification_receipt_output_only_never_log_or_persist_plaintext' ||
+    !redeemResponse.secretFields.includes('verification_ref') ||
     !verifyRequest.requiredFields.includes('consumer_operation_ref') ||
     verifyRequest.secretMaterialPolicy !==
       'verification_receipt_input_only_never_echo_or_persist_plaintext' ||
@@ -4092,6 +4120,18 @@ function validateRouteDefinition(
     });
   }
 
+  if (
+    route.operationId === 'core.consent.policy_sets.resolve' &&
+    route.exportPolicy !== 'staging_trusted_edge_only_not_sdk_or_public_docs'
+  ) {
+    diagnostics.push({
+      code: 'API_CUSTOMER_POLICY_RESOLVE_EXPORT_POLICY_INVALID',
+      file: 'contracts/apis/catalog.yaml',
+      path: `${routePath}.export_policy`,
+      message: 'The staging trusted-edge policy resolver must remain excluded from SDK and public documentation exports.'
+    });
+  }
+
   if (!includesValue(ALLOWED_OWNER_BOUNDARIES, route.ownerBoundary)) {
     diagnostics.push({
       code: 'API_CATALOG_ROUTE_OWNER_BOUNDARY_INVALID',
@@ -4526,12 +4566,16 @@ function validateSchemaDefinition(
   }
 
   if (schema.carriesSecretMaterial) {
-    if (schema.kind !== 'request') {
+    if (
+      schema.kind !== 'request' &&
+      schema.secretMaterialPolicy !==
+        'verification_receipt_output_only_never_log_or_persist_plaintext'
+    ) {
       diagnostics.push({
         code: 'API_SCHEMA_SECRET_MATERIAL_ON_NON_REQUEST',
         file: schemaBundle.file,
         path: `${path}.carries_secret_material`,
-        message: `Only request schemas may carry secret material.`
+        message: `Only request schemas and explicitly output-only verification receipts may carry secret material.`
       });
     }
 
