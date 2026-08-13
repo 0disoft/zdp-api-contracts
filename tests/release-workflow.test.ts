@@ -147,6 +147,9 @@ describe('npm trusted publishing workflow', () => {
     expect(script).toContain("['audit', 'signatures']");
     expect(script).toContain("'zdp-api-contracts/api-contracts'");
     expect(script).toContain("'zdp-api-contracts/api-export-plan'");
+    expect(script.indexOf("['audit', 'signatures']")).toBeLessThan(
+      script.indexOf("['smoke.mjs', expectedVersion]")
+    );
   });
 });
 

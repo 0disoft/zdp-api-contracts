@@ -84,8 +84,8 @@ console.log(\`zdp-api-contracts@\${expectedVersion} registry consumer smoke pass
     ],
     smokeRoot
   );
-  await run('node', ['smoke.mjs', expectedVersion], smokeRoot);
   await run(npmCommand(), ['audit', 'signatures'], smokeRoot);
+  await run('node', ['smoke.mjs', expectedVersion], smokeRoot);
 } finally {
   await rm(smokeRoot, { recursive: true, force: true });
 }
