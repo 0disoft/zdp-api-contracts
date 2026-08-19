@@ -22,6 +22,8 @@
 
 `user_visible: false`는 오류 자체를 숨기라는 뜻이다. 제품은 해당 코드를 로그와 관측성에는 남길 수 있지만 사용자 메시지는 일반 오류로 치환해야 한다. `retryable: true`는 무조건 즉시 재시도하라는 뜻이 아니다. 제품과 SDK는 `Retry-After`, backoff, 작업 상태 재조회 같은 route별 정책을 함께 적용해야 한다.
 
+`contracts/sdk-generation-input.yaml`은 이 catalog를 생성 입력으로 선언하고 `http_status`, `retryable`, `user_visible`, `localization_key`, `owner_service_id`, `lifecycle_status`를 SDK 오류 metadata로 전달한다. SDK는 오류 code 문자열을 독자적으로 재분류하지 않는다.
+
 ## 변경 절차
 
 새 route 오류를 추가할 때 같은 PR에서 catalog entry를 먼저 등록한다. 기존 코드의 의미를 바꾸지 말고 새 코드를 만든다. 폐기할 때는 먼저 `deprecated`로 바꾸고 모든 route와 SDK 소비자를 이전한 뒤 `retired`로 승격한다. HTTP status, 사용자 노출, 소유 서비스 변경도 소비자 동작을 바꾸므로 계약 변경으로 취급한다.

@@ -23,6 +23,19 @@ describe('error code catalog', () => {
     const result = validateErrorCodeCatalog(catalog, contracts);
 
     expect(catalog.entries.length).toBeGreaterThan(0);
+    expect(contracts.sdkGenerationInput.sourceContracts).toContain(
+      'contracts/error-code-catalog.yaml'
+    );
+    expect(contracts.sdkGenerationInput.requiredErrorMetadata).toEqual(
+      expect.arrayContaining([
+        'http_status',
+        'retryable',
+        'user_visible',
+        'localization_key',
+        'owner_service_id',
+        'lifecycle_status'
+      ])
+    );
     expect(result.diagnostics).toEqual([]);
     expect(result.ok).toBe(true);
   });
@@ -97,7 +110,7 @@ describe('error code catalog', () => {
       loadApiContracts(repositoryRoot),
       loadErrorCodeCatalog(repositoryRoot)
     ]);
-    const original = requiredEntry(catalog, 'validation_failed');
+  const original = requiredEntry(catalog, 'validation_failed');
     const result = validateErrorCodeCatalog(
       replaceEntry(catalog, {
         ...original,
@@ -131,6 +144,6 @@ function replaceEntry(
     ...catalog,
     entries: catalog.entries.map((entry) =>
       entry.code === replacement.code ? replacement : entry
-    )
+   )
   };
 }
