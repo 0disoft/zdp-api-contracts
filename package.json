@@ -51,11 +51,13 @@
   "scripts": {
     "build": "bun scripts/build-package.ts",
     "build:emit": "tsc -p tsconfig.build.json",
-    "check": "tsc --noEmit && bun test && bun run contracts:check",
+    "check": "tsc --noEmit && bun test && bun run contracts:check && bun run openapi:check",
     "check:tsgo": "tsgo --noEmit",
     "test": "bun test",
     "contracts:check": "bun scripts/check-api-contracts.ts",
     "export:plan": "bun scripts/plan-api-exports.ts",
+    "openapi:check": "bun scripts/print-openapi.ts --check",
+    "openapi:print": "bun scripts/print-openapi.ts",
     "prepack": "bun run build",
     "smoke:package": "bun scripts/smoke-packed-package.ts",
     "smoke:published": "bun scripts/smoke-published-package.ts"
