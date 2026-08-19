@@ -55,6 +55,7 @@
     "check:tsgo": "tsgo --noEmit",
     "test": "bun test",
     "contracts:check": "bun scripts/check-api-contracts.ts",
+    "compatibility:check": "bun scripts/check-contract-compatibility.ts",
     "export:plan": "bun scripts/plan-api-exports.ts",
     "prepack": "bun run build",
     "smoke:package": "bun scripts/smoke-packed-package.ts",
