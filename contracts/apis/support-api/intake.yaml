@@ -39,6 +39,24 @@ schema_bundle:
         - account_ref
       secret_fields:
         - abuse_verification_ref
+      properties:
+        request_kind:
+          type: string
+        reply_address:
+          type: string
+          format: email
+        message:
+          type: string
+        locale:
+          type: string
+        abuse_verification_ref:
+          type: string
+        product_id:
+          type: string
+        privacy_action:
+          type: string
+        account_ref:
+          type: string
     - id: SupportCaseCreateResponse
       kind: response
       carries_secret_material: false
@@ -48,6 +66,16 @@ schema_bundle:
         - received_at
         - verification_state
         - next_step
+      properties:
+        case_id:
+          type: string
+        received_at:
+          type: string
+          format: date-time
+        verification_state:
+          type: string
+        next_step:
+          type: string
     - id: SupportCaseDetailReadRequest
       kind: request
       carries_secret_material: false
@@ -57,6 +85,17 @@ schema_bundle:
         - reason
         - audit_request_id
         - audit_policy_version
+      properties:
+        expected_source_version:
+          type: integer
+        purpose:
+          type: string
+        reason:
+          type: string
+        audit_request_id:
+          type: string
+        audit_policy_version:
+          type: string
     - id: SupportCaseDetailReadResponse
       kind: response
       carries_secret_material: false
@@ -75,6 +114,33 @@ schema_bundle:
       optional_fields:
         - product_id
         - privacy_action
+      properties:
+        case_id:
+          type: string
+        source_version:
+          type: integer
+        request_kind:
+          type: string
+        source_state:
+          type: string
+        sanitized_message:
+          type: string
+        masked_reply_address:
+          type: string
+        locale:
+          type: string
+        opened_at:
+          type: string
+          format: date-time
+        last_activity_at:
+          type: string
+          format: date-time
+        content_access:
+          type: string
+        product_id:
+          type: string
+        privacy_action:
+          type: string
     - id: SupportCaseStatusChangeRequest
       kind: request
       carries_secret_material: false
@@ -84,6 +150,17 @@ schema_bundle:
         - reason
         - audit_request_id
         - audit_policy_version
+      properties:
+        expected_source_version:
+          type: integer
+        target_state:
+          type: string
+        reason:
+          type: string
+        audit_request_id:
+          type: string
+        audit_policy_version:
+          type: string
     - id: SupportCaseStatusChangeResponse
       kind: response
       carries_secret_material: false
@@ -94,6 +171,18 @@ schema_bundle:
         - source_state
         - changed_at
         - replayed
+      properties:
+        case_id:
+          type: string
+        source_version:
+          type: integer
+        source_state:
+          type: string
+        changed_at:
+          type: string
+          format: date-time
+        replayed:
+          type: boolean
     - id: SupportCaseReplyCreateRequest
       kind: request
       carries_secret_material: false
@@ -103,6 +192,17 @@ schema_bundle:
         - reason
         - audit_request_id
         - audit_policy_version
+      properties:
+        expected_source_version:
+          type: integer
+        message:
+          type: string
+        reason:
+          type: string
+        audit_request_id:
+          type: string
+        audit_policy_version:
+          type: string
     - id: SupportCaseReplyCreateResponse
       kind: response
       carries_secret_material: false
@@ -115,6 +215,22 @@ schema_bundle:
         - delivery_state
         - created_at
         - replayed
+      properties:
+        case_id:
+          type: string
+        reply_id:
+          type: string
+        source_version:
+          type: integer
+        source_state:
+          type: string
+        delivery_state:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        replayed:
+          type: boolean
     - id: SupportCaseReplyAddressVerifyRequest
       kind: request
       carries_secret_material: true
@@ -123,6 +239,9 @@ schema_bundle:
         - verification_ref
       secret_fields:
         - verification_ref
+      properties:
+        verification_ref:
+          type: string
     - id: SupportCaseReplyAddressVerifyResponse
       kind: response
       carries_secret_material: false
@@ -133,3 +252,15 @@ schema_bundle:
         - source_state
         - changed_at
         - replayed
+      properties:
+        case_id:
+          type: string
+        source_version:
+          type: integer
+        source_state:
+          type: string
+        changed_at:
+          type: string
+          format: date-time
+        replayed:
+          type: boolean

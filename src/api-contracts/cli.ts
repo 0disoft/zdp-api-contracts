@@ -1,10 +1,10 @@
-import { loadApiContracts } from './parser.js';
-import { validateApiContracts } from './validator.js';
 import {
   loadErrorCodeCatalog,
   validateErrorCodeCatalog
 } from './error-code-catalog.js';
 import type { ApiContractDiagnostic } from './types.js';
+import { loadApiContracts } from './registry-loader.js';
+import { validateApiContracts } from './registry-validator.js';
 
 export async function runApiContractCheckCli(
   argv: readonly string[]

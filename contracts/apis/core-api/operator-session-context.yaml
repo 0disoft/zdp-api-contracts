@@ -28,6 +28,7 @@ schema_bundle:
       kind: request
       carries_secret_material: false
       required_fields: []
+      properties: {}
     - id: OperatorSessionContextGetResponse
       kind: response
       carries_secret_material: false
@@ -39,3 +40,19 @@ schema_bundle:
         - capabilities
         - expires_at
         - policy_version
+      properties:
+        operator_ref:
+          type: string
+        organization_ref:
+          type: string
+        role:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        expires_at:
+          type: string
+          format: date-time
+        policy_version:
+          type: string

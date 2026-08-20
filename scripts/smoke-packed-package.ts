@@ -43,7 +43,10 @@ import {
   validateApiContracts,
   validateErrorCodeCatalog
 } from 'zdp-api-contracts/api-contracts';
-import { buildApiExportPlan } from 'zdp-api-contracts/api-export-plan';
+import {
+  buildApiExportPlan,
+  buildOpenApi31Document
+} from 'zdp-api-contracts/api-export-plan';
 
 const contractUrl = import.meta.resolve(
   'zdp-api-contracts/contracts/calculators/conformance.yaml'
@@ -79,6 +82,11 @@ if (
 ) {
   throw new Error('API export plan subpath was not consumable.');
 }
+
+const openapi = await buildOpenApi31Document(installedPackageRoot);
+if (!openapi.ok || openapi.document?.openapi !== '3.1.0') {
+  throw new Error('OpenAPI 3.1 export was not consumable.');
+}
 console.log('zdp-api-contracts tarball smoke passed.');
 `,
   'utf8'
@@ -89,6 +97,7 @@ await run(
   npmCommand(),
   [
     'install',
+    '--engine-strict',
     '--ignore-scripts',
     '--no-audit',
     '--no-fund',

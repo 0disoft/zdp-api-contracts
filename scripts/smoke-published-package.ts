@@ -37,7 +37,10 @@ import {
   validateApiContracts,
   validateErrorCodeCatalog
 } from 'zdp-api-contracts/api-contracts';
-import { buildApiExportPlan } from 'zdp-api-contracts/api-export-plan';
+import {
+  buildApiExportPlan,
+  buildOpenApi31Document
+} from 'zdp-api-contracts/api-export-plan';
 
 const expectedVersion = process.argv[2];
 const installedManifest = JSON.parse(
@@ -81,6 +84,11 @@ if (
 ) {
   throw new Error('Published API export plan subpath was not consumable.');
 }
+
+const openapi = await buildOpenApi31Document(installedPackageRoot);
+if (!openapi.ok || openapi.document?.openapi !== '3.1.0') {
+  throw new Error('Published OpenAPI 3.1 export was not consumable.');
+}
 console.log(\`zdp-api-contracts@\${expectedVersion} registry consumer smoke passed.\`);
 `,
     'utf8'
@@ -90,6 +98,7 @@ console.log(\`zdp-api-contracts@\${expectedVersion} registry consumer smoke pass
     npmCommand(),
     [
       'install',
+      '--engine-strict',
       '--ignore-scripts',
       '--no-audit',
       '--no-fund',
