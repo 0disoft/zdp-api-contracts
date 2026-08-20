@@ -1,5 +1,5 @@
-import { loadApiContracts } from './strict-parser.js';
-import { validateApiContracts } from './validator.js';
+import { loadApiContracts } from './registry-loader.js';
+import { validateApiContracts } from './registry-validator.js';
 
 export async function runApiContractCheckCli(
   argv: readonly string[]

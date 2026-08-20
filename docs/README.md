@@ -11,6 +11,7 @@
 | webhook handoff | `contracts/webhook-contract.md` |
 | SDK generation input | `contracts/sdk-generation.md` |
 | export dry-run plan | `ops/export-plan.md` |
+| contract family registry | `ops/contract-family-registry.md` |
 | package surface | `ops/package-surface.md` |
 | calculator contract | `contracts/calculator-contract.md` |
 | 데스크톱 제품 계정 연결 | `contracts/desktop-product-link.md` |

@@ -11,7 +11,6 @@ export {
   parseSensitiveActionAuthorizationContract
 } from './parser.js';
 export {
-  loadApiContracts,
   parseAbuseChallengeContract,
   parseApiCatalogContract,
   parseApiSchemaBundleContract,
@@ -23,3 +22,5 @@ export {
 } from './strict-parser.js';
 export * from './types.js';
 export * from './validator.js';
+export { loadApiContracts } from './registry-loader.js';
+export { validateApiContracts } from './registry-validator.js';

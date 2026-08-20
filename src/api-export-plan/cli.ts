@@ -1,5 +1,5 @@
-import { loadApiContracts } from '../api-contracts/strict-parser.js';
-import { buildApiExportPlan } from './plan.js';
+import { loadApiContracts } from '../api-contracts/registry-loader.js';
+import { buildApiExportPlan } from './registry-plan.js';
 
 export async function runApiExportPlanCli(
   argv: readonly string[]
