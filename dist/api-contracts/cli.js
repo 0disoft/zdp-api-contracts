@@ -1,4 +1,4 @@
-import { loadApiContracts } from './parser.js';
+import { loadApiContracts } from './strict-parser.js';
 import { validateApiContracts } from './validator.js';
 export async function runApiContractCheckCli(argv) {
     if (argv.includes('--help') || argv.includes('-h')) {
