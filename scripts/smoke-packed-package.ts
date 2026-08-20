@@ -37,7 +37,12 @@ await writeFile(
   `import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { parseCalculatorConformanceContract } from 'zdp-api-contracts';
-import { loadApiContracts, validateApiContracts } from 'zdp-api-contracts/api-contracts';
+import {
+  loadApiContracts,
+  loadErrorCodeCatalog,
+  validateApiContracts,
+  validateErrorCodeCatalog
+} from 'zdp-api-contracts/api-contracts';
 import {
   buildApiExportPlan,
   buildOpenApi31Document
@@ -57,6 +62,15 @@ const contracts = await loadApiContracts(installedPackageRoot);
 const validation = validateApiContracts(contracts);
 if (!validation.ok) {
   throw new Error('API contract validator subpath was not consumable.');
+}
+
+const errorCodeCatalog = await loadErrorCodeCatalog(installedPackageRoot);
+const errorCodeValidation = validateErrorCodeCatalog(
+  errorCodeCatalog,
+  contracts
+);
+if (!errorCodeValidation.ok) {
+  throw new Error('Error code catalog validator subpath was not consumable.');
 }
 
 const exportPlan = buildApiExportPlan(contracts);

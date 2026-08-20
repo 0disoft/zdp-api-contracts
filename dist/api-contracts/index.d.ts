@@ -1,3 +1,4 @@
+export * from './error-code-catalog.js';
 export { ApiContractLoadError, parseAccessDecisionContract, parseCalculatorCatalogContract, parseCalculatorConformanceContract, parseCreditPurchaseContract, parseCustomerPolicyRegistryContract, parseOidcClientRegistryContract, parseOidcProductSessionContract, parseOidcProviderRuntimeContract, parseSensitiveActionAuthorizationContract } from './parser.js';
 export { parseAbuseChallengeContract, parseApiCatalogContract, parseApiSchemaBundleContract, parseErrorEnvelopeContract, parseProductLinkHandoffContract, parseRouteContract, parseSdkGenerationInputContract, parseWebhookContract } from './strict-parser.js';
 export * from './types.js';

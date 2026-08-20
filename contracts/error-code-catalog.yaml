@@ -1,0 +1,243 @@
+error_code_catalog:
+  schema_version: 1
+  status: active
+  defaults:
+    retryable: false
+    user_visible: true
+    localization_key_prefix: api.errors.
+    lifecycle_status: active
+  entries:
+  - code: abuse_verification_failed
+    http_status: 403
+    owner_service_id: support-intake-api
+  - code: access_denied
+    http_status: 403
+    owner_service_id: core-api
+  - code: account_restricted
+    http_status: 403
+    owner_service_id: shared
+  - code: action_not_allowed
+    http_status: 403
+    owner_service_id: abuse-api
+  - code: authentication_failed
+    http_status: 401
+    owner_service_id: shared
+  - code: authorization_pending
+    http_status: 409
+    owner_service_id: core-api
+    retryable: true
+  - code: binding_mismatch
+    http_status: 409
+    owner_service_id: abuse-api
+    user_visible: false
+  - code: catalog_unavailable
+    http_status: 503
+    owner_service_id: money-api
+    retryable: true
+  - code: challenge_already_consumed
+    http_status: 409
+    owner_service_id: core-api
+  - code: challenge_already_redeemed
+    http_status: 409
+    owner_service_id: abuse-api
+  - code: challenge_expired
+    http_status: 410
+    owner_service_id: shared
+  - code: challenge_invalid
+    http_status: 400
+    owner_service_id: shared
+  - code: consent_required
+    http_status: 428
+    owner_service_id: core-api
+  - code: correlation_mismatch
+    http_status: 409
+    owner_service_id: core-api
+    user_visible: false
+  - code: idempotency_conflict
+    http_status: 409
+    owner_service_id: shared
+  - code: identity_conflict
+    http_status: 409
+    owner_service_id: core-api
+  - code: invalid_policy_resolution_request
+    http_status: 400
+    owner_service_id: core-api
+  - code: invalid_status_transition
+    http_status: 409
+    owner_service_id: support-intake-api
+  - code: invalid_trusted_edge_proof
+    http_status: 403
+    owner_service_id: core-api
+    user_visible: false
+  - code: not_found
+    http_status: 404
+    owner_service_id: money-api
+  - code: oauth_state_mismatch
+    http_status: 400
+    owner_service_id: core-api
+  - code: operator_context_unavailable
+    http_status: 503
+    owner_service_id: core-api
+    retryable: true
+    user_visible: false
+  - code: operator_permission_denied
+    http_status: 403
+    owner_service_id: core-api
+    user_visible: false
+  - code: operator_session_expired
+    http_status: 401
+    owner_service_id: core-api
+    user_visible: false
+  - code: operator_session_required
+    http_status: 401
+    owner_service_id: core-api
+    user_visible: false
+  - code: operator_session_revoked
+    http_status: 401
+    owner_service_id: core-api
+    user_visible: false
+  - code: origin_proof_failed
+    http_status: 403
+    owner_service_id: support-intake-api
+    user_visible: false
+  - code: passkey_challenge_expired
+    http_status: 410
+    owner_service_id: core-api
+  - code: payment_unavailable
+    http_status: 503
+    owner_service_id: money-api
+    retryable: true
+  - code: policy_resolution_conflict
+    http_status: 409
+    owner_service_id: core-api
+  - code: policy_resolution_unavailable
+    http_status: 503
+    owner_service_id: core-api
+    retryable: true
+  - code: policy_set_unavailable
+    http_status: 503
+    owner_service_id: core-api
+    retryable: true
+  - code: policy_unavailable
+    http_status: 503
+    owner_service_id: core-api
+    retryable: true
+  - code: product_mismatch
+    http_status: 409
+    owner_service_id: money-api
+  - code: product_not_allowed
+    http_status: 403
+    owner_service_id: core-api
+  - code: product_not_found
+    http_status: 404
+    owner_service_id: money-api
+  - code: proof_verifier_mismatch
+    http_status: 400
+    owner_service_id: core-api
+  - code: provider_unavailable
+    http_status: 503
+    owner_service_id: shared
+    retryable: true
+  - code: rate_limited
+    http_status: 429
+    owner_service_id: shared
+    retryable: true
+  - code: receipt_already_consumed
+    http_status: 409
+    owner_service_id: money-api
+  - code: receipt_expired
+    http_status: 410
+    owner_service_id: money-api
+  - code: receipt_invalid
+    http_status: 400
+    owner_service_id: money-api
+  - code: reply_address_unverified
+    http_status: 428
+    owner_service_id: support-intake-api
+  - code: return_target_mismatch
+    http_status: 409
+    owner_service_id: money-api
+  - code: return_target_not_registered
+    http_status: 400
+    owner_service_id: money-api
+  - code: risk_hold
+    http_status: 423
+    owner_service_id: money-api
+  - code: sale_unavailable
+    http_status: 409
+    owner_service_id: money-api
+    retryable: true
+  - code: scope_access_denied
+    http_status: 403
+    owner_service_id: shared
+  - code: scope_not_allowed
+    http_status: 403
+    owner_service_id: core-api
+  - code: session_compromised
+    http_status: 401
+    owner_service_id: core-api
+    user_visible: false
+  - code: session_expired
+    http_status: 401
+    owner_service_id: core-api
+  - code: session_policy_failed
+    http_status: 403
+    owner_service_id: core-api
+  - code: session_revoked
+    http_status: 401
+    owner_service_id: core-api
+  - code: ship_tier_not_found
+    http_status: 404
+    owner_service_id: money-api
+  - code: slow_down
+    http_status: 429
+    owner_service_id: core-api
+    retryable: true
+  - code: support_case_detail_read_denied
+    http_status: 403
+    owner_service_id: support-intake-api
+    user_visible: false
+  - code: support_case_not_found
+    http_status: 404
+    owner_service_id: support-intake-api
+  - code: support_case_reply_denied
+    http_status: 403
+    owner_service_id: support-intake-api
+    user_visible: false
+  - code: support_case_status_change_denied
+    http_status: 403
+    owner_service_id: support-intake-api
+    user_visible: false
+  - code: support_case_version_stale
+    http_status: 409
+    owner_service_id: support-intake-api
+    retryable: true
+  - code: support_intake_unavailable
+    http_status: 503
+    owner_service_id: support-intake-api
+    retryable: true
+  - code: support_source_unavailable
+    http_status: 503
+    owner_service_id: support-intake-api
+    retryable: true
+  - code: validation_failed
+    http_status: 400
+    owner_service_id: shared
+  - code: verification_already_consumed
+    http_status: 409
+    owner_service_id: abuse-api
+    user_visible: false
+  - code: verification_expired
+    http_status: 410
+    owner_service_id: abuse-api
+    user_visible: false
+  - code: verification_invalid
+    http_status: 400
+    owner_service_id: abuse-api
+    user_visible: false
+  - code: verification_receipt_invalid
+    http_status: 400
+    owner_service_id: support-intake-api
+  - code: workspace_access_denied
+    http_status: 403
+    owner_service_id: core-api

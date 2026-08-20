@@ -1,3 +1,4 @@
+export * from './error-code-catalog.js';
 export {
   ApiContractLoadError,
   parseAccessDecisionContract,

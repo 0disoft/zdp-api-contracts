@@ -1,3 +1,8 @@
+import {
+  loadErrorCodeCatalog,
+  validateErrorCodeCatalog
+} from './error-code-catalog.js';
+import type { ApiContractDiagnostic } from './types.js';
 import { loadApiContracts } from './registry-loader.js';
 import { validateApiContracts } from './registry-validator.js';
 
@@ -9,23 +14,27 @@ export async function runApiContractCheckCli(
     return 0;
   }
 
-  let result;
+  let diagnostics: readonly ApiContractDiagnostic[];
   try {
     const contracts = await loadApiContracts();
-    result = validateApiContracts(contracts);
+    const errorCodeCatalog = await loadErrorCodeCatalog();
+    diagnostics = [
+      ...validateApiContracts(contracts).diagnostics,
+      ...validateErrorCodeCatalog(errorCodeCatalog, contracts).diagnostics
+    ];
   } catch (error) {
     console.error('API contract check failed.');
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
 
-  if (result.ok) {
+  if (diagnostics.length === 0) {
     console.log('API contract check passed.');
     return 0;
   }
 
   console.error('API contract check failed.');
-  for (const diagnostic of result.diagnostics) {
+  for (const diagnostic of diagnostics) {
     console.error(
       `${diagnostic.code} ${diagnostic.file}#${diagnostic.path}: ${diagnostic.message}`
     );
@@ -38,5 +47,7 @@ function printHelp(): void {
   console.log(`Usage:
   bun scripts/check-api-contracts.ts
 
-Checks contracts/route-contract.yaml, error-envelope.yaml, webhook-contract.yaml, sdk-generation-input.yaml, calculators/catalog.yaml, calculators/conformance.yaml, and apis/catalog.yaml without implementing live API handlers, calculation engines, or SDK output.`);
+Checks route, schema bundle, error envelope, central error code catalog, webhook,
+SDK generation, calculator, and API catalog contracts without implementing live
+API handlers, calculation engines, or SDK output.`);
 }

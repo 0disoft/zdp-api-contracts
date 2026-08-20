@@ -15,8 +15,8 @@ export function buildApiExportPlan(contracts) {
     const outputs = result.plan.outputs.map((output) => ({
         ...output,
         sourceContracts: uniquePreservingOrder([
-            ...apiContractFamilySourcesForExport(output.kind),
-            ...output.sourceContracts
+            ...output.sourceContracts,
+            ...apiContractFamilySourcesForExport(output.kind)
         ])
     }));
     return {
