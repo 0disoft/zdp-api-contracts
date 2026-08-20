@@ -75,6 +75,7 @@ await run(
   npmCommand(),
   [
     'install',
+    '--engine-strict',
     '--ignore-scripts',
     '--no-audit',
     '--no-fund',

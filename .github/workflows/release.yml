@@ -99,6 +99,9 @@ jobs:
       - name: Verify export plan
         run: bun run export:plan
 
+      - name: Verify generated dist
+        run: bun run dist:check
+
       - name: Verify packed consumer
         run: bun run smoke:package
 
