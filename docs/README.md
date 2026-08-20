@@ -11,6 +11,7 @@
 | webhook handoff | `contracts/webhook-contract.md` |
 | SDK generation input | `contracts/sdk-generation.md` |
 | export dry-run plan | `ops/export-plan.md` |
+| contract family registry | `ops/contract-family-registry.md` |
 | package surface | `ops/package-surface.md` |
 | 계약 호환성 및 SemVer gate | `ops/contract-compatibility.md` |
 | breaking migration 문서 | `migrations/README.md` |
