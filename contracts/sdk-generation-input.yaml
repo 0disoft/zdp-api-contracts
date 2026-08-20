@@ -3,6 +3,7 @@ sdk_generation_input:
   source_contracts:
     - contracts/route-contract.yaml
     - contracts/error-envelope.yaml
+    - contracts/error-code-catalog.yaml
     - contracts/webhook-contract.yaml
     - contracts/sdk-generation-input.yaml
     - contracts/apis/catalog.yaml
@@ -61,6 +62,12 @@ sdk_generation_input:
     - trace_id
     - retry_after_seconds
     - documentation_url
+    - http_status
+    - retryable
+    - user_visible
+    - localization_key
+    - owner_service_id
+    - lifecycle_status
   required_client_runtime_metadata:
     - typed_fetch_operation_map
     - standard_error_envelope_normalization

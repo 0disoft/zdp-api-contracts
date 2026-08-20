@@ -1,6 +1,6 @@
 {
   "name": "zdp-api-contracts",
-  "version": "0.33.0",
+  "version": "0.35.0",
   "private": false,
   "license": "MIT",
   "type": "module",
@@ -15,6 +15,9 @@
   "homepage": "https://github.com/0disoft/zdp-api-contracts#readme",
   "bin": {
     "zdp-api-contracts": "./dist/api-contracts/cli-bin.js"
+  },
+  "engines": {
+    "node": "^22.0.0 || ^24.0.0"
   },
   "exports": {
     ".": {
@@ -54,11 +57,15 @@
   "scripts": {
     "build": "bun scripts/build-package.ts",
     "build:emit": "tsc -p tsconfig.build.json",
-    "check": "tsc --noEmit && bun test && bun run contracts:check",
+    "dist:check": "bun run build && bun scripts/check-generated-dist.ts",
+    "check": "tsc --noEmit && bun test && bun run contracts:check && bun run openapi:check",
     "check:tsgo": "tsgo --noEmit",
     "test": "bun test",
     "contracts:check": "bun scripts/check-api-contracts.ts",
+    "compatibility:check": "bun scripts/check-contract-compatibility.ts",
     "export:plan": "bun scripts/plan-api-exports.ts",
+    "openapi:check": "bun scripts/print-openapi.ts --check",
+    "openapi:print": "bun scripts/print-openapi.ts",
     "prepack": "bun run build",
     "smoke:package": "bun scripts/smoke-packed-package.ts",
     "smoke:published": "bun scripts/smoke-published-package.ts"

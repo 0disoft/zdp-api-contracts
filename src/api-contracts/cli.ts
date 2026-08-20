@@ -1,10 +1,12 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
+import { ApiContractLoadError } from './parser.js';
 import {
-  ApiContractLoadError,
-  loadApiContracts
-} from './parser.js';
-import { validateApiContracts } from './validator.js';
+  loadErrorCodeCatalog,
+  validateErrorCodeCatalog
+} from './error-code-catalog.js';
+import { loadApiContracts } from './registry-loader.js';
+import { validateApiContracts } from './registry-validator.js';
 import type {
   ApiContractDiagnostic,
   ApiContractValidationResult,
@@ -67,7 +69,15 @@ export async function runApiContractCheckCli(
 
   try {
     const contracts = await loadApiContracts(root);
-    contractValidation = validateApiContracts(contracts);
+    const errorCodeCatalog = await loadErrorCodeCatalog(root);
+    const diagnostics = [
+      ...validateApiContracts(contracts).diagnostics,
+      ...validateErrorCodeCatalog(errorCodeCatalog, contracts).diagnostics
+    ];
+    contractValidation = {
+      ok: diagnostics.length === 0,
+      diagnostics
+    };
 
     if (options.openApi !== null) {
       const openApiFile = resolve(runtime.cwd, options.openApi);

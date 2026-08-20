@@ -480,6 +480,7 @@ export interface ApiSchemaDefinition {
     readonly requiredFields: readonly string[];
     readonly optionalFields: readonly string[];
     readonly secretFields: readonly string[];
+    readonly properties?: unknown;
 }
 export interface ApiContractDiagnostic {
     readonly code: string;

@@ -39,8 +39,16 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseCalculatorConformanceContract } from 'zdp-api-contracts';
-import { loadApiContracts, validateApiContracts } from 'zdp-api-contracts/api-contracts';
-import { buildApiExportPlan } from 'zdp-api-contracts/api-export-plan';
+import {
+  loadApiContracts,
+  loadErrorCodeCatalog,
+  validateApiContracts,
+  validateErrorCodeCatalog
+} from 'zdp-api-contracts/api-contracts';
+import {
+  buildApiExportPlan,
+  buildOpenApi31Document
+} from 'zdp-api-contracts/api-export-plan';
 
 const contractUrl = import.meta.resolve(
   'zdp-api-contracts/contracts/calculators/conformance.yaml'
@@ -66,6 +74,15 @@ const contracts = await loadApiContracts(installedPackageRoot);
 const validation = validateApiContracts(contracts);
 if (!validation.ok) {
   throw new Error('API contract validator subpath was not consumable.');
+}
+
+const errorCodeCatalog = await loadErrorCodeCatalog(installedPackageRoot);
+const errorCodeValidation = validateErrorCodeCatalog(
+  errorCodeCatalog,
+  contracts
+);
+if (!errorCodeValidation.ok) {
+  throw new Error('Error code catalog validator subpath was not consumable.');
 }
 
 const exportPlan = buildApiExportPlan(contracts);
@@ -103,6 +120,10 @@ if (
   throw new Error('Installed CLI did not return a successful JSON report.');
 }
 
+const openapi = await buildOpenApi31Document(installedPackageRoot);
+if (!openapi.ok || openapi.document?.openapi !== '3.1.0') {
+  throw new Error('OpenAPI 3.1 export was not consumable.');
+}
 console.log('zdp-api-contracts tarball smoke passed.');
 `,
   'utf8'
@@ -113,6 +134,7 @@ await run(
   npmCommand(),
   [
     'install',
+    '--engine-strict',
     '--ignore-scripts',
     '--no-audit',
     '--no-fund',
