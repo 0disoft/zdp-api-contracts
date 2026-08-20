@@ -1,3 +1,4 @@
-import { runApiContractCheckCli } from '../src/api-contracts/cli';
+#!/usr/bin/env node
+import { runApiContractCheckCli } from './cli.js';
 
 process.exitCode = await runApiContractCheckCli(process.argv.slice(2));

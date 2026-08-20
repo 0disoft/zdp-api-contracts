@@ -34,7 +34,9 @@ await writeFile(
 );
 await writeFile(
   join(consumerRoot, 'smoke.mjs'),
-  `import { readFile } from 'node:fs/promises';
+  `import { spawnSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseCalculatorConformanceContract } from 'zdp-api-contracts';
 import {
@@ -58,6 +60,16 @@ if (contract.contractVersion !== '1.0.0' || contract.cases.length < 1) {
 }
 
 const installedPackageRoot = fileURLToPath(new URL('../../', contractUrl));
+const installedManifest = JSON.parse(
+  await readFile(join(installedPackageRoot, 'package.json'), 'utf8')
+);
+if (
+  installedManifest.bin?.['zdp-api-contracts'] !==
+  './dist/api-contracts/cli-bin.js'
+) {
+  throw new Error('Package bin map did not expose zdp-api-contracts.');
+}
+
 const contracts = await loadApiContracts(installedPackageRoot);
 const validation = validateApiContracts(contracts);
 if (!validation.ok) {
@@ -81,6 +93,31 @@ if (
   exportPlan.plan.publishesSchemas !== false
 ) {
   throw new Error('API export plan subpath was not consumable.');
+}
+
+const cli = spawnSync(
+  process.execPath,
+  [
+    join(installedPackageRoot, 'dist', 'api-contracts', 'cli-bin.js'),
+    '--root',
+    installedPackageRoot,
+    '--format',
+    'json'
+  ],
+  { cwd: process.cwd(), encoding: 'utf8' }
+);
+if (cli.status !== 0) {
+  throw new Error(
+    \`Installed CLI failed with status \${cli.status}: \${cli.stderr || cli.stdout}\`
+  );
+}
+const cliReport = JSON.parse(cli.stdout);
+if (
+  cliReport.schemaVersion !== 1 ||
+  cliReport.ok !== true ||
+  cliReport.contractValidation?.ok !== true
+) {
+  throw new Error('Installed CLI did not return a successful JSON report.');
 }
 
 const openapi = await buildOpenApi31Document(installedPackageRoot);

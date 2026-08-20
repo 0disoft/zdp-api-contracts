@@ -1,4 +1,4 @@
-import { rm } from 'node:fs/promises';
+import { chmod, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const repositoryRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -14,3 +14,5 @@ const exitCode = await processHandle.exited;
 if (exitCode !== 0) {
   throw new Error(`Package declaration build failed with exit code ${exitCode}.`);
 }
+
+await chmod(new URL('../dist/api-contracts/cli-bin.js', import.meta.url), 0o755);

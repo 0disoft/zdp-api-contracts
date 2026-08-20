@@ -15,6 +15,7 @@
 | export dry-run plan | `ops/export-plan.md` |
 | contract family registry | `ops/contract-family-registry.md` |
 | package surface | `ops/package-surface.md` |
+| contract CLI | `ops/contract-cli.md` |
 | 계약 호환성 및 SemVer gate | `ops/contract-compatibility.md` |
 | breaking migration 문서 | `migrations/README.md` |
 | calculator contract | `contracts/calculator-contract.md` |
