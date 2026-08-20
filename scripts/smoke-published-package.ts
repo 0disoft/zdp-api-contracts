@@ -84,6 +84,7 @@ console.log(\`zdp-api-contracts@\${expectedVersion} registry consumer smoke pass
     npmCommand(),
     [
       'install',
+      '--engine-strict',
       '--ignore-scripts',
       '--no-audit',
       '--no-fund',

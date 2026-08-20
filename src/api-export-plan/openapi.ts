@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { loadApiContracts } from '../api-contracts/parser.js';
+import { loadApiContracts } from '../api-contracts/registry-loader.js';
 import type {
   ApiContractDiagnostic,
   ApiContracts,

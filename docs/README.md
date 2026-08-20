@@ -12,7 +12,10 @@
 | SDK generation input | `contracts/sdk-generation.md` |
 | typed schema와 OpenAPI 3.1 | `contracts/typed-schema-model.md` |
 | export dry-run plan | `ops/export-plan.md` |
+| contract family registry | `ops/contract-family-registry.md` |
 | package surface | `ops/package-surface.md` |
+| 계약 호환성 및 SemVer gate | `ops/contract-compatibility.md` |
+| breaking migration 문서 | `migrations/README.md` |
 | calculator contract | `contracts/calculator-contract.md` |
 | 데스크톱 제품 계정 연결 | `contracts/desktop-product-link.md` |
 | 민감 행위 authorization receipt | `contracts/sensitive-action-authorization.md` |
