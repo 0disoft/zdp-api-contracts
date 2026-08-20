@@ -14,7 +14,7 @@ import {
   type ApiContractCompatibilityReport,
   type ApiContractMigrationDocument
 } from './lib/contract-compatibility';
-import { loadApiContracts } from '../src/api-contracts/parser';
+import { loadApiContracts } from '../src/api-contracts/registry-loader';
 
 const execFileAsync = promisify(execFile);
 const repositoryRoot = fileURLToPath(new URL('..', import.meta.url));

@@ -5,7 +5,7 @@ import {
   migrationDocumentPath,
   type ApiContractCompatibilityReport
 } from '../scripts/lib/contract-compatibility';
-import { loadApiContracts } from '../src/api-contracts/parser';
+import { loadApiContracts } from '../src/api-contracts/registry-loader';
 import type {
   ApiContracts,
   ApiRouteDefinition,
