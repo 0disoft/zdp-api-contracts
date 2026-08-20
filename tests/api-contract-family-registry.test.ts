@@ -7,7 +7,7 @@ import {
   listApiSchemaBundleSourcePaths,
   validateApiContractFamilyRegistry
 } from '../src/api-contracts/family-registry';
-import { loadApiContracts as loadLegacyApiContracts } from '../src/api-contracts/parser';
+import { loadApiContracts as loadStrictApiContracts } from '../src/api-contracts/strict-parser';
 import { loadApiContracts } from '../src/api-contracts/registry-loader';
 import {
   validateApiContractValidationRegistry,
@@ -40,13 +40,13 @@ describe('api contract family registry', () => {
     expect(codes).toContain('API_CONTRACT_FAMILY_SOURCE_DUPLICATE');
   });
 
-  it('loads the same committed contract graph as the compatibility loader', async () => {
-    const [registeredContracts, legacyContracts] = await Promise.all([
+  it('loads the same committed contract graph as the strict loader', async () => {
+    const [registeredContracts, strictContracts] = await Promise.all([
       loadApiContracts(repositoryRoot),
-      loadLegacyApiContracts(repositoryRoot)
+      loadStrictApiContracts(repositoryRoot)
     ]);
 
-    expect(registeredContracts).toEqual(legacyContracts);
+    expect(registeredContracts).toEqual(strictContracts);
     expect(
       registeredContracts.schemaBundles.map((bundle) => bundle.file)
     ).toEqual([

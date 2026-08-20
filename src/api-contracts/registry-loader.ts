@@ -9,9 +9,9 @@ import {
   type ApiContractFamilyRegistration
 } from './family-registry.js';
 import {
-  ApiContractLoadError,
   parseApiSchemaBundleContract
-} from './parser.js';
+} from './strict-parser.js';
+import { ApiContractLoadError } from './parser.js';
 import type {
   ApiContractDiagnostic,
   ApiContracts,

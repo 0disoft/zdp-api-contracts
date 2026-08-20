@@ -1,20 +1,22 @@
 import {
   parseAbuseChallengeContract,
-  parseAccessDecisionContract,
   parseApiCatalogContract,
+  parseErrorEnvelopeContract,
+  parseProductLinkHandoffContract,
+  parseRouteContract,
+  parseSdkGenerationInputContract,
+  parseWebhookContract
+} from './strict-parser.js';
+import {
+  parseAccessDecisionContract,
   parseCalculatorCatalogContract,
   parseCalculatorConformanceContract,
   parseCreditPurchaseContract,
   parseCustomerPolicyRegistryContract,
-  parseErrorEnvelopeContract,
   parseOidcClientRegistryContract,
   parseOidcProductSessionContract,
   parseOidcProviderRuntimeContract,
-  parseProductLinkHandoffContract,
-  parseRouteContract,
-  parseSdkGenerationInputContract,
-  parseSensitiveActionAuthorizationContract,
-  parseWebhookContract
+  parseSensitiveActionAuthorizationContract
 } from './parser.js';
 import type {
   ApiCatalogContract,

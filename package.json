@@ -13,6 +13,9 @@
     "url": "https://github.com/0disoft/zdp-api-contracts/issues"
   },
   "homepage": "https://github.com/0disoft/zdp-api-contracts#readme",
+  "engines": {
+    "node": "^22.0.0 || ^24.0.0"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -51,6 +54,7 @@
   "scripts": {
     "build": "bun scripts/build-package.ts",
     "build:emit": "tsc -p tsconfig.build.json",
+    "dist:check": "bun run build && bun scripts/check-generated-dist.ts",
     "check": "tsc --noEmit && bun test && bun run contracts:check",
     "check:tsgo": "tsgo --noEmit",
     "test": "bun test",
