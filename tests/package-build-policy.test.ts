@@ -71,6 +71,12 @@ describe('package build and runtime policy', () => {
     expect(script).toContain("'--porcelain=v1'");
     expect(script).toContain("'--untracked-files=all'");
     expect(script).toContain("'dist'");
+    expect(
+      readFileSync(
+        join(repositoryRoot, 'scripts', 'build-package.ts'),
+        'utf8'
+      )
+    ).toContain("chmod(new URL('../dist/api-contracts/cli-bin.js'");
   });
 
   it('installs and executes the packed package on Node 22 and 24', () => {
