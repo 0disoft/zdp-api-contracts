@@ -24,6 +24,7 @@ schema_bundle:
       kind: request
       carries_secret_material: false
       required_fields: []
+      properties: {}
     - id: AuthSessionCurrentGetResponse
       kind: response
       carries_secret_material: false
@@ -33,3 +34,13 @@ schema_bundle:
         - actor_ref
         - tenant_ref
         - expires_at
+      properties:
+        session_ref:
+          type: string
+        actor_ref:
+          type: string
+        tenant_ref:
+          type: string
+        expires_at:
+          type: string
+          format: date-time

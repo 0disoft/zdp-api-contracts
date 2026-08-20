@@ -177,6 +177,7 @@ function compareSchema(
   }
 
   compareSchemaFields(file, base, head, changes);
+  compareSchemaProperties(schemaPath, base, head, changes);
   compareSetDelta(
     base.secretFields,
     head.secretFields,
@@ -193,6 +194,50 @@ function compareSchema(
     },
     changes
   );
+}
+
+function compareSchemaProperties(
+  schemaPath: string,
+  base: ApiSchemaDefinition,
+  head: ApiSchemaDefinition,
+  changes: ApiContractCompatibilityChange[]
+): void {
+  const baseProperties = base.properties ?? null;
+  const headProperties = head.properties ?? null;
+  if (canonicalJson(baseProperties) === canonicalJson(headProperties)) {
+    return;
+  }
+
+  const typingAdded = baseProperties === null && headProperties !== null;
+  addChange(
+    changes,
+    typingAdded ? 'feature' : 'breaking',
+    typingAdded
+      ? 'API_COMPAT_SCHEMA_TYPING_ADDED'
+      : 'API_COMPAT_SCHEMA_TYPING_CHANGED',
+    `${schemaPath}.properties`,
+    typingAdded
+      ? `Schema \`${base.id}\` added typed property metadata.`
+      : `Schema \`${base.id}\` changed or removed typed property metadata.`
+  );
+}
+
+function canonicalJson(value: unknown): string {
+  return JSON.stringify(canonicalize(value));
+}
+
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(canonicalize);
+  }
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, entry]) => [key, canonicalize(entry)])
+    );
+  }
+  return value;
 }
 
 function compareSchemaFields(

@@ -38,7 +38,10 @@ await writeFile(
 import { fileURLToPath } from 'node:url';
 import { parseCalculatorConformanceContract } from 'zdp-api-contracts';
 import { loadApiContracts, validateApiContracts } from 'zdp-api-contracts/api-contracts';
-import { buildApiExportPlan } from 'zdp-api-contracts/api-export-plan';
+import {
+  buildApiExportPlan,
+  buildOpenApi31Document
+} from 'zdp-api-contracts/api-export-plan';
 
 const contractUrl = import.meta.resolve(
   'zdp-api-contracts/contracts/calculators/conformance.yaml'
@@ -64,6 +67,11 @@ if (
   exportPlan.plan.publishesSchemas !== false
 ) {
   throw new Error('API export plan subpath was not consumable.');
+}
+
+const openapi = await buildOpenApi31Document(installedPackageRoot);
+if (!openapi.ok || openapi.document?.openapi !== '3.1.0') {
+  throw new Error('OpenAPI 3.1 export was not consumable.');
 }
 console.log('zdp-api-contracts tarball smoke passed.');
 `,

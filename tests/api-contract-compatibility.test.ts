@@ -153,6 +153,44 @@ describe('API contract compatibility gate', () => {
     expect(codes).toContain('API_COMPAT_RESPONSE_FIELD_ADDED_OR_STRENGTHENED');
   });
 
+  it('classifies typed schema metadata additions and changes', async () => {
+    const base = await loadApiContracts();
+    const untyped = replaceSchema(
+      base,
+      'contracts/apis/support-api/intake.yaml',
+      'SupportCaseCreateRequest',
+      (schema) => ({ ...schema, properties: undefined })
+    );
+    const typed = replaceSchema(
+      untyped,
+      'contracts/apis/support-api/intake.yaml',
+      'SupportCaseCreateRequest',
+      (schema) => ({
+        ...schema,
+        properties: { subject: { type: 'string' } }
+      })
+    );
+
+    expect(compareApiContracts(untyped, typed)).toMatchObject({
+      level: 'feature',
+      changes: [expect.objectContaining({ code: 'API_COMPAT_SCHEMA_TYPING_ADDED' })]
+    });
+
+    const changed = replaceSchema(
+      typed,
+      'contracts/apis/support-api/intake.yaml',
+      'SupportCaseCreateRequest',
+      (schema) => ({
+        ...schema,
+        properties: { subject: { type: 'integer' } }
+      })
+    );
+    expect(compareApiContracts(typed, changed)).toMatchObject({
+      level: 'breaking',
+      changes: [expect.objectContaining({ code: 'API_COMPAT_SCHEMA_TYPING_CHANGED' })]
+    });
+  });
+
   it('requires a pre-1.0 minor bump and migration document for breaking changes', () => {
     const report = reportWithLevel('breaking');
     const missing = evaluateApiContractVersionGate({

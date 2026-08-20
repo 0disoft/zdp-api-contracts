@@ -166,7 +166,8 @@ const API_SCHEMA_DEFINITION_KEYS = [
   'session_effect',
   'required_fields',
   'optional_fields',
-  'secret_fields'
+  'secret_fields',
+  'properties'
 ] as const;
 
 const SCHEMA_BUNDLE_COMPANION_ROOT_BY_FILE: Readonly<Record<string, string>> = {
