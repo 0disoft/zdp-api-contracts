@@ -105,6 +105,9 @@ describe('npm trusted publishing workflow', () => {
     expect(stepByName(steps, 'Verify export plan').run).toBe(
       'bun run export:plan'
     );
+    expect(stepByName(steps, 'Verify generated dist').run).toBe(
+      'bun run dist:check'
+    );
     expect(stepByName(steps, 'Verify packed consumer').run).toBe(
       'bun run smoke:package'
     );
