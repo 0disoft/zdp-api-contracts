@@ -1,4 +1,4 @@
-import { loadApiContracts } from '../api-contracts/parser.js';
+import { loadApiContracts } from '../api-contracts/strict-parser.js';
 import { buildApiExportPlan } from './plan.js';
 export async function runApiExportPlanCli(argv) {
     if (argv.includes('--help') || argv.includes('-h')) {
