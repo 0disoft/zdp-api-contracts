@@ -49,7 +49,9 @@ describe('api contract family registry', () => {
     expect(registeredContracts).toEqual(legacyContracts);
     expect(
       registeredContracts.schemaBundles.map((bundle) => bundle.file)
-    ).toEqual(listApiSchemaBundleSourcePaths(registeredContracts.apiCatalog));
+    ).toEqual([
+      ...listApiSchemaBundleSourcePaths(registeredContracts.apiCatalog)
+    ]);
   });
 
   it('preserves validation and export plan behavior behind registry entrypoints', async () => {
