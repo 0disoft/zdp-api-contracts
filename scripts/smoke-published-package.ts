@@ -28,18 +28,26 @@ try {
   );
   await writeFile(
     join(smokeRoot, 'smoke.mjs'),
-    `import { readFile } from 'node:fs/promises';
+    `import { spawnSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseCalculatorConformanceContract } from 'zdp-api-contracts';
 import { loadApiContracts, validateApiContracts } from 'zdp-api-contracts/api-contracts';
 import { buildApiExportPlan } from 'zdp-api-contracts/api-export-plan';
 
 const expectedVersion = process.argv[2];
+const installedPackageRoot = join(process.cwd(), 'node_modules', 'zdp-api-contracts');
 const installedManifest = JSON.parse(
-  await readFile(join(process.cwd(), 'node_modules', 'zdp-api-contracts', 'package.json'), 'utf8')
+  await readFile(join(installedPackageRoot, 'package.json'), 'utf8')
 );
 if (installedManifest.version !== expectedVersion) {
   throw new Error(\`Expected zdp-api-contracts@\${expectedVersion}, installed \${installedManifest.version}.\`);
+}
+if (
+  installedManifest.bin?.['zdp-api-contracts'] !==
+  './dist/api-contracts/cli-bin.js'
+) {
+  throw new Error('Published package bin map did not expose zdp-api-contracts.');
 }
 
 const contractUrl = import.meta.resolve(
@@ -51,7 +59,6 @@ if (contract.contractVersion !== '1.0.0' || contract.cases.length < 1) {
   throw new Error('Published calculator conformance contract was not consumable.');
 }
 
-const installedPackageRoot = join(process.cwd(), 'node_modules', 'zdp-api-contracts');
 const contracts = await loadApiContracts(installedPackageRoot);
 const validation = validateApiContracts(contracts);
 if (!validation.ok) {
@@ -67,6 +74,32 @@ if (
 ) {
   throw new Error('Published API export plan subpath was not consumable.');
 }
+
+const cli = spawnSync(
+  process.execPath,
+  [
+    join(installedPackageRoot, 'dist', 'api-contracts', 'cli-bin.js'),
+    '--root',
+    installedPackageRoot,
+    '--format',
+    'json'
+  ],
+  { cwd: process.cwd(), encoding: 'utf8' }
+);
+if (cli.status !== 0) {
+  throw new Error(
+    \`Published CLI failed with status \${cli.status}: \${cli.stderr || cli.stdout}\`
+  );
+}
+const cliReport = JSON.parse(cli.stdout);
+if (
+  cliReport.schemaVersion !== 1 ||
+  cliReport.ok !== true ||
+  cliReport.contractValidation?.ok !== true
+) {
+  throw new Error('Published CLI did not return a successful JSON report.');
+}
+
 console.log(\`zdp-api-contracts@\${expectedVersion} registry consumer smoke passed.\`);
 `,
     'utf8'
