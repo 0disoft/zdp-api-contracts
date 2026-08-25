@@ -35,6 +35,8 @@ schema_bundle:
         - abuse_verification_ref
       optional_fields:
         - product_id
+        - topic_code
+        - subject
         - privacy_action
         - account_ref
       secret_fields:
@@ -52,6 +54,10 @@ schema_bundle:
         abuse_verification_ref:
           type: string
         product_id:
+          type: string
+        topic_code:
+          type: string
+        subject:
           type: string
         privacy_action:
           type: string
@@ -113,6 +119,8 @@ schema_bundle:
         - content_access
       optional_fields:
         - product_id
+        - topic_code
+        - subject
         - privacy_action
       properties:
         case_id:
@@ -138,6 +146,10 @@ schema_bundle:
         content_access:
           type: string
         product_id:
+          type: string
+        topic_code:
+          type: string
+        subject:
           type: string
         privacy_action:
           type: string
