@@ -65,6 +65,7 @@ describe('api export plan', () => {
       'core.auth.sessions.refresh',
       'core.auth.sessions.revoke_current',
       'core.auth.sessions.get_current',
+      'core.account.settings_overview.get',
       'core.access.authorization_decisions.create',
       'core.auth.product_link_challenges.create',
       'core.auth.product_link_challenges.complete',
@@ -112,6 +113,16 @@ describe('api export plan', () => {
           'contracts/apis/core-api/auth-session-consumer.yaml#AuthSessionCurrentGetRequest',
         responseSchemaRef:
           'contracts/apis/core-api/auth-session-consumer.yaml#AuthSessionCurrentGetResponse'
+      },
+      'core.account.settings_overview.get': {
+        method: 'GET',
+        path: '/v1/account-settings/overview',
+        authRequired: true,
+        idempotency: 'not_required',
+        requestSchemaRef:
+          'contracts/apis/core-api/account-settings-overview.yaml#AccountSettingsOverviewGetRequest',
+        responseSchemaRef:
+          'contracts/apis/core-api/account-settings-overview.yaml#AccountSettingsOverviewGetResponse'
       },
       'core.access.authorization_decisions.create': {
         method: 'POST',
@@ -527,6 +538,19 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/core-api/access-decision.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'account-settings-overview.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/account-settings-overview.yaml'
       ),
       parseApiSchemaBundleContract(
         readFileSync(

@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 0.37.0
+
+### Added
+
+- 공통 설정 shell용 읽기 전용 account-settings overview route와 schema bundle을 추가했다.
+- 계정·현재 workspace·session·연결 제품·알림 선호를 한 응답으로 제공하되 권한 판정과 mutation은 별도 owner 경계로 유지한다.
+
 ## 0.36.0
 
 ### Added

@@ -27,6 +27,7 @@
 | OIDC client registry와 첨 staging runtime | `contracts/oidc-client-registry-and-runtime.md` |
 | 공통 귤 충전과 복귀 | `contracts/credit-purchase.md` |
 | 공통 고객 정책 레지스트리 | `contracts/customer-policy-registry.md` |
+| 공통 계정 설정 overview | `contracts/account-settings-overview.md` |
 
 ## Boundary
 

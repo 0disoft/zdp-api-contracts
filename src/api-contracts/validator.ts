@@ -4639,6 +4639,7 @@ function validateSchemaDefinition(
   }
 
   const allowedEmptyRequestSchemas = new Set([
+    'AccountSettingsOverviewGetRequest',
     'AuthSessionCurrentGetRequest',
     'OperatorSessionContextGetRequest',
     'AbuseHealthGetRequest'

@@ -709,6 +709,42 @@ describe('api contract checker', () => {
     ]);
   });
 
+  it('keeps the account-settings overview read-only and bounded to the current actor context', () => {
+    const contracts = loadCommittedContracts();
+    const route = contracts.apiCatalog.routes.find(
+      (candidate) =>
+        candidate.operationId === 'core.account.settings_overview.get'
+    );
+    const bundle = contracts.schemaBundles.find(
+      (candidate) =>
+        candidate.file ===
+        'contracts/apis/core-api/account-settings-overview.yaml'
+    );
+    const response = bundle?.schemas.find(
+      (schema) => schema.id === 'AccountSettingsOverviewGetResponse'
+    );
+
+    expect(route).toMatchObject({
+      method: 'GET',
+      path: '/v1/account-settings/overview',
+      authRequired: true,
+      ownerBoundary: 'identity',
+      tenantBoundary: 'organization',
+      idempotency: 'not_required',
+      sessionEffect: 'none'
+    });
+    expect(response?.requiredFields).toEqual([
+      'account',
+      'workspace',
+      'session',
+      'connected_products',
+      'notification_preferences'
+    ]);
+    expect(JSON.stringify(response?.properties)).not.toMatch(
+      /password|access_token|refresh_token|authorization_header|cookie_header/u
+    );
+  });
+
   it('rejects request-supplied authority and access fields in current-session identity', () => {
     const contracts = loadCommittedContracts();
     const result = validateApiContracts({
@@ -1403,6 +1439,7 @@ describe('api contract checker', () => {
       'core.auth.sessions.refresh',
       'core.auth.sessions.revoke_current',
       'core.auth.sessions.get_current',
+      'core.account.settings_overview.get',
       'core.admin.operator_session_context.get',
       'core.access.authorization_decisions.create',
       'core.auth.product_link_challenges.create',
@@ -1944,6 +1981,7 @@ describe('api contract checker', () => {
       'contracts/apis/abuse-api/challenge.yaml',
       'contracts/apis/abuse-api/health.yaml',
       'contracts/apis/core-api/access-decision.yaml',
+      'contracts/apis/core-api/account-settings-overview.yaml',
       'contracts/apis/core-api/auth-session-consumer.yaml',
       'contracts/apis/core-api/auth-session.yaml',
       'contracts/apis/core-api/customer-policy-registry.yaml',
@@ -2522,6 +2560,19 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/abuse-api/health.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(
+          join(
+            process.cwd(),
+            'contracts',
+            'apis',
+            'core-api',
+            'account-settings-overview.yaml'
+          ),
+          'utf8'
+        ),
+        'contracts/apis/core-api/account-settings-overview.yaml'
       ),
       parseApiSchemaBundleContract(
         readFileSync(

@@ -23,6 +23,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 | OIDC client registry와 첫 staging runtime | `docs/contracts/oidc-client-registry-and-runtime.md` |
 | 공통 귤 충전과 복귀 | `docs/contracts/credit-purchase.md` |
 | 공통 고객 정책 레지스트리 | `docs/contracts/customer-policy-registry.md` |
+| 공통 계정 설정 overview | `docs/contracts/account-settings-overview.md` |
 | package surface | `docs/ops/package-surface.md` |
 
 ## 현재 범위
@@ -47,6 +48,7 @@ ZDP API 계약 저장소다. 초기 목적은 backend 구현보다 먼저 route 
 - 공통 함선 팩 catalog projection, checkout intent, 결제·지급 분리 상태와 일회용 복귀 receipt 계약
 - 공통 정책과 제품·관할·채널 addendum을 정확한 revision set으로 resolve하고 불변 consent receipt로 묶는 계약
 - 모든 제품이 재사용하는 공개 문의 접수, 운영자 감사형 source detail read, source-owned 상태 변경과 답변 outbox 계약
+- 공통 설정 shell이 계정·현재 workspace·session·연결 제품·알림 선호를 권위 추정 없이 읽는 account-settings overview 계약
 
 ## 현재 제외
 

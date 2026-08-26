@@ -1,0 +1,102 @@
+schema_bundle:
+  service_id: core-api
+  owner_boundary: identity
+  status: contract-only
+  purpose: provide one bounded read model for the shared account settings shell without turning current-session identity into authorization or exposing platform source records
+  common_envelope:
+    required_request_metadata:
+      - request_id
+      - trace_id
+    required_response_metadata:
+      - request_id
+      - trace_id
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: AccountSettingsOverviewGetRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: []
+      properties: {}
+    - id: AccountSettingsOverviewGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - account
+        - workspace
+        - session
+        - connected_products
+        - notification_preferences
+      properties:
+        account:
+          type: object
+          required:
+            - actor_ref
+            - display_name
+          properties:
+            actor_ref:
+              type: string
+            display_name:
+              type: string
+        workspace:
+          type: object
+          required:
+            - workspace_ref
+            - display_name
+          properties:
+            workspace_ref:
+              type: string
+            display_name:
+              type: string
+        session:
+          type: object
+          required:
+            - session_ref
+            - expires_at
+          properties:
+            session_ref:
+              type: string
+            expires_at:
+              type: string
+              format: date-time
+        connected_products:
+          type: array
+          items:
+            type: object
+            required:
+              - product_ref
+              - connection_state
+            properties:
+              product_ref:
+                type: string
+              connection_state:
+                type: string
+                enum:
+                  - connected
+                  - disconnected
+                  - unavailable
+        notification_preferences:
+          type: array
+          items:
+            type: object
+            required:
+              - category
+              - state
+            properties:
+              category:
+                type: string
+              state:
+                type: string
+                enum:
+                  - enabled
+                  - disabled
+                  - required
+                  - unavailable

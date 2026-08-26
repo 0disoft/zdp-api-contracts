@@ -2933,6 +2933,7 @@ function validateSchemaDefinition(schemaBundle, schema, index, diagnostics) {
         }
     }
     const allowedEmptyRequestSchemas = new Set([
+        'AccountSettingsOverviewGetRequest',
         'AuthSessionCurrentGetRequest',
         'OperatorSessionContextGetRequest',
         'AbuseHealthGetRequest'

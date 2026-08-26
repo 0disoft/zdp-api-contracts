@@ -333,6 +333,32 @@ routes:
       - session_expired
       - session_compromised
       - account_restricted
+  - operation_id: core.account.settings_overview.get
+    service_id: core-api
+    resource: account_settings_overview
+    action: get
+    method: GET
+    path: /v1/account-settings/overview
+    success_statuses:
+      - 200
+    request_schema_ref: contracts/apis/core-api/account-settings-overview.yaml#AccountSettingsOverviewGetRequest
+    response_schema_ref: contracts/apis/core-api/account-settings-overview.yaml#AccountSettingsOverviewGetResponse
+    auth_required: true
+    permission_check: core.identity.account_settings.read_self
+    audit_event: core.identity.account_settings.read
+    idempotency: not_required
+    owner_boundary: identity
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes:
+      - authentication_failed
+      - session_revoked
+      - session_expired
+      - account_restricted
+      - workspace_access_denied
   - operation_id: core.admin.operator_session_context.get
     service_id: core-api
     resource: operator_session_context
