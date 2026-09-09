@@ -5,6 +5,7 @@
 ### Added
 
 - Core 접근 판정 응답의 필수 binding과 schema에 `tenant_ref`를 추가해 검증된 현재 세션의 tenant를 소비자가 대조할 수 있도록 했다.
+- 접근 판정 요청·응답을 typed JSON schema로 선언해 allow/deny, scope 종류, 날짜와 obligations 배열을 OpenAPI에 전달한다.
 - tenant binding 누락·선택 필드 격하와 요청 측 tenant 권한 주입을 거부하는 회귀 테스트를 추가했다. 계약은 계속 contract-only이며 runtime route를 활성화하지 않는다.
 
 ## 0.37.0
