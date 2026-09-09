@@ -32,13 +32,17 @@ Core는 현재 세션에서 subject와 session을 확인하고, 현재 relations
 
 - `decision_ref`, `decision`, `reason_code`;
 - `policy_version`, `data_revision`;
-- `subject_ref`, `session_ref`;
+- `subject_ref`, `session_ref`, `tenant_ref`;
 - `product_ref`, `action`, `resource_type`, `resource_ref`;
 - `scope_type`, `scope_ref`;
 - `decided_at`, `decision_expires_at`, `session_expires_at`;
 - 항상 존재하는 `obligations` 목록.
 
 `decision_ref`는 불투명하고 비밀이 아닌 감사 참조다. bearer credential, 재사용 가능한 capability 또는 서명 토큰으로 해석하지 않는다. 제품 adapter는 `decision == allow`만 접근 허용으로 변환하고, deny·오류·누락·알 수 없는 값은 모두 fail closed로 처리한다.
+
+`tenant_ref`는 검증된 현재 세션의 Core tenant 참조다. 제품은 응답의 subject·session·tenant를 먼저 확인한 세션 증거와 정확히 비교한다. 이 값은 요청 payload에서 받지 않으며, 제품의 매장 ID나 요청 scope에서 유도하지 않는다. 다른 scope 종류를 지원하더라도 세션 tenant binding과 판정 대상 scope는 별개다. 누락·불일치는 제품 작업을 허용하지 않는다.
+
+이 변경은 응답 binding 누락을 보완하는 첫 계약 단위다. 정확한 HTTP envelope·인증 transport·헤더, 제품별 action catalog와 매장 binding, Core handler 및 소비자 연결은 후속 검토 대상이다. 내부 persistence record 전체를 HTTP 응답으로 직렬화하라는 뜻이 아니다.
 
 `reason_code`는 안정된 비열거형(non-enumerating) 코드만 사용한다. raw policy, membership, role, 관계 graph 또는 customer payload를 노출하지 않는다. `obligations`는 정규화되고 길이가 제한된 식별자 목록이며, 제품 UI가 아니라 실제 effect 경계에서 집행한다.
 

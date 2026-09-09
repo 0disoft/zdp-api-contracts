@@ -189,6 +189,7 @@ const ACCESS_DECISION_RESPONSE_BINDINGS = [
     'data_revision',
     'subject_ref',
     'session_ref',
+    'tenant_ref',
     'product_ref',
     'action',
     'resource_type',
