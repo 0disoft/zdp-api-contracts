@@ -4,6 +4,23 @@ access_decision:
   owner_boundary: access
   operation_id: core.access.authorization_decisions.create
   route_path: /v1/access/authorization-decisions
+  http_profile:
+    credential_transport: core_current_session_cookie
+    request_content_type: application/json
+    response_content_type: application/json
+    success_envelope: direct_schema_object
+    error_envelope_ref: contracts/error-envelope.yaml
+    request_metadata_headers: [Idempotency-Key, X-Request-ID, X-Trace-ID]
+    response_metadata_headers: [X-Request-ID, X-Trace-ID]
+    cache_control: no-store
+    pragma: no-cache
+    replay_status: 201
+    duplicate_header_policy: reject
+    redirect_policy: reject_without_forwarding_credentials
+    max_identifier_utf8_bytes: 160
+    max_obligations: 16
+    max_request_bytes: 8192
+    max_response_bytes: 32768
   decision_values:
     - allow
     - deny

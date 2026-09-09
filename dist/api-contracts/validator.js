@@ -1,4 +1,5 @@
 import { CANONICAL_FORBIDDEN_VALUES } from './forbidden-values.js';
+import { validateAccessDecisionHttpProfile } from './access-decision-http.js';
 const REQUIRED_CALCULATOR_DEFINITION_FIELDS = [
     'id',
     'lifecycle_status',
@@ -1461,6 +1462,7 @@ function validateAbuseChallenge(contracts, schemaBundlesByFile, diagnostics) {
 }
 function validateAccessDecision(contracts, schemaBundlesByFile, diagnostics) {
     const contract = contracts.accessDecision;
+    diagnostics.push(...validateAccessDecisionHttpProfile(contract.httpProfile));
     const push = (code, path, message) => {
         diagnostics.push({ code, file: ACCESS_DECISION_FILE, path, message });
     };

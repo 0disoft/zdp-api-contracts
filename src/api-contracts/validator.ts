@@ -12,6 +12,7 @@ import type {
   CalculatorOutputDefinition
 } from './types.js';
 import { CANONICAL_FORBIDDEN_VALUES } from './forbidden-values.js';
+import { validateAccessDecisionHttpProfile } from './access-decision-http.js';
 
 const REQUIRED_CALCULATOR_DEFINITION_FIELDS = [
   'id',
@@ -2198,6 +2199,7 @@ function validateAccessDecision(
   diagnostics: ApiContractDiagnostic[]
 ): void {
   const contract = contracts.accessDecision;
+  diagnostics.push(...validateAccessDecisionHttpProfile(contract.httpProfile));
   const push = (code: string, path: string, message: string): void => {
     diagnostics.push({ code, file: ACCESS_DECISION_FILE, path, message });
   };

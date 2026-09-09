@@ -2,10 +2,15 @@
 
 ## 0.38.0
 
+### Changed
+
+- 접근 판정 HTTP 프로파일 변경은 인증·헤더·본문 상한·replay 호환성을 바꾸므로 breaking으로 분류하고 마이그레이션을 요구한다.
+
 ### Added
 
 - Core 접근 판정 응답의 필수 binding과 schema에 `tenant_ref`를 추가해 검증된 현재 세션의 tenant를 소비자가 대조할 수 있도록 했다.
 - 접근 판정 요청·응답을 typed JSON schema로 선언해 allow/deny, scope 종류, 날짜와 obligations 배열을 OpenAPI에 전달한다.
+- 기존 current-session cookie transport를 따르는 HTTP 프로파일과 필수 metadata header, cache 금지, 201 replay, 중복·redirect 거부 및 body 한도를 선언했다.
 - tenant binding 누락·선택 필드 격하와 요청 측 tenant 권한 주입을 거부하는 회귀 테스트를 추가했다. 계약은 계속 contract-only이며 runtime route를 활성화하지 않는다.
 
 ## 0.37.0
