@@ -1459,7 +1459,8 @@ describe('api contract checker', () => {
       'platform.abuse.challenges.redeem',
       'platform.abuse.verifications.verify',
       'platform.abuse.health.get',
-      'core.accounts.personal_scope.get_current'
+      'core.accounts.personal_scope.get_current',
+      'core.accounts.orchid_visitor_access.change'
     ]);
     const supportCreate = contracts.apiCatalog.routes.find(
       (route) => route.operationId === 'platform.support.cases.create'
@@ -1988,6 +1989,7 @@ describe('api contract checker', () => {
       'contracts/apis/core-api/current-personal-account-scope.yaml',
       'contracts/apis/core-api/customer-policy-registry.yaml',
       'contracts/apis/core-api/operator-session-context.yaml',
+      'contracts/apis/core-api/orchid-visitor-access.yaml',
       'contracts/apis/core-api/product-link.yaml',
       'contracts/apis/core-api/referral.yaml',
       'contracts/apis/core-api/sensitive-action-authorization.yaml',
@@ -2723,6 +2725,10 @@ function loadCommittedContracts(): ApiContracts {
       parseApiSchemaBundleContract(
         readFileSync(join(process.cwd(), 'contracts/apis/core-api/current-personal-account-scope.yaml'), 'utf8'),
         'contracts/apis/core-api/current-personal-account-scope.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(join(process.cwd(), 'contracts/apis/core-api/orchid-visitor-access.yaml'), 'utf8'),
+        'contracts/apis/core-api/orchid-visitor-access.yaml'
       )
     ],
     calculatorCatalog: parseCalculatorCatalogContract(

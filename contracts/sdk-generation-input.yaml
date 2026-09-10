@@ -12,6 +12,7 @@ sdk_generation_input:
     - contracts/apis/core-api/access-decision.yaml
     - contracts/apis/core-api/account-settings-overview.yaml
     - contracts/apis/core-api/current-personal-account-scope.yaml
+    - contracts/apis/core-api/orchid-visitor-access.yaml
     - contracts/apis/core-api/auth-session-consumer.yaml
     - contracts/apis/core-api/auth-session.yaml
     - contracts/apis/core-api/customer-policy-registry.yaml

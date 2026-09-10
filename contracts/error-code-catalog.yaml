@@ -248,6 +248,12 @@ error_code_catalog:
   - code: verification_receipt_invalid
     http_status: 400
     owner_service_id: support-intake-api
+  - code: visitor_access_conflict
+    http_status: 409
+    owner_service_id: core-api
+  - code: visitor_access_revoked
+    http_status: 403
+    owner_service_id: core-api
   - code: workspace_access_denied
     http_status: 403
     owner_service_id: core-api

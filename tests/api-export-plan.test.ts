@@ -84,7 +84,8 @@ describe('api export plan', () => {
       'platform.abuse.challenges.redeem',
       'platform.abuse.verifications.verify',
       'platform.abuse.health.get',
-      'core.accounts.personal_scope.get_current'
+      'core.accounts.personal_scope.get_current',
+      'core.accounts.orchid_visitor_access.change'
     ]);
     expect(plan.typedFetchOperationMap).toMatchObject({
       'core.auth.sessions.create': {
@@ -687,6 +688,10 @@ function loadCommittedContracts(): ApiContracts {
       parseApiSchemaBundleContract(
         readFileSync(join(process.cwd(), 'contracts/apis/core-api/current-personal-account-scope.yaml'), 'utf8'),
         'contracts/apis/core-api/current-personal-account-scope.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(join(process.cwd(), 'contracts/apis/core-api/orchid-visitor-access.yaml'), 'utf8'),
+        'contracts/apis/core-api/orchid-visitor-access.yaml'
       )
     ]
   };
