@@ -1458,7 +1458,8 @@ describe('api contract checker', () => {
       'platform.abuse.challenges.issue',
       'platform.abuse.challenges.redeem',
       'platform.abuse.verifications.verify',
-      'platform.abuse.health.get'
+      'platform.abuse.health.get',
+      'core.accounts.personal_scope.get_current'
     ]);
     const supportCreate = contracts.apiCatalog.routes.find(
       (route) => route.operationId === 'platform.support.cases.create'
@@ -1984,6 +1985,7 @@ describe('api contract checker', () => {
       'contracts/apis/core-api/account-settings-overview.yaml',
       'contracts/apis/core-api/auth-session-consumer.yaml',
       'contracts/apis/core-api/auth-session.yaml',
+      'contracts/apis/core-api/current-personal-account-scope.yaml',
       'contracts/apis/core-api/customer-policy-registry.yaml',
       'contracts/apis/core-api/operator-session-context.yaml',
       'contracts/apis/core-api/product-link.yaml',
@@ -2717,6 +2719,10 @@ function loadCommittedContracts(): ApiContracts {
           'utf8'
         ),
         'contracts/apis/support-api/intake.yaml'
+      ),
+      parseApiSchemaBundleContract(
+        readFileSync(join(process.cwd(), 'contracts/apis/core-api/current-personal-account-scope.yaml'), 'utf8'),
+        'contracts/apis/core-api/current-personal-account-scope.yaml'
       )
     ],
     calculatorCatalog: parseCalculatorCatalogContract(

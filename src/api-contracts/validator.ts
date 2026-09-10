@@ -887,6 +887,7 @@ const PUBLIC_PERMISSION_CHECKS = [
 
 const ALLOWED_OWNER_BOUNDARIES = [
   'identity',
+  'accounts',
   'money',
   'access',
   'consent',
@@ -4643,6 +4644,7 @@ function validateSchemaDefinition(
 
   const allowedEmptyRequestSchemas = new Set([
     'AccountSettingsOverviewGetRequest',
+    'CurrentPersonalAccountScopeGetRequest',
     'AuthSessionCurrentGetRequest',
     'OperatorSessionContextGetRequest',
     'AbuseHealthGetRequest'

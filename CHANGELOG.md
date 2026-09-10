@@ -8,6 +8,8 @@
 
 ### Added
 
+- 현재 개인 계정 scope 조회의 typed response와 세션 인증·감사·캐시 금지 계약을 추가했다. scope 조회는 제품 접근 권한을 부여하지 않는다.
+
 - Core 접근 판정 응답의 필수 binding과 schema에 `tenant_ref`를 추가해 검증된 현재 세션의 tenant를 소비자가 대조할 수 있도록 했다.
 - 접근 판정 요청·응답을 typed JSON schema로 선언해 allow/deny, scope 종류, 날짜와 obligations 배열을 OpenAPI에 전달한다.
 - 기존 current-session cookie transport를 따르는 HTTP 프로파일과 필수 metadata header, cache 금지, 201 replay, 중복·redirect 거부 및 body 한도를 선언했다.

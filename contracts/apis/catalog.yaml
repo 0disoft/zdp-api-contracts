@@ -883,3 +883,23 @@ routes:
       - authentication_failed
       - scope_access_denied
       - provider_unavailable
+  - operation_id: core.accounts.personal_scope.get_current
+    service_id: core-api
+    resource: current_personal_account_scope
+    action: get
+    method: GET
+    path: /v1/accounts/personal-scope/current
+    success_statuses: [200]
+    request_schema_ref: contracts/apis/core-api/current-personal-account-scope.yaml#CurrentPersonalAccountScopeGetRequest
+    response_schema_ref: contracts/apis/core-api/current-personal-account-scope.yaml#CurrentPersonalAccountScopeGetResponse
+    auth_required: true
+    permission_check: core.accounts.personal_scope.read_self
+    audit_event: core.accounts.personal_scope.read
+    idempotency: not_required
+    owner_boundary: accounts
+    tenant_boundary: personal_account
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes: [authentication_failed, invalid_request, invalid_request_metadata, scope_lookup_unavailable]
