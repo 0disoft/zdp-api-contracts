@@ -62,6 +62,12 @@ error_code_catalog:
   - code: invalid_policy_resolution_request
     http_status: 400
     owner_service_id: core-api
+  - code: invalid_request
+    http_status: 400
+    owner_service_id: shared
+  - code: invalid_request_metadata
+    http_status: 400
+    owner_service_id: shared
   - code: invalid_status_transition
     http_status: 409
     owner_service_id: support-intake-api
@@ -170,6 +176,10 @@ error_code_catalog:
   - code: scope_access_denied
     http_status: 403
     owner_service_id: shared
+  - code: scope_lookup_unavailable
+    http_status: 503
+    owner_service_id: core-api
+    retryable: true
   - code: scope_not_allowed
     http_status: 403
     owner_service_id: core-api
@@ -238,6 +248,12 @@ error_code_catalog:
   - code: verification_receipt_invalid
     http_status: 400
     owner_service_id: support-intake-api
+  - code: visitor_access_conflict
+    http_status: 409
+    owner_service_id: core-api
+  - code: visitor_access_revoked
+    http_status: 403
+    owner_service_id: core-api
   - code: workspace_access_denied
     http_status: 403
     owner_service_id: core-api

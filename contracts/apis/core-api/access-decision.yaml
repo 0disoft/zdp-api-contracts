@@ -4,6 +4,23 @@ access_decision:
   owner_boundary: access
   operation_id: core.access.authorization_decisions.create
   route_path: /v1/access/authorization-decisions
+  http_profile:
+    credential_transport: core_current_session_cookie
+    request_content_type: application/json
+    response_content_type: application/json
+    success_envelope: direct_schema_object
+    error_envelope_ref: contracts/error-envelope.yaml
+    request_metadata_headers: [Idempotency-Key, X-Request-ID, X-Trace-ID]
+    response_metadata_headers: [X-Request-ID, X-Trace-ID]
+    cache_control: no-store
+    pragma: no-cache
+    replay_status: 201
+    duplicate_header_policy: reject
+    redirect_policy: reject_without_forwarding_credentials
+    max_identifier_utf8_bytes: 160
+    max_obligations: 16
+    max_request_bytes: 8192
+    max_response_bytes: 32768
   decision_values:
     - allow
     - deny
@@ -22,6 +39,7 @@ access_decision:
     - data_revision
     - subject_ref
     - session_ref
+    - tenant_ref
     - product_ref
     - action
     - resource_type
@@ -111,6 +129,20 @@ schema_bundle:
         - resource_ref
         - requested_scope_type
         - requested_scope_ref
+      properties:
+        product_ref:
+          type: string
+        action:
+          type: string
+        resource_type:
+          type: string
+        resource_ref:
+          type: string
+        requested_scope_type:
+          type: string
+          enum: [platform, personal_account, organization, workspace]
+        requested_scope_ref:
+          type: string
     - id: AccessAuthorizationDecisionCreateResponse
       kind: response
       carries_secret_material: false
@@ -123,6 +155,7 @@ schema_bundle:
         - data_revision
         - subject_ref
         - session_ref
+        - tenant_ref
         - product_ref
         - action
         - resource_type
@@ -133,3 +166,47 @@ schema_bundle:
         - decision_expires_at
         - session_expires_at
         - obligations
+      properties:
+        decision_ref:
+          type: string
+        decision:
+          type: string
+          enum: [allow, deny]
+        reason_code:
+          type: string
+        policy_version:
+          type: string
+        data_revision:
+          type: string
+        subject_ref:
+          type: string
+        session_ref:
+          type: string
+        tenant_ref:
+          type: string
+        product_ref:
+          type: string
+        action:
+          type: string
+        resource_type:
+          type: string
+        resource_ref:
+          type: string
+        scope_type:
+          type: string
+          enum: [platform, personal_account, organization, workspace]
+        scope_ref:
+          type: string
+        decided_at:
+          type: string
+          format: date-time
+        decision_expires_at:
+          type: string
+          format: date-time
+        session_expires_at:
+          type: string
+          format: date-time
+        obligations:
+          type: array
+          items:
+            type: string

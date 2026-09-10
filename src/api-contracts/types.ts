@@ -285,6 +285,7 @@ export interface SensitiveActionAuthorizationTransition {
 }
 
 export interface AccessDecisionContract {
+  readonly httpProfile: AccessDecisionHttpProfile | null;
   readonly schemaVersion: number;
   readonly status: string;
   readonly ownerBoundary: string;
@@ -305,6 +306,25 @@ export interface AccessDecisionContract {
   readonly forbiddenRequestAuthorityFields: readonly string[];
   readonly forbiddenConsumerUses: readonly string[];
   readonly forbiddenValues: readonly string[];
+}
+
+export interface AccessDecisionHttpProfile {
+  readonly credentialTransport: string;
+  readonly requestContentType: string;
+  readonly responseContentType: string;
+  readonly successEnvelope: string;
+  readonly errorEnvelopeRef: string;
+  readonly requestMetadataHeaders: readonly string[];
+  readonly responseMetadataHeaders: readonly string[];
+  readonly cacheControl: string;
+  readonly pragma: string;
+  readonly replayStatus: number;
+  readonly duplicateHeaderPolicy: string;
+  readonly redirectPolicy: string;
+  readonly maxIdentifierUtf8Bytes: number;
+  readonly maxObligations: number;
+  readonly maxRequestBytes: number;
+  readonly maxResponseBytes: number;
 }
 
 export interface ProductLinkHandoffContract {
