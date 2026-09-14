@@ -14,7 +14,7 @@ Core가 서비스 identity의 정확한 organization grant로 호출자를 인�
 
 receipt와 예상 승인 revision, 거래 binding digest, 증거 manifest digest, 전체 체인 식별자와 exact action/resource를 요청한다. 예상 revision은 비교값이며 승인 근거가 아니다. binding은 실제 거래 바이트에서 해석한 대상·인자·sender·gas owner·gas 객체/예산·수량·수령자·Grant·tranche와 source/dependency/policy/custody revision·만료를 포함해야 한다.
 
-거래 내용 digest → 증거 manifest digest → 최종 승인 binding 순서로 만들어 순환 참조를 피한다. canonical encoding과 hash profile은 별도 버전 계약으로 확정해야 하며, 현재 string schema가 임의 문자열을 실제 digest로 신뢰한다는 뜻은 아니다. mock syntheticBinding과 Sui transaction digest를 승인 binding으로 대체할 수 없다.
+거래 내용 digest → 증거 manifest digest → 최종 승인 binding 순서로 만들어 순환 참조를 피한다. canonical encoding과 hash는 [digest v1](doubloon-digest.md)을 따른다. 현재 string schema가 임의 문자열을 실제 digest로 신뢰한다는 뜻은 아니다. mock syntheticBinding과 Sui transaction digest를 승인 binding으로 대체할 수 없다.
 
 ## 검증 응답과 실패
 

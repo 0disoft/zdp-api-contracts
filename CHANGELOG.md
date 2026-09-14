@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.40.0
+
+- 두블룬 digest v1의 정규화·domain·SHA-256 결합 순서와 독립 생성한 고정 테스트 벡터를 추가했다. 참고 구현은 테스트 전용이며 실행 권한이나 live route는 추가하지 않는다.
+
 ## 0.39.0
 
 - 두블룬 테스트넷 승인 검증의 닫힌 작업 목록, 거래·증거 binding과 typed 요청·응답을 추가했다. OpenAPI schema에는 포함하되 route·SDK 호출·실행 권한은 추가하지 않는다.

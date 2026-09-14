@@ -50,10 +50,10 @@ doubloon_approval:
     resource_ref: opaque_experiment_operation_ref_not_raw_transaction
     forbidden: [mainnet, upgrade, mint, burn, make_immutable, generic_transfer, wildcard_action]
   digest_profile:
-    encoding_profile: pending_separate_versioned_contract
-    algorithm_profile: pending_separate_versioned_contract
+    encoding_profile: contracts/apis/core-api/doubloon-digest-v1.yaml
+    algorithm_profile: sha256_jcs_ascii_string_tree_v1
     production_digest_implementation_ready: false
-    binding_contents: [schema_version, experiment_ref, operation_ref, plan_revision, network, full_chain_identifier, source_commit, linked_build_digest, dependencies, transaction_bytes_digest, decoded_targets_and_arguments, sender, gas_owner, gas_objects, gas_budget, recipient, amount, grant, tranche, policy_revision, custody_revision, approval_expiry]
+    binding_contents: [schema_version, experiment_ref, operation_ref, plan_revision, network, full_chain_identifier, action_ref, source_commit, linked_build_digest, dependencies, transaction_bytes_digest, decoded_targets_and_arguments, sender, gas_owner, gas_objects, gas_budget, recipient, amount, grant, tranche, policy_revision, custody_revision, approval_expiry]
     construction_order: [transaction_content_digest, evidence_manifest_digest, approval_binding]
     evidence_subject: transaction_content_digest_without_manifest_or_approval
     approval_binds: [transaction_content_digest, evidence_manifest_digest, approval_revision, issuer, audience, expiry]
