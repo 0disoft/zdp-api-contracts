@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.39.0
+
+- 두블룬 테스트넷 승인 검증의 닫힌 작업 목록, 거래·증거 binding과 typed 요청·응답을 추가했다. OpenAPI schema에는 포함하되 route·SDK 호출·실행 권한은 추가하지 않는다.
+
 ## 0.38.0
 
 - Orchid 방문자 자기 등록·철회의 고정 operation, 개인 계정 멱등성, 상태 오류와 원자적 감사 계약을 추가했다.

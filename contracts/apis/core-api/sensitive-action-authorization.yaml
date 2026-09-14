@@ -163,3 +163,116 @@ schema_bundle:
         - decision_revision
         - issued_at
         - audit_event_ref
+    - id: DoubloonApprovalVerifyRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - receipt_ref
+        - expected_approval_revision
+        - transaction_binding_digest
+        - evidence_manifest_digest
+        - network
+        - full_chain_identifier
+        - audience_product_ref
+        - action_ref
+        - resource_type
+        - resource_ref
+      properties:
+        receipt_ref:
+          type: string
+        expected_approval_revision:
+          type: string
+        transaction_binding_digest:
+          type: string
+        evidence_manifest_digest:
+          type: string
+        network:
+          type: string
+          enum: ["sui_testnet"]
+        full_chain_identifier:
+          type: string
+        audience_product_ref:
+          type: string
+          enum: ["zdp-token-operator"]
+        action_ref:
+          type: string
+          enum: ["publish_token","register_currency","publish_reserve","assign_token_upgrade_custody","assign_reserve_upgrade_custody","create_grant","premature_claim","outsider_claim","mature_claim","replay_claim"]
+        resource_type:
+          type: string
+          enum: ["doubloon.testnet-operation"]
+        resource_ref:
+          type: string
+    - id: DoubloonApprovalVerifyResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - receipt_ref
+        - transaction_binding_digest
+        - evidence_manifest_digest
+        - network
+        - full_chain_identifier
+        - audience_product_ref
+        - action_ref
+        - resource_type
+        - resource_ref
+        - issuer_ref
+        - verification_result
+        - verified_at
+        - expires_at
+        - policy_ref
+        - policy_revision
+        - actor_authority_revision
+        - revocation_revision
+        - audit_ref
+        - execution_authorized
+        - approval_revision
+      properties:
+        receipt_ref:
+          type: string
+        transaction_binding_digest:
+          type: string
+        evidence_manifest_digest:
+          type: string
+        network:
+          type: string
+          enum: ["sui_testnet"]
+        full_chain_identifier:
+          type: string
+        audience_product_ref:
+          type: string
+          enum: ["zdp-token-operator"]
+        action_ref:
+          type: string
+          enum: ["publish_token","register_currency","publish_reserve","assign_token_upgrade_custody","assign_reserve_upgrade_custody","create_grant","premature_claim","outsider_claim","mature_claim","replay_claim"]
+        resource_type:
+          type: string
+          enum: ["doubloon.testnet-operation"]
+        resource_ref:
+          type: string
+        issuer_ref:
+          type: string
+        verification_result:
+          type: string
+          enum: ["valid","invalid","expired","revoked","binding_mismatch","revision_stale","policy_stale","actor_authority_stale","quorum_missing","evidence_invalid"]
+        verified_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        policy_ref:
+          type: string
+        policy_revision:
+          type: string
+        actor_authority_revision:
+          type: string
+        revocation_revision:
+          type: string
+        audit_ref:
+          type: string
+        execution_authorized:
+          type: boolean
+          enum: [false]
+        approval_revision:
+          type: string
