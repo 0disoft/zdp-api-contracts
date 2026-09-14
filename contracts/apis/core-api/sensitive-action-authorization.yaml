@@ -276,3 +276,72 @@ schema_bundle:
           enum: [false]
         approval_revision:
           type: string
+    - id: DoubloonConsentReviewRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: [receipt_ref]
+      properties:
+        receipt_ref:
+          type: string
+    - id: DoubloonConsentReviewResponse
+      kind: response
+      session_effect: none
+      carries_secret_material: false
+      required_fields: [receipt_ref, tenant, requester_id, policy_ref, approval_revision, confirmation_binding, transaction_json, evidence_json, execution_authorized]
+      properties:
+        receipt_ref:
+          type: string
+        tenant:
+          type: string
+        requester_id:
+          type: string
+        policy_ref:
+          type: string
+        approval_revision:
+          type: string
+        confirmation_binding:
+          type: string
+        transaction_json:
+          type: string
+        evidence_json:
+          type: string
+        execution_authorized:
+          type: boolean
+          enum: [false]
+    - id: DoubloonConsentConfirmRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: password_verifier_input_only_never_echo
+      secret_fields: [password]
+      required_fields: [receipt_ref, confirmed_binding, accepted, password]
+      properties:
+        receipt_ref:
+          type: string
+        confirmed_binding:
+          type: string
+        accepted:
+          type: boolean
+          enum: [true]
+        password:
+          type: string
+    - id: DoubloonConsentConfirmResponse
+      kind: response
+      session_effect: none
+      carries_secret_material: false
+      required_fields: [receipt_ref, confirmation_binding, audit_event_ref, actor_id, assignment_id, assignment_event_count, execution_authorized]
+      properties:
+        receipt_ref:
+          type: string
+        confirmation_binding:
+          type: string
+        audit_event_ref:
+          type: string
+        actor_id:
+          type: string
+        assignment_id:
+          type: string
+        assignment_event_count:
+          type: integer
+        execution_authorized:
+          type: boolean
+          enum: [false]

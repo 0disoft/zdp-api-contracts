@@ -1,0 +1,37 @@
+doubloon_consent:
+  schema_version: 1
+  status: contract-only-no-live-route
+  owner: zdp-core-platform
+  ui_owner: zdp-admin-console
+  scope: issue_consent_only_revocation_ui_deferred
+  path: null
+  base_url: null
+  runtime_enabled: false
+  sdk_operation_generated: false
+  method: POST
+  operations:
+    review: [DoubloonConsentReviewRequest, DoubloonConsentReviewResponse]
+    confirm: [DoubloonConsentConfirmRequest, DoubloonConsentConfirmResponse]
+  schema_source: contracts/apis/core-api/sensitive-action-authorization.yaml
+  proposal_source: trusted_core_frozen_proposal_not_request_body
+  auth: private_operator_bearer_session_current_platform_and_organization_policy_roles
+  tenant: frozen_proposal_not_caller_claim
+  confirm: explicit_true_exact_binding_and_fresh_password
+  request_metadata: [X-Request-ID, X-Trace-ID]
+  audit_metadata: request_and_trace_propagated_confirmation_audit_id_server_generated
+  content_type: application/json
+  max_request_bytes: 8192
+  max_review_response_bytes: 300000
+  unknown_or_duplicate_fields: reject
+  browser_boundary: same_origin_bff_required_core_rejects_origin_and_cookie
+  cache_control: no-store
+  redirects: reject
+  password: transient_never_logged_or_persisted
+  ui: show_complete_frozen_transaction_and_evidence_before_unchecked_confirmation
+  failure: clear_password_no_automatic_retry_unknown_result_requires_audit_reconciliation
+  success: consent_recorded_not_approval_issued_or_transaction_submitted
+  success_statuses: [200]
+  errors: [400, 401, 403, 405, 409, 503]
+  error_envelope: [code, message, request_id, trace_id]
+  execution_authorized: false
+  activation_requires: [trusted_proposal_loader, reviewed_private_routes, same_origin_bff, operator_role_provisioning]
