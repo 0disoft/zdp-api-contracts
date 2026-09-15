@@ -276,6 +276,103 @@ schema_bundle:
           enum: [false]
         approval_revision:
           type: string
+    - id: DoubloonProposalCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: [command_key, transaction_json, evidence_json]
+      properties:
+        command_key:
+          type: string
+        transaction_json:
+          type: string
+        evidence_json:
+          type: string
+    - id: DoubloonProposalCreateResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields: [command_key, receipt_ref, confirmation_binding, state, execution_authorized]
+      properties:
+        command_key:
+          type: string
+        receipt_ref:
+          type: string
+        confirmation_binding:
+          type: string
+        state:
+          type: string
+          enum: [pending]
+        execution_authorized:
+          type: boolean
+          enum: [false]
+    - id: DoubloonApprovalCompleteRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: password_verifier_input_only_never_echo
+      secret_fields: [password]
+      required_fields: [command_key, receipt_ref, confirmed_binding, accepted, password]
+      properties:
+        command_key:
+          type: string
+        receipt_ref:
+          type: string
+        confirmed_binding:
+          type: string
+        accepted:
+          type: boolean
+          enum: [true]
+        password:
+          type: string
+    - id: DoubloonApprovalCompleteResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields: [command_key, receipt_ref, confirmation_binding, approval_revision, audit_event_ref, state, execution_authorized]
+      properties:
+        command_key:
+          type: string
+        receipt_ref:
+          type: string
+        confirmation_binding:
+          type: string
+        approval_revision:
+          type: string
+        audit_event_ref:
+          type: string
+        state:
+          type: string
+          enum: [issued]
+        execution_authorized:
+          type: boolean
+          enum: [false]
+    - id: DoubloonApprovalStatusRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: [receipt_ref]
+      properties:
+        receipt_ref:
+          type: string
+    - id: DoubloonApprovalStatusResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields: [receipt_ref, confirmation_binding, state, execution_authorized]
+      optional_fields: [approval_revision, audit_event_ref]
+      properties:
+        receipt_ref:
+          type: string
+        confirmation_binding:
+          type: string
+        state:
+          type: string
+          enum: [pending, issued, expired, revoked, invalidated]
+        execution_authorized:
+          type: boolean
+          enum: [false]
+        approval_revision:
+          type: string
+        audit_event_ref:
+          type: string
     - id: DoubloonConsentReviewRequest
       kind: request
       carries_secret_material: false

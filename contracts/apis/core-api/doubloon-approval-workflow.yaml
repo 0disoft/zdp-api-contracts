@@ -1,0 +1,106 @@
+doubloon_approval_workflow:
+  schema_version: 1
+  status: contract_only_not_implemented
+  owner: zdp-core-platform
+  owner_boundary: access_consent_audit
+  ui_owner: zdp-admin-console
+  resource: doubloon_approval_proposal
+  method: POST
+  base_url: null
+  public_path: null
+  default_enabled: false
+  deployment_activation: not_asserted
+  sdk_operation_generated: false
+  session_effect: none
+  operations:
+    create: [DoubloonProposalCreateRequest, DoubloonProposalCreateResponse]
+    complete: [DoubloonApprovalCompleteRequest, DoubloonApprovalCompleteResponse]
+    status: [DoubloonApprovalStatusRequest, DoubloonApprovalStatusResponse]
+  proposed_internal_paths:
+    create: /internal/admin/doubloon/proposals
+    complete: /internal/admin/doubloon/complete
+    status: /internal/admin/doubloon/status
+  schema_source: contracts/apis/core-api/sensitive-action-authorization.yaml
+  compatibility:
+    existing_review_confirm: unchanged
+    existing_confirm: consent_only_never_implicitly_issue
+    complete: separate_atomic_single_approver_operation
+    legacy_consent_import: forbidden
+  pilot:
+    environment: staging_synthetic_only
+    action: create_grant
+    policy_selection: exact_server_configured_tenant_policy_revision
+    quorum: exactly_one_reject_other_policies_never_downgrade
+    identities: distinct_requester_and_approver
+    independent_humans: not_proven_by_two_test_accounts
+  security:
+    auth: current_private_operator_bearer_session_active_account_and_current_platform_role
+    create_permission: current_exact_tenant_proposer_role_selected_by_server_policy
+    complete_permission: current_exact_tenant_approver_role_and_not_requester
+    status_permission: current_exact_tenant_requester_of_this_proposal_or_policy_approver
+    tenant: trusted_server_configuration_not_body
+    requester_policy_revision_receipt: server_derived_not_body
+    approval_evidence_actor_assignment: server_derived_not_body
+    content: canonical_digest_v1_and_create_grant_semantic_consistency_and_policy_limits
+    required_content_checks: [chain, asset, call_target, recipient, amount, grant_schedule, sender, gas_owner, gas_budget, expiry]
+    transaction_bytes_execution_claim: none_requires_independent_operator_validation
+    browser_boundary: same_origin_bff_core_rejects_origin_and_cookie
+    unknown_or_duplicate_fields: reject
+    request_metadata: [X-Request-ID, X-Trace-ID]
+    metadata_is_command_key: false
+    password: transient_never_logged_persisted_hashed_for_idempotency_or_returned
+    password_rate_limit: failed_assurance_budget_separate_from_successful_operation_throttle
+    redirects: reject
+    cache_control: no-store
+    content_type: application/json
+  limits:
+    create_request_bytes: 300000
+    complete_and_status_request_bytes: 8192
+    transaction_json_utf8_bytes: 65536
+    evidence_json_utf8_bytes: 65536
+    response_bytes: 16384
+    command_key: uuid_v4_lowercase_client_generated_before_first_send
+    reference: ascii_alphanumeric_colon_dash_underscore_slash_dot_1_to_160
+    digest: lowercase_sha256_prefix_and_64_hex
+    password_utf8_bytes: 512
+  idempotency:
+    scope: [tenant, authenticated_actor, operation, command_key]
+    create_fingerprint: canonical_transaction_and_evidence_payload
+    complete_fingerprint: receipt_ref_confirmed_binding_accepted_excluding_password
+    same_key_same_content: original_committed_success_response_200
+    same_key_different_content: conflict_409
+    first_success_status: 200
+    replay_auth: current_session_account_platform_and_operation_scope_permission_required
+    replay_assurance: no_password_reverification_no_new_consent_or_issue
+    replay_policy: no_new_policy_selection_or_reexecution_original_bound_result_only
+    replay_validity: historical_command_result_not_current_approval_authority_use_status
+    new_key_same_actor_same_receipt_complete: conflict_409_no_second_consent
+    concurrent_same_command: serialize_unique_scope_one_success_result
+    retention: durable_no_automatic_expiry_or_key_reuse
+    unsuccessful_attempt: no_success_result_password_failure_budget_may_commit
+    transport_unknown: retry_same_key_same_payload_only_never_generate_new_key
+    creation_response_lost: resend_original_create_command_same_key
+  atomicity:
+    create: [proposal, creation_audit, command_result]
+    complete: [consent_audit, approval_record, approval_actors, approval_head, issuance_audit, command_result]
+    completion_input: receipt_loads_stored_immutable_proposal_inside_transaction
+    completion_checks: current_account_role_epoch_policy_revision_quorum_and_db_time_expiry
+    final_expiry_check: after_waiting_for_locks_before_final_writes
+    lock_order: one_documented_order_shared_by_create_complete_issue_revoke
+    failure: rollback_all_business_writes_and_success_result
+    verification_audits: each_operator_verification_is_fresh_not_deduplicated_as_command
+  result_status:
+    accessible_after_completion: true
+    current_state: [pending, issued, expired, revoked, invalidated]
+    precedence: revoked_then_expired_then_invalidated_then_issued_or_pending
+    invalidated: current_account_organization_role_epoch_or_policy_no_longer_valid
+    fields_for_issued: approval_revision_and_audit_event_ref_required
+    fields_for_pending: approval_revision_and_audit_event_ref_absent
+    other_states: issued_revision_and_audit_present_together_only_if_previously_issued
+    missing_or_out_of_scope: same_403_no_existence_disclosure
+    mutation_effect: none
+    execution_authority: never_use_status_as_signing_or_execution_grant
+  errors: [400, 401, 403, 405, 409, 503]
+  error_envelope: [code, message, request_id, trace_id]
+  execution_authorized: false
+  excluded: [live_signing, chain_submission, new_mint, generic_multisig_workflow, service_identity_proposal_creation]

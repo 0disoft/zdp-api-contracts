@@ -1,12 +1,20 @@
 doubloon_consent:
   schema_version: 1
-  status: contract-only-no-live-route
+  status: internal-staging-review-confirm-implemented-default-disabled
   owner: zdp-core-platform
   ui_owner: zdp-admin-console
   scope: issue_consent_only_revocation_ui_deferred
   path: null
   base_url: null
   runtime_enabled: false
+  runtime_enabled_semantics: compatibility_alias_for_default_enabled_not_deployment_evidence
+  default_enabled: false
+  deployment_activation: not_asserted
+  supported_internal_paths:
+    review: /internal/admin/doubloon/review
+    confirm: /internal/admin/doubloon/confirm
+  public_path: null
+  workflow_extension: contracts/apis/core-api/doubloon-approval-workflow.yaml
   sdk_operation_generated: false
   method: POST
   operations:
