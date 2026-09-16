@@ -7,6 +7,7 @@ import {
   compareWebhookContract
 } from './compatibility-schema';
 import { highestLevel } from './compatibility-shared';
+import { compareAccessDecisionHttp } from './compatibility-access-http';
 import type {
   ApiContractCompatibilityChange,
   ApiContractCompatibilityReport
@@ -27,6 +28,7 @@ export function compareApiContracts(
   compareErrorEnvelope(base, head, changes);
   compareWebhookContract(base, head, changes);
   compareSdkGenerationInput(base, head, changes);
+  compareAccessDecisionHttp(base.accessDecision.httpProfile, head.accessDecision.httpProfile, changes);
 
   changes.sort((left, right) => {
     const levelWeight = { patch: 1, feature: 2, breaking: 3 } as const;

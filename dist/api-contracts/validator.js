@@ -1,4 +1,5 @@
 import { CANONICAL_FORBIDDEN_VALUES } from './forbidden-values.js';
+import { validateAccessDecisionHttpProfile } from './access-decision-http.js';
 const REQUIRED_CALCULATOR_DEFINITION_FIELDS = [
     'id',
     'lifecycle_status',
@@ -189,6 +190,7 @@ const ACCESS_DECISION_RESPONSE_BINDINGS = [
     'data_revision',
     'subject_ref',
     'session_ref',
+    'tenant_ref',
     'product_ref',
     'action',
     'resource_type',
@@ -820,6 +822,7 @@ const PUBLIC_PERMISSION_CHECKS = [
 ];
 const ALLOWED_OWNER_BOUNDARIES = [
     'identity',
+    'accounts',
     'money',
     'access',
     'consent',
@@ -1460,6 +1463,7 @@ function validateAbuseChallenge(contracts, schemaBundlesByFile, diagnostics) {
 }
 function validateAccessDecision(contracts, schemaBundlesByFile, diagnostics) {
     const contract = contracts.accessDecision;
+    diagnostics.push(...validateAccessDecisionHttpProfile(contract.httpProfile));
     const push = (code, path, message) => {
         diagnostics.push({ code, file: ACCESS_DECISION_FILE, path, message });
     };
@@ -2934,6 +2938,7 @@ function validateSchemaDefinition(schemaBundle, schema, index, diagnostics) {
     }
     const allowedEmptyRequestSchemas = new Set([
         'AccountSettingsOverviewGetRequest',
+        'CurrentPersonalAccountScopeGetRequest',
         'AuthSessionCurrentGetRequest',
         'OperatorSessionContextGetRequest',
         'AbuseHealthGetRequest'

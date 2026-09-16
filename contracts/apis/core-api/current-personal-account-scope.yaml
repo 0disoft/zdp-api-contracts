@@ -1,0 +1,40 @@
+schema_bundle:
+  service_id: core-api
+  owner_boundary: accounts
+  status: contract-only
+  purpose: return the verified current actor personal account scope without granting product authorization
+  common_envelope:
+    required_request_metadata: [request_id, trace_id]
+    required_response_metadata: [request_id, trace_id]
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: CurrentPersonalAccountScopeGetRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: []
+      properties: {}
+    - id: CurrentPersonalAccountScopeGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields: [session_ref, subject_ref, tenant_ref, personal_account_ref, expires_at]
+      properties:
+        session_ref:
+          type: string
+        subject_ref:
+          type: string
+        tenant_ref:
+          type: string
+        personal_account_ref:
+          type: string
+        expires_at:
+          type: string
+          format: date-time

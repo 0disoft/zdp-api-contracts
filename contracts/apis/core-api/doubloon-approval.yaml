@@ -1,0 +1,73 @@
+doubloon_approval:
+  schema_version: 1
+  status: contract-only-no-live-route
+  schema_source: contracts/apis/core-api/sensitive-action-authorization.yaml
+  request_schema: DoubloonApprovalVerifyRequest
+  response_schema: DoubloonApprovalVerifyResponse
+  operation_id: core.access.doubloon_approvals.verify
+  method: POST
+  path: null
+  base_url: null
+  runtime_enabled: false
+  sdk_operation_generated: false
+  owner_boundary: access
+  identity_approval_owner: zdp-core-platform
+  transaction_and_manifest_owner: zdp-token-protocol
+  consumer: zdp-token-operator
+  tenant_boundary: verified_service_identity_exact_organization_grant_not_caller_claim
+  auth_required: true
+  permission_check: closed_doubloon_verifier_grant_required_before_activation
+  capability_code: null
+  session_effect: none
+  credential_policy: dedicated_service_identity_no_user_cookie_no_request_issuer_keys
+  success_statuses: [200]
+  request_id_required: true
+  trace_id_required: true
+  transport:
+    content_type: application/json
+    request_metadata_headers: [X-Request-ID, X-Trace-ID]
+    response_metadata_headers: [X-Request-ID, X-Trace-ID]
+    cache_control: no-store
+    redirect_policy: reject_without_forwarding_credentials
+    unknown_or_duplicate_fields: reject
+    max_request_bytes: 8192
+    max_response_bytes: 16384
+  idempotency: reverify_current_authority_each_call_no_cached_valid_replay
+  audit_event: core.access.doubloon_approval_verified
+  audit_failure: no_valid_response
+  errors:
+    400: validation_failed
+    401: authentication_failed
+    403: access_denied
+    503: approval_verification_unavailable
+  error_envelope_ref: contracts/error-envelope.yaml
+  unknown_receipt: authenticated_generic_invalid_no_subject_details
+  closed_binding:
+    audience_product_ref: zdp-token-operator
+    resource_type: doubloon.testnet-operation
+    network: sui_testnet
+    actions: [publish_token, register_currency, publish_reserve, assign_token_upgrade_custody, assign_reserve_upgrade_custody, create_grant, premature_claim, outsider_claim, mature_claim, replay_claim]
+    resource_ref: opaque_experiment_operation_ref_not_raw_transaction
+    forbidden: [mainnet, upgrade, mint, burn, make_immutable, generic_transfer, wildcard_action]
+  digest_profile:
+    encoding_profile: contracts/apis/core-api/doubloon-digest-v1.yaml
+    algorithm_profile: sha256_jcs_ascii_string_tree_v1
+    production_digest_implementation_ready: false
+    binding_contents: [schema_version, experiment_ref, operation_ref, plan_revision, network, full_chain_identifier, action_ref, source_commit, linked_build_digest, dependencies, transaction_bytes_digest, decoded_targets_and_arguments, sender, gas_owner, gas_objects, gas_budget, recipient, amount, grant, tranche, policy_revision, custody_revision, approval_expiry]
+    construction_order: [transaction_content_digest, evidence_manifest_digest, approval_binding]
+    evidence_subject: transaction_content_digest_without_manifest_or_approval
+    approval_binds: [transaction_content_digest, evidence_manifest_digest, approval_revision, issuer, audience, expiry]
+    meaning: immutable_transaction_content_and_approval_scope_not_sui_transaction_digest
+  validation:
+    digest_and_revision_strings: opaque_nonempty_exact_comparison_no_coercion_max_256_utf8_bytes
+    identifiers: nonempty_max_160_utf8_bytes
+    time: strict_rfc3339_utc_explicit_expiry
+    expected_approval_revision: caller_expectation_not_authority
+    response_binding: authoritative_record_must_match_every_requested_binding_for_valid
+    non_valid_response_binding: request_echo_only_not_proof_of_record_existence
+    unavailable_record_metadata: bounded_not_available_marker_only_for_non_valid
+    valid_response_requires: [trusted_issuer, exact_service_grant, active_approval_revision, current_actor_authority, separate_approvers_and_quorum, active_policy, exact_binding, authenticated_fresh_evidence, unexpired_approval, not_revoked, successful_audit]
+    execution_authorized: false
+    verify_consumes_or_reserves: false
+    stale_or_missing_or_unknown: never_valid
+    activation_requires: [core_binding_implementation, approved_digest_profile, service_grant_and_credential_handoff, revocation_and_quorum_policy, architecture_approval]

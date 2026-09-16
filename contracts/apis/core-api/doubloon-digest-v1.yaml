@@ -1,0 +1,33 @@
+doubloon_digest:
+  profile: doubloon.digest/v1
+  status: contract-and-synthetic-conformance-only
+  runtime_enabled: false
+  algorithm: SHA-256
+  encoding: rfc8785_restricted_ascii_string_tree
+  envelope_keys: [domain, payload]
+  domains:
+    transaction: zdp.doubloon/transaction-content/v1
+    evidence: zdp.doubloon/evidence-manifest/v1
+    approval: zdp.doubloon/approval-binding/v1
+  output_pattern: '^sha256:[0-9a-f]{64}$'
+  preimage: utf8_canonical_envelope_without_bom_or_trailing_newline
+  limits: {max_preimage_bytes: 65536, max_depth: 16, max_array_items: 256, max_string_characters: 4096}
+  strings: printable_ascii_only_no_normalization
+  object_keys: lowercase_ascii_snake_case_sorted_ascending
+  arrays: preserve_order
+  rejected: [duplicate_keys, unknown_root_fields, missing_root_fields, numbers, booleans, null, unicode, control_characters]
+  integer_strings: canonical_unsigned_decimal_u64_for_gas_budget_amount_tranche
+  time: YYYY-MM-DDTHH:mm:ss.sssZ
+  not_applicable: explicit_single_key_not_applicable_object_with_machine_reason
+  order: [transaction_content_digest, evidence_manifest_digest, approval_binding]
+  transaction_fields: [schema_version, experiment_ref, operation_ref, plan_revision, network, full_chain_identifier, action_ref, source_commit, linked_build_digest, dependencies, transaction_bytes_digest, decoded_targets_and_arguments, sender, gas_owner, gas_objects, gas_budget, recipient, amount, grant, tranche, policy_revision, custody_revision, approval_expiry]
+  evidence_fields: [transaction_content_digest, entries]
+  evidence_entry_fields: [evidence_ref, evidence_kind, producer_ref, revision, subject_binding, content_digest, observed_at, valid_until, observation_scope]
+  evidence_entry_order: unique_evidence_ref_ascending
+  evidence_subject: exact_transaction_content_digest
+  approval_fields: [transaction_content_digest, evidence_manifest_digest, approval_revision, issuer, audience, expiry]
+  api_transaction_binding_digest: transaction_content_digest
+  raw_transaction_bytes_digest: sha256_of_raw_bytes_not_sui_transaction_digest
+  vectors: contracts/apis/core-api/doubloon-digest-v1.vectors.json
+  reference: tests/helpers/doubloon-digest-reference.ts
+  production_requirements: [core_and_operator_conformance, action_specific_payload_schema, trusted_transaction_decoder, evidence_authentication, current_authority_checks]
