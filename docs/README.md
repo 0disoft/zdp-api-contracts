@@ -23,6 +23,7 @@
 | 민감 행위 authorization receipt | `contracts/sensitive-action-authorization.md` |
 | Core 접근 판정 | `contracts/access-decision.md` |
 | 두블룬 테스트넷 승인 검증 | `contracts/doubloon-approval.md` |
+| 두블룬 내부 승인 워크플로 구현·검증 상태 | `contracts/doubloon-approval-workflow.md` |
 | 공통 abuse challenge | `contracts/abuse-challenge.md` |
 | 웹 제품 OIDC 로그인 handoff | `contracts/oidc-product-session.md` |
 | OIDC client registry와 첨 staging runtime | `contracts/oidc-client-registry-and-runtime.md` |

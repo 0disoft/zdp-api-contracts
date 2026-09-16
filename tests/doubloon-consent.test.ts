@@ -2,6 +2,24 @@ import {expect,test} from 'bun:test';
 import {buildOpenApi31Document} from '../src/api-export-plan/openapi';
 import {parse} from 'yaml';
 
+test('implemented workflow metadata does not assert deployment or end-to-end TLS proof',async()=>{
+  const w=parse(await Bun.file('contracts/apis/core-api/doubloon-approval-workflow.yaml').text()).doubloon_approval_workflow;
+  expect(w.status).toBe('internal_staging_implemented_default_disabled');
+  expect(w.default_enabled).toBe(false);
+  expect(w.deployment_activation).toBe('not_asserted');
+  expect(w.base_url).toBeNull();
+  expect(w.public_path).toBeNull();
+  expect(w.sdk_operation_generated).toBe(false);
+  expect(w.supported_internal_paths).toEqual({create:'/internal/admin/doubloon/proposals',complete:'/internal/admin/doubloon/complete',status:'/internal/admin/doubloon/status'});
+  expect(w.implementation_evidence).toMatchObject({
+    conformance:'scoped_local_evidence_not_full_contract_certification',
+    integration_transport:'stdio_http_adapter_with_disposable_postgres',
+    browser_backend:'synthetic_response_fixtures',
+    deployed_browser_to_core_tls_verified:false,
+  });
+  expect(await Bun.file(w.implementation_evidence.documentation).exists()).toBe(true);
+});
+
 test('workflow exports additive closed DTOs while preserving consent-only confirm',async()=>{
   const result=await buildOpenApi31Document(process.cwd());
   expect(result.ok,JSON.stringify(result)).toBe(true);

@@ -1,6 +1,14 @@
 doubloon_approval_workflow:
   schema_version: 1
-  status: contract_only_not_implemented
+  status: internal_staging_implemented_default_disabled
+  implementation_evidence:
+    documentation: docs/contracts/doubloon-approval-workflow.md
+    conformance: scoped_local_evidence_not_full_contract_certification
+    core_mode: staging-synthetic-create-v1
+    admin_mode: core-workflow-v1
+    integration_transport: stdio_http_adapter_with_disposable_postgres
+    browser_backend: synthetic_response_fixtures
+    deployed_browser_to_core_tls_verified: false
   owner: zdp-core-platform
   owner_boundary: access_consent_audit
   ui_owner: zdp-admin-console
@@ -16,7 +24,7 @@ doubloon_approval_workflow:
     create: [DoubloonProposalCreateRequest, DoubloonProposalCreateResponse]
     complete: [DoubloonApprovalCompleteRequest, DoubloonApprovalCompleteResponse]
     status: [DoubloonApprovalStatusRequest, DoubloonApprovalStatusResponse]
-  proposed_internal_paths:
+  supported_internal_paths:
     create: /internal/admin/doubloon/proposals
     complete: /internal/admin/doubloon/complete
     status: /internal/admin/doubloon/status
