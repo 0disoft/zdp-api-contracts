@@ -1,0 +1,39 @@
+schema_bundle:
+  service_id: core-api
+  owner_boundary: accounts
+  status: contract-only
+  purpose: change only the current actor Orchid visitor membership with atomic audit
+  common_envelope:
+    required_request_metadata: [request_id, trace_id, idempotency_key]
+    required_response_metadata: [request_id, trace_id]
+    forbidden_payload_values:
+      - authorization_header
+      - cookie_header
+      - refresh_token_plaintext
+      - provider_secret
+      - raw_provider_error
+      - raw_customer_payload
+      - stack_trace
+      - screen_component_payload
+  schemas:
+    - id: OrchidVisitorAccessChangeRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: [operation]
+      properties:
+        operation:
+          type: string
+          enum: [register, revoke]
+    - id: OrchidVisitorAccessChangeResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields: [personal_account_ref, status, replayed]
+      properties:
+        personal_account_ref:
+          type: string
+        status:
+          type: string
+          enum: [active, revoked]
+        replayed:
+          type: boolean

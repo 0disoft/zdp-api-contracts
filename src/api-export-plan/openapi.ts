@@ -9,6 +9,7 @@ import type {
   ApiSchemaDefinition
 } from '../api-contracts/types.js';
 import { validateApiContracts } from '../api-contracts/validator.js';
+import { withAccessDecisionHttpProfile } from './access-decision-http.js';
 import {
   loadTypedSchemaRegistry,
   type ApiTypedSchemaDefinition,
@@ -174,7 +175,9 @@ export async function buildOpenApi31Document(
     contextResult.contexts,
     contracts
   );
-  const paths = buildPaths(routes, contextResult.contexts);
+  const paths = withAccessDecisionHttpProfile(
+    buildPaths(routes, contextResult.contexts), contracts.accessDecision
+  );
   const title = options.title?.trim() || manifest.name;
 
   return {

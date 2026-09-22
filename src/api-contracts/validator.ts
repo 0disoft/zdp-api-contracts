@@ -12,6 +12,7 @@ import type {
   CalculatorOutputDefinition
 } from './types.js';
 import { CANONICAL_FORBIDDEN_VALUES } from './forbidden-values.js';
+import { validateAccessDecisionHttpProfile } from './access-decision-http.js';
 
 const REQUIRED_CALCULATOR_DEFINITION_FIELDS = [
   'id',
@@ -220,6 +221,7 @@ const ACCESS_DECISION_RESPONSE_BINDINGS = [
   'data_revision',
   'subject_ref',
   'session_ref',
+  'tenant_ref',
   'product_ref',
   'action',
   'resource_type',
@@ -885,6 +887,7 @@ const PUBLIC_PERMISSION_CHECKS = [
 
 const ALLOWED_OWNER_BOUNDARIES = [
   'identity',
+  'accounts',
   'money',
   'access',
   'consent',
@@ -2197,6 +2200,7 @@ function validateAccessDecision(
   diagnostics: ApiContractDiagnostic[]
 ): void {
   const contract = contracts.accessDecision;
+  diagnostics.push(...validateAccessDecisionHttpProfile(contract.httpProfile));
   const push = (code: string, path: string, message: string): void => {
     diagnostics.push({ code, file: ACCESS_DECISION_FILE, path, message });
   };
@@ -4640,6 +4644,7 @@ function validateSchemaDefinition(
 
   const allowedEmptyRequestSchemas = new Set([
     'AccountSettingsOverviewGetRequest',
+    'CurrentPersonalAccountScopeGetRequest',
     'AuthSessionCurrentGetRequest',
     'OperatorSessionContextGetRequest',
     'AbuseHealthGetRequest'

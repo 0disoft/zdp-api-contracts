@@ -163,3 +163,282 @@ schema_bundle:
         - decision_revision
         - issued_at
         - audit_event_ref
+    - id: DoubloonApprovalVerifyRequest
+      kind: request
+      carries_secret_material: false
+      required_fields:
+        - receipt_ref
+        - expected_approval_revision
+        - transaction_binding_digest
+        - evidence_manifest_digest
+        - network
+        - full_chain_identifier
+        - audience_product_ref
+        - action_ref
+        - resource_type
+        - resource_ref
+      properties:
+        receipt_ref:
+          type: string
+        expected_approval_revision:
+          type: string
+        transaction_binding_digest:
+          type: string
+        evidence_manifest_digest:
+          type: string
+        network:
+          type: string
+          enum: ["sui_testnet"]
+        full_chain_identifier:
+          type: string
+        audience_product_ref:
+          type: string
+          enum: ["zdp-token-operator"]
+        action_ref:
+          type: string
+          enum: ["publish_token","register_currency","publish_reserve","assign_token_upgrade_custody","assign_reserve_upgrade_custody","create_grant","premature_claim","outsider_claim","mature_claim","replay_claim"]
+        resource_type:
+          type: string
+          enum: ["doubloon.testnet-operation"]
+        resource_ref:
+          type: string
+    - id: DoubloonApprovalVerifyResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields:
+        - receipt_ref
+        - transaction_binding_digest
+        - evidence_manifest_digest
+        - network
+        - full_chain_identifier
+        - audience_product_ref
+        - action_ref
+        - resource_type
+        - resource_ref
+        - issuer_ref
+        - verification_result
+        - verified_at
+        - expires_at
+        - policy_ref
+        - policy_revision
+        - actor_authority_revision
+        - revocation_revision
+        - audit_ref
+        - execution_authorized
+        - approval_revision
+      properties:
+        receipt_ref:
+          type: string
+        transaction_binding_digest:
+          type: string
+        evidence_manifest_digest:
+          type: string
+        network:
+          type: string
+          enum: ["sui_testnet"]
+        full_chain_identifier:
+          type: string
+        audience_product_ref:
+          type: string
+          enum: ["zdp-token-operator"]
+        action_ref:
+          type: string
+          enum: ["publish_token","register_currency","publish_reserve","assign_token_upgrade_custody","assign_reserve_upgrade_custody","create_grant","premature_claim","outsider_claim","mature_claim","replay_claim"]
+        resource_type:
+          type: string
+          enum: ["doubloon.testnet-operation"]
+        resource_ref:
+          type: string
+        issuer_ref:
+          type: string
+        verification_result:
+          type: string
+          enum: ["valid","invalid","expired","revoked","binding_mismatch","revision_stale","policy_stale","actor_authority_stale","quorum_missing","evidence_invalid"]
+        verified_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        policy_ref:
+          type: string
+        policy_revision:
+          type: string
+        actor_authority_revision:
+          type: string
+        revocation_revision:
+          type: string
+        audit_ref:
+          type: string
+        execution_authorized:
+          type: boolean
+          enum: [false]
+        approval_revision:
+          type: string
+    - id: DoubloonProposalCreateRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: [command_key, transaction_json, evidence_json]
+      properties:
+        command_key:
+          type: string
+        transaction_json:
+          type: string
+        evidence_json:
+          type: string
+    - id: DoubloonProposalCreateResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields: [command_key, receipt_ref, confirmation_binding, state, execution_authorized]
+      properties:
+        command_key:
+          type: string
+        receipt_ref:
+          type: string
+        confirmation_binding:
+          type: string
+        state:
+          type: string
+          enum: [pending]
+        execution_authorized:
+          type: boolean
+          enum: [false]
+    - id: DoubloonApprovalCompleteRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: password_verifier_input_only_never_echo
+      secret_fields: [password]
+      required_fields: [command_key, receipt_ref, confirmed_binding, accepted, password]
+      properties:
+        command_key:
+          type: string
+        receipt_ref:
+          type: string
+        confirmed_binding:
+          type: string
+        accepted:
+          type: boolean
+          enum: [true]
+        password:
+          type: string
+    - id: DoubloonApprovalCompleteResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields: [command_key, receipt_ref, confirmation_binding, approval_revision, audit_event_ref, state, execution_authorized]
+      properties:
+        command_key:
+          type: string
+        receipt_ref:
+          type: string
+        confirmation_binding:
+          type: string
+        approval_revision:
+          type: string
+        audit_event_ref:
+          type: string
+        state:
+          type: string
+          enum: [issued]
+        execution_authorized:
+          type: boolean
+          enum: [false]
+    - id: DoubloonApprovalStatusRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: [receipt_ref]
+      properties:
+        receipt_ref:
+          type: string
+    - id: DoubloonApprovalStatusResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields: [receipt_ref, confirmation_binding, state, execution_authorized]
+      optional_fields: [approval_revision, audit_event_ref]
+      properties:
+        receipt_ref:
+          type: string
+        confirmation_binding:
+          type: string
+        state:
+          type: string
+          enum: [pending, issued, expired, revoked, invalidated]
+        execution_authorized:
+          type: boolean
+          enum: [false]
+        approval_revision:
+          type: string
+        audit_event_ref:
+          type: string
+    - id: DoubloonConsentReviewRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: [receipt_ref]
+      properties:
+        receipt_ref:
+          type: string
+    - id: DoubloonConsentReviewResponse
+      kind: response
+      session_effect: none
+      carries_secret_material: false
+      required_fields: [receipt_ref, tenant, requester_id, policy_ref, approval_revision, confirmation_binding, transaction_json, evidence_json, execution_authorized]
+      properties:
+        receipt_ref:
+          type: string
+        tenant:
+          type: string
+        requester_id:
+          type: string
+        policy_ref:
+          type: string
+        approval_revision:
+          type: string
+        confirmation_binding:
+          type: string
+        transaction_json:
+          type: string
+        evidence_json:
+          type: string
+        execution_authorized:
+          type: boolean
+          enum: [false]
+    - id: DoubloonConsentConfirmRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: password_verifier_input_only_never_echo
+      secret_fields: [password]
+      required_fields: [receipt_ref, confirmed_binding, accepted, password]
+      properties:
+        receipt_ref:
+          type: string
+        confirmed_binding:
+          type: string
+        accepted:
+          type: boolean
+          enum: [true]
+        password:
+          type: string
+    - id: DoubloonConsentConfirmResponse
+      kind: response
+      session_effect: none
+      carries_secret_material: false
+      required_fields: [receipt_ref, confirmation_binding, audit_event_ref, actor_id, assignment_id, assignment_event_count, execution_authorized]
+      properties:
+        receipt_ref:
+          type: string
+        confirmation_binding:
+          type: string
+        audit_event_ref:
+          type: string
+        actor_id:
+          type: string
+        assignment_id:
+          type: string
+        assignment_event_count:
+          type: integer
+        execution_authorized:
+          type: boolean
+          enum: [false]

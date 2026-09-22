@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { loadApiContracts } from '../api-contracts/registry-loader.js';
 import { validateApiContracts } from '../api-contracts/validator.js';
+import { withAccessDecisionHttpProfile } from './access-decision-http.js';
 import { loadTypedSchemaRegistry } from './typed-schema.js';
 const OPENAPI_VERSION = '3.1.0';
 const JSON_SCHEMA_DIALECT = 'https://json-schema.org/draft/2020-12/schema';
@@ -72,7 +73,7 @@ export async function buildOpenApi31Document(root = process.cwd(), options = {})
         .slice()
         .sort(compareRoutes);
     const components = buildSchemaComponents(contextResult.contexts, contracts);
-    const paths = buildPaths(routes, contextResult.contexts);
+    const paths = withAccessDecisionHttpProfile(buildPaths(routes, contextResult.contexts), contracts.accessDecision);
     const title = options.title?.trim() || manifest.name;
     return {
         ok: true,

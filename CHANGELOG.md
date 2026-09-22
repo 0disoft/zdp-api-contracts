@@ -1,5 +1,49 @@
 # CHANGELOG.md
 
+## 0.42.2
+
+- main의 0.37.0에서 현재 계약으로 이전하는 누적 마이그레이션 안내를 추가해 PR 호환성 검증의 문서 누락을 해결했다. HTTP·DTO 계약 자체는 바꾸지 않는다.
+
+## 0.42.1
+
+- 두블룬 승인 워크플로의 미구현 표기를 내부 스테이징 구현·기본 비활성 상태로 갱신했다. 요청·응답 DTO와 공개 route 범위는 유지한다.
+- Core·Admin·Operator 로컬 연동과 브라우저 합성 응답 검증을 구분하고, 배포·활성화 및 전체 계약 적합성은 미확인임을 명시했다.
+
+## 0.42.0
+
+- 두블룬 제안 생성·단일 승인 완료·상태 조회의 비활성 계약과 닫힌 스키마를 추가했다. 기존 confirm의 동의 전용 의미는 유지한다.
+- 명령 키의 영속 중복 방지, 원자적 완료, 응답 유실 복구와 과거 명령 결과·현재 승인 효력의 차이를 정의했다.
+- 기존 review·confirm의 스테이징 구현 경로와 기본 비활성·미확인 배포 상태를 구분했다.
+
+## 0.41.0
+
+- 두블룬 발급 동의의 내용 확인·비밀번호 재확인 요청과 응답 계약을 추가했다. 공개 경로와 실행 권한은 비활성 상태다.
+
+## 0.40.0
+
+- 두블룬 digest v1의 정규화·domain·SHA-256 결합 순서와 독립 생성한 고정 테스트 벡터를 추가했다. 참고 구현은 테스트 전용이며 실행 권한이나 live route는 추가하지 않는다.
+
+## 0.39.0
+
+- 두블룬 테스트넷 승인 검증의 닫힌 작업 목록, 거래·증거 binding과 typed 요청·응답을 추가했다. OpenAPI schema에는 포함하되 route·SDK 호출·실행 권한은 추가하지 않는다.
+
+## 0.38.0
+
+- Orchid 방문자 자기 등록·철회의 고정 operation, 개인 계정 멱등성, 상태 오류와 원자적 감사 계약을 추가했다.
+
+### Changed
+
+- 접근 판정 HTTP 프로파일 변경은 인증·헤더·본문 상한·replay 호환성을 바꾸므로 breaking으로 분류하고 마이그레이션을 요구한다.
+
+### Added
+
+- 현재 개인 계정 scope 조회의 typed response와 세션 인증·감사·캐시 금지 계약을 추가했다. scope 조회는 제품 접근 권한을 부여하지 않는다.
+
+- Core 접근 판정 응답의 필수 binding과 schema에 `tenant_ref`를 추가해 검증된 현재 세션의 tenant를 소비자가 대조할 수 있도록 했다.
+- 접근 판정 요청·응답을 typed JSON schema로 선언해 allow/deny, scope 종류, 날짜와 obligations 배열을 OpenAPI에 전달한다.
+- 기존 current-session cookie transport를 따르는 HTTP 프로파일과 필수 metadata header, cache 금지, 201 replay, 중복·redirect 거부 및 body 한도를 선언했다.
+- tenant binding 누락·선택 필드 격하와 요청 측 tenant 권한 주입을 거부하는 회귀 테스트를 추가했다. 계약은 계속 contract-only이며 runtime route를 활성화하지 않는다.
+
 ## 0.37.0
 
 ### Added
