@@ -7,3 +7,9 @@
 이 route는 최종 authorization, account 수정, workspace 전환, session 폐기, 제품 연결 해제 또는 알림 변경을 수행하지 않는다. 각 mutation은 별도 operation과 owner 검증 계약이 생기기 전까지 비활성이다.
 
 응답에는 password, token, credential, provider payload, 내부 역할 원문, 제품 DB row 또는 화면 컴포넌트 payload를 넣지 않는다.
+
+account는 `login_id`, `public_user_code` 두 optional 문자열을 가질 수 있다.
+두 식별자는 현재 세션의 소유자에 속한 활성(`active`) 레코드에서만 조회한다.
+구버전 응답에 두 필드가 없어도 호환되며 누락은 정보 없음으로 처리한다.
+공개 사용자 코드는 계정 식별자이며 추천코드가 아니다.
+구형 strict parser BFF는 Core보다 먼저 업그레이드해야 한다.

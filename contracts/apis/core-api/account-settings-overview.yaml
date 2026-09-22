@@ -46,6 +46,14 @@ schema_bundle:
               type: string
             display_name:
               type: string
+            login_id:
+              type: string
+              minLength: 1
+              maxLength: 256
+            public_user_code:
+              type: string
+              minLength: 1
+              maxLength: 256
         workspace:
           type: object
           required:
