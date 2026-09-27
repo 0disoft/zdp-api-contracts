@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.44.0
+
+- 두블룬 승인 검증의 비공개 staging 경로와 전용 서비스 capability를 예약했다. 공개 route, SDK 호출, credential 발급과 런타임 활성화는 계속 없다.
+
 ## 0.43.0
 
 - 합성 두블룬 게시 작업에서 UpgradeCap 보관 배정 두 작업을 제거하고, 각 게시 PTB 안에서 반환 cap을 `make_immutable`로 소비하도록 계약을 바꿨다.

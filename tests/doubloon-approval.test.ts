@@ -28,8 +28,11 @@ test('closed actions and schema references match the no-route policy', async () 
   const result = await buildOpenApi31Document(process.cwd());
   expect(result.ok).toBe(true);
   expect(policy.path).toBeNull();
+  expect(policy.reserved_internal_path).toBe('/v1/internal/doubloon-approvals/verify');
   expect(policy.runtime_enabled).toBe(false);
   expect(policy.sdk_operation_generated).toBe(false);
+  expect(policy.capability_code).toBe('doubloon-approval:verify');
+  expect(policy.capability_provisioned).toBe(false);
   expect(policy.validation.execution_authorized).toBe(false);
   expect(policy.validation.verify_consumes_or_reserves).toBe(false);
   expect(result.document!.components.schemas.DoubloonApprovalVerifyRequest)

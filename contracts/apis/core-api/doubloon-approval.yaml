@@ -8,6 +8,7 @@ doubloon_approval:
   method: POST
   path: null
   base_url: null
+  reserved_internal_path: /v1/internal/doubloon-approvals/verify
   runtime_enabled: false
   sdk_operation_generated: false
   owner_boundary: access
@@ -16,8 +17,9 @@ doubloon_approval:
   consumer: zdp-token-operator
   tenant_boundary: verified_service_identity_exact_organization_grant_not_caller_claim
   auth_required: true
-  permission_check: closed_doubloon_verifier_grant_required_before_activation
-  capability_code: null
+  permission_check: active_exact_organization_service_grant_required_before_every_verification
+  capability_code: doubloon-approval:verify
+  capability_provisioned: false
   session_effect: none
   credential_policy: dedicated_service_identity_no_user_cookie_no_request_issuer_keys
   success_statuses: [200]
