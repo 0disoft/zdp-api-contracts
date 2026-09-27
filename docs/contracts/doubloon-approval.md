@@ -10,7 +10,9 @@ Core가 서비스 identity의 정확한 organization grant로 호출자를 인�
 
 ## 요청과 binding
 
-허용 작업은 token 게시·Currency 등록·reserve 게시·각 UpgradeCap 보관 배정·Grant 생성·만기 전/제3자/정상/중복 청구의 10가지다. 네트워크는 sui_testnet, audience는 zdp-token-operator, resource type은 doubloon.testnet-operation으로 제한한다. upgrade·mint·burn·mainnet·임의 전송은 포함하지 않는다.
+허용 작업은 token 게시·Currency 등록·reserve 게시·Grant 생성·만기 전/제3자/정상/중복 청구의 8가지다. 네트워크는 sui_testnet, audience는 zdp-token-operator, resource type은 doubloon.testnet-operation으로 제한한다. cap 보관 배정, upgrade·mint·burn·mainnet·임의 전송은 포함하지 않는다.
+
+ADR-0060에 따라 두 게시 작업은 각각 `Publish`가 반환한 UpgradeCap을 **같은 PTB**의 `sui::package::make_immutable`에서 소비해야 한다. 독립적인 `make_immutable` 작업이나 게시 직후 별도 고정 거래는 허용하지 않는다. 승인 binding과 시뮬레이션은 게시와 cap 소비를 포함한 전체 거래 바이트를 대상으로 하며, 성공 effects·package ID·cap 소비·생존 cap 부재를 대조해야 완료로 본다. 현재 Core 검증기는 PTB 명령을 해독하지 않으므로 이 계약만으로 불변화 조건이 강제됐다고 주장할 수 없다.
 
 receipt와 예상 승인 revision, 거래 binding digest, 증거 manifest digest, 전체 체인 식별자와 exact action/resource를 요청한다. 예상 revision은 비교값이며 승인 근거가 아니다. binding은 실제 거래 바이트에서 해석한 대상·인자·sender·gas owner·gas 객체/예산·수량·수령자·Grant·tranche와 source/dependency/policy/custody revision·만료를 포함해야 한다.
 

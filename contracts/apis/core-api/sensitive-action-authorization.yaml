@@ -196,7 +196,7 @@ schema_bundle:
           enum: ["zdp-token-operator"]
         action_ref:
           type: string
-          enum: ["publish_token","register_currency","publish_reserve","assign_token_upgrade_custody","assign_reserve_upgrade_custody","create_grant","premature_claim","outsider_claim","mature_claim","replay_claim"]
+          enum: ["publish_token","register_currency","publish_reserve","create_grant","premature_claim","outsider_claim","mature_claim","replay_claim"]
         resource_type:
           type: string
           enum: ["doubloon.testnet-operation"]
@@ -244,7 +244,7 @@ schema_bundle:
           enum: ["zdp-token-operator"]
         action_ref:
           type: string
-          enum: ["publish_token","register_currency","publish_reserve","assign_token_upgrade_custody","assign_reserve_upgrade_custody","create_grant","premature_claim","outsider_claim","mature_claim","replay_claim"]
+          enum: ["publish_token","register_currency","publish_reserve","create_grant","premature_claim","outsider_claim","mature_claim","replay_claim"]
         resource_type:
           type: string
           enum: ["doubloon.testnet-operation"]

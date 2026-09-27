@@ -46,9 +46,19 @@ doubloon_approval:
     audience_product_ref: zdp-token-operator
     resource_type: doubloon.testnet-operation
     network: sui_testnet
-    actions: [publish_token, register_currency, publish_reserve, assign_token_upgrade_custody, assign_reserve_upgrade_custody, create_grant, premature_claim, outsider_claim, mature_claim, replay_claim]
+    actions: [publish_token, register_currency, publish_reserve, create_grant, premature_claim, outsider_claim, mature_claim, replay_claim]
     resource_ref: opaque_experiment_operation_ref_not_raw_transaction
-    forbidden: [mainnet, upgrade, mint, burn, make_immutable, generic_transfer, wildcard_action]
+    forbidden: [mainnet, upgrade, mint, burn, standalone_make_immutable, generic_transfer, wildcard_action]
+    publish_immutability:
+      decision_ref: zdp-architecture/adr/0060-doubloon-synthetic-testnet-package-immutability.md
+      applies_to: [publish_token, publish_reserve]
+      same_transaction_required: true
+      publish_returned_upgrade_cap_consumed_by_make_immutable: true
+      separate_followup_transaction_allowed: false
+      surviving_upgrade_cap_allowed: false
+      reviewed_binding_must_cover_full_publish_ptb: true
+      current_core_verifier_decodes_ptb: false
+      activation_requires_semantic_ptb_decode_and_effects_reconciliation: true
   digest_profile:
     encoding_profile: contracts/apis/core-api/doubloon-digest-v1.yaml
     algorithm_profile: sha256_jcs_ascii_string_tree_v1

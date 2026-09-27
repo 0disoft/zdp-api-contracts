@@ -37,6 +37,17 @@ test('closed actions and schema references match the no-route policy', async () 
   expect(policy.closed_binding.actions).not.toContain('upgrade');
   expect(policy.closed_binding.actions).not.toContain('mint');
   expect(policy.closed_binding.actions).not.toContain('burn');
+  expect(policy.closed_binding.actions).not.toContain('assign_token_upgrade_custody');
+  expect(policy.closed_binding.actions).not.toContain('assign_reserve_upgrade_custody');
+  expect(policy.closed_binding.forbidden).toContain('standalone_make_immutable');
+  expect(policy.closed_binding.publish_immutability).toMatchObject({
+    applies_to: ['publish_token', 'publish_reserve'],
+    same_transaction_required: true,
+    publish_returned_upgrade_cap_consumed_by_make_immutable: true,
+    separate_followup_transaction_allowed: false,
+    surviving_upgrade_cap_allowed: false,
+    current_core_verifier_decodes_ptb: false,
+  });
   const catalog = parse(await readFile('contracts/error-code-catalog.yaml', 'utf8')).error_code_catalog.entries;
   for (const [status, code] of Object.entries(policy.errors)) {
     expect(catalog.find((entry: { code: string }) => entry.code === code)?.http_status).toBe(Number(status));
