@@ -4,7 +4,7 @@
 
 ## 실행 상태
 
-계약은 contract-only-no-live-route다. 검토할 비공개 POST 경로를 `/v1/internal/doubloon-approvals/verify`, 전용 capability를 `doubloon-approval:verify`로 예약했다. 공개 path·base URL은 null이고 route catalog에 등록하지 않았으므로 OpenAPI components에는 schema가 있어도 paths나 SDK 호출은 추가되지 않는다. Core 라우트 연결과 capability·credential 발급은 아직 없으며 기존 Orchid/Admin 대상의 허용 범위를 넓히지 않는다.
+계약은 contract-only-no-live-route다. 비공개 POST 경로 `/v1/internal/doubloon-approvals/verify`와 전용 capability `doubloon-approval:verify`를 예약했다. 공개 path·base URL은 null이고 route catalog에 등록하지 않았으므로 OpenAPI components에는 schema가 있어도 paths나 SDK 호출은 추가되지 않는다. Core에는 이 경로의 기본 비활성 스테이징 조립 코드가 병합됐지만 운영 배포·활성화와 capability·credential 발급은 아직 없다. 계약의 `runtime_enabled: false`는 이 운영 상태를 가리키며 기존 Orchid/Admin 대상의 허용 범위를 넓히지 않는다.
 
 Core가 서비스 identity의 정확한 organization grant로 호출자를 인증하고 token-operator 전용 검증 권한을 확인해야 한다. permission 문구나 operation ID가 있다는 사실만으로 grant가 만들어지지 않는다. credential은 별도 보관 경계에서 전달하며 사용자 cookie나 요청에 첨부한 issuer key를 사용하지 않는다.
 
@@ -30,4 +30,4 @@ receipt와 예상 승인 revision, 거래 binding digest, 증거 manifest digest
 
 zdp_api_contracts_check에서 두블룬 schema export, 닫힌 입력/응답, 허용 작업과 정책 일치, route 부재, 중앙 오류 코드를 확인한다. 문서와 typed schema를 추가한 것이 런타임 인증·DB migration·네트워크 활성화를 증명하지 않는다.
 
-Core의 닫힌 binding 타입·verdict와 digest profile은 구현돼 있다. 다음은 예약한 비공개 경로를 기본 비활성 staging 조립에 연결하고, 합성 HTTP/disposable DB에서 정확한 서비스 grant를 검증하는 단계다. 실제 credential 발급·조직/승인자 정책과 배포 활성화는 별도 결정한다.
+Core의 닫힌 binding 타입·verdict, digest profile과 기본 비활성 스테이징 HTTP 조립은 구현돼 있다. 합성 HTTP/disposable DB에서 정확한 서비스 grant를 검증했으며, 실제 credential 발급·조직/승인자 정책·private ingress와 배포 활성화는 별도 결정한다.
