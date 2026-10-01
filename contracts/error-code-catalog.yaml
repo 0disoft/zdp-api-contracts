@@ -26,6 +26,10 @@ error_code_catalog:
   - code: authentication_failed
     http_status: 401
     owner_service_id: shared
+  - code: authentication_unavailable
+    http_status: 503
+    owner_service_id: core-api
+    retryable: false
   - code: authorization_pending
     http_status: 409
     owner_service_id: core-api

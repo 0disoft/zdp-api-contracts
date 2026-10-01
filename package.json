@@ -1,6 +1,6 @@
 {
   "name": "zdp-api-contracts",
-  "version": "0.44.0",
+  "version": "0.45.0",
   "private": false,
   "license": "MIT",
   "type": "module",

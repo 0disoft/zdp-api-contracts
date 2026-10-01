@@ -1448,6 +1448,8 @@ describe('api contract checker', () => {
       'core.auth.recovery_requests.create',
       'core.auth.passkey_challenges.create',
       'core.auth.passkey_assertions.verify',
+      'core.auth.passkey_login_begin.create',
+      'core.auth.passkey_login_complete.create',
       'core.auth.oauth_callbacks.accept',
       'core.referral.uses.create',
       'money.referral_rewards.status.get',
@@ -1503,7 +1505,7 @@ describe('api contract checker', () => {
     ).toBe(true);
     expect(
       authRoutes.filter((route) => route.sessionEffect === 'issue').length
-    ).toBe(3);
+    ).toBe(4);
     expect(
       authRoutes.find((route) => route.operationId === 'core.auth.sessions.get_current')
     ).toMatchObject({
@@ -1990,6 +1992,7 @@ describe('api contract checker', () => {
       'contracts/apis/core-api/customer-policy-registry.yaml',
       'contracts/apis/core-api/operator-session-context.yaml',
       'contracts/apis/core-api/orchid-visitor-access.yaml',
+      'contracts/apis/core-api/passkey-login.yaml',
       'contracts/apis/core-api/product-link.yaml',
       'contracts/apis/core-api/referral.yaml',
       'contracts/apis/core-api/sensitive-action-authorization.yaml',
@@ -2539,6 +2542,10 @@ function loadCommittedContracts(): ApiContracts {
       )
     ),
     schemaBundles: [
+      parseApiSchemaBundleContract(
+        readFileSync(join(process.cwd(), 'contracts/apis/core-api/passkey-login.yaml'), 'utf8'),
+        'contracts/apis/core-api/passkey-login.yaml'
+      ),
       parseApiSchemaBundleContract(
         readFileSync(
           join(

@@ -577,6 +577,46 @@ routes:
       - account_restricted
       - rate_limited
       - idempotency_conflict
+  - operation_id: core.auth.passkey_login_begin.create
+    service_id: core-api
+    resource: passkey_login_begin
+    action: create
+    method: POST
+    path: /v1/auth/passkey/login/begin
+    success_statuses: [200]
+    request_schema_ref: contracts/apis/core-api/passkey-login.yaml#PasskeyLoginBeginRequest
+    response_schema_ref: contracts/apis/core-api/passkey-login.yaml#PasskeyLoginBeginResponse
+    auth_required: false
+    permission_check: core.identity.public_auth_entrypoint
+    audit_event: core.identity.passkey.login_begun
+    idempotency: not_required
+    owner_boundary: identity
+    tenant_boundary: pending_identity_or_organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes: [validation_failed, authentication_failed, authentication_unavailable]
+  - operation_id: core.auth.passkey_login_complete.create
+    service_id: core-api
+    resource: passkey_login_complete
+    action: create
+    method: POST
+    path: /v1/auth/passkey/login/complete
+    success_statuses: [201]
+    request_schema_ref: contracts/apis/core-api/passkey-login.yaml#PasskeyLoginCompleteRequest
+    response_schema_ref: contracts/apis/core-api/passkey-login.yaml#PasskeyLoginCompleteResponse
+    auth_required: false
+    permission_check: core.identity.public_auth_entrypoint
+    audit_event: core.identity.passkey.login_completed
+    idempotency: not_required
+    owner_boundary: identity
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: issue
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes: [validation_failed, authentication_failed, authentication_unavailable]
   - operation_id: core.auth.oauth_callbacks.accept
     service_id: core-api
     resource: oauth_callback

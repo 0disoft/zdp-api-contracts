@@ -73,6 +73,8 @@ describe('api export plan', () => {
       'core.auth.recovery_requests.create',
       'core.auth.passkey_challenges.create',
       'core.auth.passkey_assertions.verify',
+      'core.auth.passkey_login_begin.create',
+      'core.auth.passkey_login_complete.create',
       'core.auth.oauth_callbacks.accept',
       'core.referral.uses.create',
       'money.referral_rewards.status.get',
@@ -502,6 +504,10 @@ function loadCommittedContracts(): ApiContracts {
       )
     ),
     schemaBundles: [
+      parseApiSchemaBundleContract(
+        readFileSync(join(process.cwd(), 'contracts/apis/core-api/passkey-login.yaml'), 'utf8'),
+        'contracts/apis/core-api/passkey-login.yaml'
+      ),
       parseApiSchemaBundleContract(
         readFileSync(
           join(

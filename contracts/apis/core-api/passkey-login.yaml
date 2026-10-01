@@ -1,0 +1,79 @@
+schema_bundle:
+  service_id: core-api
+  owner_boundary: identity
+  status: contract-only
+  purpose: describe discoverable cookie-bound passkey login browser and gateway payloads without activating private Core handlers
+  common_envelope:
+    required_request_metadata: [request_id, trace_id]
+    required_response_metadata: [request_id, trace_id]
+    forbidden_payload_values: [authorization_header, cookie_header, refresh_token_plaintext, provider_secret, raw_provider_error, raw_customer_payload, stack_trace, screen_component_payload]
+  schemas:
+    # Browser/gateway payloads. The private Core wire payload additionally receives
+    # browser_binding from an HttpOnly cookie through signed trusted forwarding.
+    - id: PasskeyLoginBeginRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: []
+      properties: {}
+    - id: PasskeyLoginBeginResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields: [ceremony_id, options]
+      properties:
+        ceremony_id:
+          type: string
+          format: uuid
+        options:
+          type: object
+          additional_properties: false
+          required: [publicKey]
+          properties:
+            publicKey:
+              type: object
+              required: [challenge, rpId, timeout, userVerification]
+              properties:
+                challenge: {type: string}
+                rpId: {type: string}
+                timeout: {type: integer}
+                userVerification: {type: string, enum: [required]}
+                allowCredentials: {type: array, items: {type: object}}
+                extensions: {type: object, additional_properties: true}
+                hints: {type: array, items: {type: string}}
+            mediation: {type: string}
+    - id: PasskeyLoginCompleteRequest
+      kind: request
+      carries_secret_material: true
+      secret_material_policy: browser_assertion_only_never_echo
+      required_fields: [ceremony_id, credential]
+      secret_fields: [credential]
+      properties:
+        ceremony_id:
+          type: string
+          format: uuid
+        credential:
+          type: object
+          required: [id, rawId, type, response]
+          properties:
+            id: {type: string}
+            rawId: {type: string}
+            type: {type: string, enum: [public-key]}
+            response:
+              type: object
+              required: [authenticatorData, clientDataJSON, signature, userHandle]
+              properties:
+                authenticatorData: {type: string}
+                clientDataJSON: {type: string}
+                signature: {type: string}
+                userHandle: {type: string}
+            extensions: {type: object, additional_properties: true}
+    - id: PasskeyLoginCompleteResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: issue
+      required_fields: [session_ref, actor_ref, tenant_ref, expires_at]
+      properties:
+        session_ref: {type: string}
+        actor_ref: {type: string}
+        tenant_ref: {type: string}
+        expires_at: {type: string, format: date-time}

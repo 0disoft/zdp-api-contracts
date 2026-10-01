@@ -4139,7 +4139,8 @@ function validateRouteDefinition(
 
   if (
     includesValue(MUTATING_METHODS_REQUIRING_IDEMPOTENCY, route.method) &&
-    route.idempotency !== REQUIRED_MUTATION_IDEMPOTENCY_POLICY
+    route.idempotency !== REQUIRED_MUTATION_IDEMPOTENCY_POLICY &&
+    !isSingleUsePasskeyLoginRoute(route)
   ) {
     diagnostics.push({
       code: 'API_CATALOG_ROUTE_MUTATION_IDEMPOTENCY_NOT_REQUIRED',
@@ -4268,6 +4269,8 @@ function validateRouteDefinition(
   for (const requiredErrorCode of SESSION_EFFECT_REQUIRED_ERROR_CODES[
     route.sessionEffect
   ] ?? []) {
+    // Discoverable login deliberately masks restricted/unknown accounts alike.
+    if (requiredErrorCode === 'account_restricted' && isSingleUsePasskeyLoginRoute(route)) continue;
     if (!route.errorCodes.includes(requiredErrorCode)) {
       diagnostics.push({
         code: 'API_CATALOG_ROUTE_SESSION_ERROR_CODE_MISSING',
@@ -4287,6 +4290,24 @@ function validateRouteDefinition(
       diagnostics
     });
   }
+}
+
+// These browser/gateway ceremonies are single-use, not replayable mutations.
+// The gateway still supplies the mandatory request key for private Edge proof.
+function isSingleUsePasskeyLoginRoute(route: ApiRouteDefinition): boolean {
+  const phase = route.operationId === 'core.auth.passkey_login_begin.create'
+    ? 'Begin'
+    : route.operationId === 'core.auth.passkey_login_complete.create'
+      ? 'Complete'
+      : null;
+  if (phase === null) return false;
+  const prefix = 'contracts/apis/core-api/passkey-login.yaml#PasskeyLogin';
+  return route.method === 'POST' &&
+    route.path === `/v1/auth/passkey/login/${phase.toLowerCase()}` &&
+    route.serviceId === 'core-api' && route.ownerBoundary === 'identity' &&
+    route.authRequired === false && route.idempotency === 'not_required' &&
+    route.requestSchemaRef === `${prefix}${phase}Request` &&
+    route.responseSchemaRef === `${prefix}${phase}Response`;
 }
 
 function validateRouteResponseBodyContract(input: {
@@ -4647,7 +4668,8 @@ function validateSchemaDefinition(
     'CurrentPersonalAccountScopeGetRequest',
     'AuthSessionCurrentGetRequest',
     'OperatorSessionContextGetRequest',
-    'AbuseHealthGetRequest'
+    'AbuseHealthGetRequest',
+    'PasskeyLoginBeginRequest'
   ]);
   if (
     schema.requiredFields.length === 0 &&
