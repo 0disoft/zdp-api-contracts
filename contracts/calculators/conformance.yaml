@@ -1369,3 +1369,46 @@ cases:
       trip: one-way
     options: { decimal_places: 2 }
     expected: { status: error, error_code: domain_error }
+
+  - id: work-hours.next-day-later-clock
+    calculator_id: work-hours
+    input:
+      start_minutes: { value: "540", unit: minutes }
+      end_minutes: { value: "1020", unit: minutes }
+      overnight: "yes"
+      break_minutes: { value: "0", unit: minutes }
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        total_minutes: { value: 1920, unit: minutes }
+        decimal_hours: { value: "32.00", unit: hours }
+
+  - id: fuel-cost.negative-liters-per-100km
+    calculator_id: fuel-cost
+    input:
+      distance: "100"
+      economy: "-8"
+      fuel_price: { value: "1.50", unit: USD }
+      people_count: { value: "2", unit: people }
+      economy_unit: liters_per_100km
+      trip: one-way
+    options: { decimal_places: 2 }
+    expected: { status: error, error_code: domain_error }
+
+  - id: fuel-cost.zero-liters-per-100km
+    calculator_id: fuel-cost
+    input:
+      distance: "100"
+      economy: "0"
+      fuel_price: { value: "1.50", unit: USD }
+      people_count: { value: "2", unit: people }
+      economy_unit: liters_per_100km
+      trip: one-way
+    options: { decimal_places: 2 }
+    expected:
+      status: success
+      output:
+        fuel_used: { value: "0.00", unit: liters }
+        total_cost: { value: "0.00", unit: USD }
+        cost_per_person: { value: "0.00", unit: USD }

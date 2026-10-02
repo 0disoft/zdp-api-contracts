@@ -1139,7 +1139,7 @@ describe('api contract checker', () => {
       compatibleEngineVersions: ['0.x']
     });
     expect(contracts.calculatorConformance.schemaVersion).toBe(2);
-    expect(contracts.calculatorConformance.cases).toHaveLength(112);
+    expect(contracts.calculatorConformance.cases).toHaveLength(115);
     expect(
       reviewed.find((definition) => definition.id === 'compound-interest')
     ).toMatchObject({
