@@ -45,7 +45,8 @@ const REQUIRED_CALCULATOR_IDS = [
   'discount',
   'age',
   'work-hours',
-  'fuel-cost'
+  'fuel-cost',
+  'percentage'
 ] as const;
 
 const ALLOWED_CALCULATOR_LIFECYCLE_STATUSES = [
@@ -121,7 +122,8 @@ const REVIEWED_CALCULATOR_IDS = [
   'discount',
   'age',
   'work-hours',
-  'fuel-cost'
+  'fuel-cost',
+  'percentage'
 ] as const;
 const DATE_DIFFERENCE_PRECISION_POLICY =
   'exact_integer_calendar_days_years_0001_to_9999';
@@ -3095,7 +3097,8 @@ function validateCalculatorConformanceCase(
     Object.keys(testCase.input),
     definition.inputs.map((input) => input.id),
     `${path}.input`,
-    diagnostics
+    diagnostics,
+    definition.inputs.filter((input) => input.required).map((input) => input.id)
   );
   const unsupportedInputUnits = validateCalculatorConformanceInputs(
     contracts,
@@ -3336,9 +3339,10 @@ function validateConformanceKeys(
   actual: readonly string[],
   expected: readonly string[],
   path: string,
-  diagnostics: ApiContractDiagnostic[]
+  diagnostics: ApiContractDiagnostic[],
+  required: readonly string[] = expected
 ): void {
-  for (const key of expected) {
+  for (const key of required) {
     if (!actual.includes(key)) {
       pushCalculatorConformanceDiagnostic(
         diagnostics,

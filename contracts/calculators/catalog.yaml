@@ -221,6 +221,7 @@ definitions:
       - "0.5.0"
       - "0.6.0"
       - "0.6.1"
+      - "0.7.0"
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -301,6 +302,7 @@ definitions:
       - "0.5.0"
       - "0.6.0"
       - "0.6.1"
+      - "0.7.0"
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -373,6 +375,7 @@ definitions:
       - "0.5.0"
       - "0.6.0"
       - "0.6.1"
+      - "0.7.0"
     jurisdiction: global
     precision_policy: exact_integer_calendar_days_years_0001_to_9999
     rounding_policy: not_applicable_exact_integer
@@ -945,3 +948,84 @@ definitions:
       - people_count_is_positive
       - fuel_price_is_caller_supplied
       - live_fuel_price_lookup_not_performed
+
+  - id: percentage
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions: ["0.7.0"]
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - id: mode
+        value_kind: enum
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: ["of", "ratio", "apply"]
+        required: true
+        domain: allowed_values_only
+      - id: value
+        value_kind: decimal
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: false
+        domain: any_finite_decimal_for_of_or_apply
+      - id: percentage
+        value_kind: decimal
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: false
+        domain: any_finite_decimal_for_of_non_negative_for_apply
+      - id: part
+        value_kind: decimal
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: false
+        domain: any_finite_decimal_for_ratio
+      - id: whole
+        value_kind: decimal
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: false
+        domain: non_zero_finite_decimal_for_ratio
+      - id: direction
+        value_kind: enum
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: ["increase", "decrease"]
+        required: false
+        domain: required_for_apply
+    outputs:
+      - id: result
+        value_kind: decimal
+        unit_dimension: dimensionless
+        unit_policy: enumerated
+        unit_options: [number, percent]
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - denominator_zero
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - of_is_value_times_percentage_divided_by_100
+      - ratio_is_part_divided_by_whole_times_100
+      - ratio_zero_whole_returns_denominator_zero
+      - apply_is_value_times_one_plus_or_minus_percentage_divided_by_100
+      - apply_requires_increase_or_decrease_direction
+      - apply_percentage_is_non_negative_without_upper_bound
+      - unused_mode_fields_are_ignored
+      - result_unit_is_percent_for_ratio_and_number_otherwise
+      - round_only_the_final_result

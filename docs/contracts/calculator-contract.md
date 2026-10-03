@@ -72,3 +72,7 @@ active 승격에는 다음이 필요하다.
 - SEO, 광고, 결제, 크레딧, AI payload
 - 번역 label과 사용자 문구
 - provider 가격이나 국가 정책 기준값
+
+## 퍼센트 계산기
+
+`percentage`는 `of`(값 × 퍼센트 ÷ 100), `ratio`(부분 ÷ 전체 × 100), `apply`(값 × (1 ± 퍼센트 ÷ 100))를 제공한다. 모드별 입력은 필수이며 사용하지 않는 필드는 무시한다. `ratio`의 전체가 0이면 `denominator_zero`다. `apply`는 증가·감소 방향과 비음수 퍼센트를 요구하며 상한은 없다. 결과 단위는 `ratio`에서 `percent`, 나머지에서 `number`이며 마지막 결과만 반올림한다. 기존 `percentage-change`의 증감률 계약과 분리한다.

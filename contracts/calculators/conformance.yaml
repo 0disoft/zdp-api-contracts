@@ -1412,3 +1412,188 @@ cases:
         fuel_used: { value: "0.00", unit: liters }
         total_cost: { value: "0.00", unit: USD }
         cost_per_person: { value: "0.00", unit: USD }
+
+  - id: percentage.of
+    calculator_id: percentage
+    input:
+      mode: "of"
+      value: "10000"
+      percentage: "20"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        result:
+          value: "2000.00"
+          unit: number
+
+  - id: percentage.ratio
+    calculator_id: percentage
+    input:
+      mode: "ratio"
+      part: "20"
+      whole: "80"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        result:
+          value: "25.00"
+          unit: percent
+
+  - id: percentage.increase
+    calculator_id: percentage
+    input:
+      mode: "apply"
+      value: "100"
+      percentage: "20"
+      direction: "increase"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        result:
+          value: "120.00"
+          unit: number
+
+  - id: percentage.decrease
+    calculator_id: percentage
+    input:
+      mode: "apply"
+      value: "100"
+      percentage: "20"
+      direction: "decrease"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        result:
+          value: "80.00"
+          unit: number
+
+  - id: percentage.zero-value
+    calculator_id: percentage
+    input:
+      mode: "of"
+      value: "0"
+      percentage: "50"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        result:
+          value: "0.00"
+          unit: number
+
+  - id: percentage.signed-ratio
+    calculator_id: percentage
+    input:
+      mode: "ratio"
+      part: "-20"
+      whole: "80"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        result:
+          value: "-25.00"
+          unit: percent
+
+  - id: percentage.over-100-decrease
+    calculator_id: percentage
+    input:
+      mode: "apply"
+      value: "100"
+      percentage: "150"
+      direction: "decrease"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        result:
+          value: "-50.00"
+          unit: number
+
+  - id: percentage.half-away
+    calculator_id: percentage
+    input:
+      mode: "of"
+      value: "1"
+      percentage: "5"
+    options:
+      decimal_places: 1
+    expected:
+      status: success
+      output:
+        result:
+          value: "0.1"
+          unit: number
+
+  - id: percentage.exact-large
+    calculator_id: percentage
+    input:
+      mode: "of"
+      value: "9007199254740993"
+      percentage: "100"
+    options:
+      decimal_places: 2
+    expected:
+      status: success
+      output:
+        result:
+          value: "9007199254740993.00"
+          unit: number
+
+  - id: percentage.zero-whole
+    calculator_id: percentage
+    input:
+      mode: "ratio"
+      part: "20"
+      whole: "0"
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: denominator_zero
+
+  - id: percentage.negative-apply-rate
+    calculator_id: percentage
+    input:
+      mode: "apply"
+      value: "100"
+      percentage: "-20"
+      direction: "increase"
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: domain_error
+
+  - id: percentage.invalid-mode
+    calculator_id: percentage
+    input:
+      mode: "unknown"
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: invalid_input
+
+  - id: percentage.missing-direction
+    calculator_id: percentage
+    input:
+      mode: "apply"
+      value: "100"
+      percentage: "20"
+    options:
+      decimal_places: 2
+    expected:
+      status: error
+      error_code: invalid_input
