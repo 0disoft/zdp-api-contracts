@@ -46,7 +46,8 @@ const REQUIRED_CALCULATOR_IDS = [
   'age',
   'work-hours',
   'fuel-cost',
-  'percentage'
+  'percentage',
+  'margin-pricing'
 ] as const;
 
 const ALLOWED_CALCULATOR_LIFECYCLE_STATUSES = [
@@ -123,7 +124,8 @@ const REVIEWED_CALCULATOR_IDS = [
   'age',
   'work-hours',
   'fuel-cost',
-  'percentage'
+  'percentage',
+  'margin-pricing'
 ] as const;
 const DATE_DIFFERENCE_PRECISION_POLICY =
   'exact_integer_calendar_days_years_0001_to_9999';
@@ -3112,7 +3114,8 @@ function validateCalculatorConformanceCase(
       Object.keys(testCase.expected.output),
       definition.outputs.map((output) => output.id),
       `${path}.expected.output`,
-      diagnostics
+      diagnostics,
+      definition.outputs.filter((output) => output.required !== false).map((output) => output.id)
     );
     for (const [field, output] of Object.entries(testCase.expected.output)) {
       const definitionOutput = definition.outputs.find(

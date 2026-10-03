@@ -222,6 +222,7 @@ definitions:
       - "0.6.0"
       - "0.6.1"
       - "0.7.0"
+      - "0.8.0"
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -303,6 +304,7 @@ definitions:
       - "0.6.0"
       - "0.6.1"
       - "0.7.0"
+      - "0.8.0"
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -376,6 +378,7 @@ definitions:
       - "0.6.0"
       - "0.6.1"
       - "0.7.0"
+      - "0.8.0"
     jurisdiction: global
     precision_policy: exact_integer_calendar_days_years_0001_to_9999
     rounding_policy: not_applicable_exact_integer
@@ -952,7 +955,7 @@ definitions:
   - id: percentage
     lifecycle_status: reviewed
     contract_version: "1.0.0"
-    compatible_engine_versions: ["0.7.0"]
+    compatible_engine_versions: ["0.7.0", "0.8.0"]
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -1029,3 +1032,95 @@ definitions:
       - unused_mode_fields_are_ignored
       - result_unit_is_percent_for_ratio_and_number_otherwise
       - round_only_the_final_result
+
+  - id: margin-pricing
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions: ["0.8.0"]
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - id: mode
+        value_kind: enum
+        unit_dimension: dimensionless
+        unit_policy: none
+        unit_options: []
+        allowed_values: ["measure", "target-margin", "target-markup"]
+        required: true
+        domain: allowed_values_only
+      - id: cost
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+        allowed_values: []
+        required: true
+        domain: non_negative_for_measure_positive_for_targets
+      - id: selling_price
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+        allowed_values: []
+        required: false
+        domain: non_negative_required_for_measure
+      - id: target_percentage
+        value_kind: decimal
+        unit_dimension: percent
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: false
+        domain: required_for_targets_margin_0_inclusive_100_exclusive_markup_non_negative
+      - id: price_increment
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: none
+        unit_options: []
+        allowed_values: []
+        required: false
+        domain: positive_required_for_targets_precision_must_fit_decimal_places
+    outputs:
+      - id: selling_price
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+      - id: gross_profit
+        value_kind: decimal
+        unit_dimension: currency
+        unit_policy: caller_supplied
+        unit_options: []
+      - id: margin_percentage
+        value_kind: decimal
+        unit_dimension: percent
+        unit_policy: enumerated
+        unit_options: [percent]
+        required: false
+      - id: markup_percentage
+        value_kind: decimal
+        unit_dimension: percent
+        unit_policy: enumerated
+        unit_options: [percent]
+        required: false
+    error_codes:
+      - invalid_input
+      - domain_error
+      - limit_exceeded
+      - contract_mismatch
+      - incompatible_units
+      - precision_policy_required
+      - rounding_policy_required
+    semantic_rules:
+      - measure_requires_matching_cost_and_selling_price_units
+      - gross_profit_is_selling_price_minus_cost
+      - zero_denominator_omits_only_the_undefined_percentage
+      - target_margin_price_is_cost_divided_by_one_minus_target_rate
+      - target_markup_price_is_cost_times_one_plus_target_rate
+      - target_modes_require_positive_cost
+      - target_price_is_ceiled_to_caller_supplied_positive_price_increment
+      - output_precision_must_represent_price_increment_exactly
+      - actual_percentages_use_the_snapped_selling_price_before_final_rounding
+      - target_modes_ignore_selling_price_and_measure_ignores_target_fields
+      - no_currency_policy_fee_or_tax_is_inferred

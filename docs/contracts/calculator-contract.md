@@ -76,3 +76,7 @@ active 승격에는 다음이 필요하다.
 ## 퍼센트 계산기
 
 `percentage`는 `of`(값 × 퍼센트 ÷ 100), `ratio`(부분 ÷ 전체 × 100), `apply`(값 × (1 ± 퍼센트 ÷ 100))를 제공한다. 모드별 입력은 필수이며 사용하지 않는 필드는 무시한다. `ratio`의 전체가 0이면 `denominator_zero`다. `apply`는 증가·감소 방향과 비음수 퍼센트를 요구하며 상한은 없다. 결과 단위는 `ratio`에서 `percent`, 나머지에서 `number`이며 마지막 결과만 반올림한다. 기존 `percentage-change`의 증감률 계약과 분리한다.
+
+## 마진·가격 책정
+
+`margin-pricing`는 기존 `margin-markup` API와 별개다. `measure`는 비음수 원가·판매가와 같은 단위를 요구하며 판매가·이익액을 항상 반환하고 분모가 0인 비율만 생략한다. 출력의 `required: false`는 해당 결과가 없을 수 있음을 뜻하며 생략된 선언은 필수다. `target-margin`은 0 이상 100 미만, `target-markup`은 비음수 목표 비율과 양수 원가를 요구한다. 이론 판매가를 호출자가 지정한 양수 `price_increment`의 배수로 올림한 뒤 실제 비율을 재계산한다. 증분을 표현할 수 없는 출력 정밀도는 `precision_policy_required`다. 엔진은 통화별 최소 단위를 추정하지 않고 수수료·세금을 차감하지 않는다. 모든 결과의 마지막 표시 반올림은 기존 half-away-from-zero를 따른다.
