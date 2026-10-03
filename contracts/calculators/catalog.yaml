@@ -224,6 +224,7 @@ definitions:
       - "0.7.0"
       - "0.8.0"
       - "0.9.0"
+      - "0.10.0"
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -307,6 +308,7 @@ definitions:
       - "0.7.0"
       - "0.8.0"
       - "0.9.0"
+      - "0.10.0"
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -382,6 +384,7 @@ definitions:
       - "0.7.0"
       - "0.8.0"
       - "0.9.0"
+      - "0.10.0"
     jurisdiction: global
     precision_policy: exact_integer_calendar_days_years_0001_to_9999
     rounding_policy: not_applicable_exact_integer
@@ -958,7 +961,7 @@ definitions:
   - id: percentage
     lifecycle_status: reviewed
     contract_version: "1.0.0"
-    compatible_engine_versions: ["0.7.0", "0.8.0", "0.9.0"]
+    compatible_engine_versions: ["0.7.0", "0.8.0", "0.9.0", "0.10.0"]
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -1039,7 +1042,7 @@ definitions:
   - id: margin-pricing
     lifecycle_status: reviewed
     contract_version: "1.0.0"
-    compatible_engine_versions: ["0.8.0", "0.9.0"]
+    compatible_engine_versions: ["0.8.0", "0.9.0", "0.10.0"]
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -1131,7 +1134,7 @@ definitions:
   - id: break-even-planning
     lifecycle_status: reviewed
     contract_version: "1.0.0"
-    compatible_engine_versions: ["0.9.0"]
+    compatible_engine_versions: ["0.9.0", "0.10.0"]
     jurisdiction: global
     precision_policy: canonical_ascii_decimal_string_max_1000_digits
     rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
@@ -1163,4 +1166,39 @@ definitions:
       - whole_quantities_are_exact_ceiling_before_display_rounding_as_integer_valued_decimal_strings
       - zero_fixed_cost_and_zero_target_profit_require_zero_items
       - no_period_conversion_tax_or_fee_policy_is_applied
+      - round_only_the_final_decimal_results
+
+  - id: compound-savings
+    lifecycle_status: reviewed
+    contract_version: "1.0.0"
+    compatible_engine_versions: ["0.10.0"]
+    jurisdiction: global
+    precision_policy: canonical_ascii_decimal_string_max_1000_digits
+    rounding_policy: caller_decimal_places_0_to_100_half_away_from_zero
+    inputs:
+      - { id: principal, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal }
+      - { id: contribution, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [], allowed_values: [], required: true, domain: non_negative_finite_decimal_per_compounding_period }
+      - { id: nominal_annual_rate, value_kind: decimal, unit_dimension: dimensionless, unit_policy: none, unit_options: [], allowed_values: [], required: true, domain: finite_decimal_greater_than_negative_one }
+      - { id: compounding_periods, value_kind: integer, unit_dimension: count, unit_policy: none, unit_options: [], allowed_values: [], required: true, domain: canonical_unsigned_integer_string_not_exceeding_frequency_times_100 }
+      - { id: compounding_frequency, value_kind: enum, unit_dimension: dimensionless, unit_policy: none, unit_options: [], allowed_values: [1_per_year, 2_per_year, 4_per_year, 12_per_year, 365_per_year], required: true, domain: allowed_values_only }
+      - { id: payment_timing, value_kind: enum, unit_dimension: dimensionless, unit_policy: none, unit_options: [], allowed_values: [beginning, end], required: true, domain: allowed_values_only }
+    outputs:
+      - { id: future_value, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+      - { id: total_contributed, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+      - { id: interest_earned, value_kind: decimal, unit_dimension: currency, unit_policy: caller_supplied, unit_options: [] }
+      - { id: effective_annual_percentage, value_kind: decimal, unit_dimension: percent, unit_policy: enumerated, unit_options: [percent] }
+    error_codes: [invalid_input, domain_error, limit_exceeded, contract_mismatch, incompatible_units, precision_policy_required, rounding_policy_required]
+    semantic_rules:
+      - existing_compound_interest_api_is_unchanged
+      - contribution_currency_must_match_principal
+      - contribution_occurs_once_per_compounding_period_for_exactly_n_payments
+      - beginning_payment_occurs_before_interest_and_end_payment_after_interest
+      - zero_periods_make_no_payments_and_zero_rate_uses_linear_accumulation
+      - total_contributed_is_principal_plus_contribution_times_periods
+      - interest_earned_is_exact_future_value_minus_total_contributed
+      - effective_annual_percentage_is_base_to_frequency_minus_one_times_100_independent_of_payments
+      - exact_rational_intermediates_are_not_rounded
+      - reduced_power_operand_estimated_digits_times_max_periods_frequency_must_not_exceed_250000
+      - periods_must_not_exceed_frequency_times_100_but_work_budget_may_limit_earlier
+      - no_fractional_period_tax_fee_or_payment_frequency_conversion
       - round_only_the_final_decimal_results

@@ -48,7 +48,8 @@ const REQUIRED_CALCULATOR_IDS = [
   'fuel-cost',
   'percentage',
   'margin-pricing',
-  'break-even-planning'
+  'break-even-planning',
+  'compound-savings'
 ] as const;
 
 const ALLOWED_CALCULATOR_LIFECYCLE_STATUSES = [
@@ -127,7 +128,8 @@ const REVIEWED_CALCULATOR_IDS = [
   'fuel-cost',
   'percentage',
   'margin-pricing',
-  'break-even-planning'
+  'break-even-planning',
+  'compound-savings'
 ] as const;
 const DATE_DIFFERENCE_PRECISION_POLICY =
   'exact_integer_calendar_days_years_0001_to_9999';
