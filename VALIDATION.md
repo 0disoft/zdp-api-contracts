@@ -1,15 +1,15 @@
 # VALIDATION.md
 
-이 문서는 API 계약 저장소 변경 후 확인할 기준을 모은다. 실행 권한은 mustflow command contract와 package scripts가 별도로 소유한다.
+이 문서는 API 계약 저장소 변경 후 확인할 기준을 모은다. 관련 package scripts와 저장소 명령을 직접 실행한다.
 
 ## Configured Repository Validation
 
 | 변경 범위 | 확인 기준 |
 | --- | --- |
-| `contracts/*`, `src/api-contracts/*`, `src/api-export-plan/*` | `zdp_api_contracts_check`, `zdp_architecture_validate_api_contracts_repository` |
-| npm export, declaration, runtime dependency, package files | `zdp_api_contracts_build`, `zdp_api_contracts_package_smoke`, `zdp_api_contracts_npm_pack_dry_run` |
+| `contracts/*`, `src/api-contracts/*`, `src/api-export-plan/*` | `bun run check`, `bun src/cli.ts validate --architecture ../../docs/zdp-architecture --repository ../../contracts/zdp-api-contracts` (cwd: `projects/zdp-platforms/architecture-tools/zdp-architecture-linter`) |
+| npm export, declaration, runtime dependency, package files | `zdp_api_contracts_build`, `zdp_api_contracts_package_smoke`, `npm.cmd pack --dry-run --json` |
 | 루트 `service.yaml` manifest 또는 CI gate | GitHub Actions `Validate service catalog manifest` step, using full-SHA-pinned `0disoft/service-catalog-generator` v0.5.11 with `input-schema: zdp-v2` |
-| ZDP architecture catalog나 linter rule과 함께 바뀐 경우 | `zdp_architecture_validate_fast` |
+| ZDP architecture catalog나 linter rule과 함께 바뀐 경우 | `bun run validate:architecture` (cwd: `projects/zdp-platforms/architecture-tools/zdp-architecture-linter`) |
 | 문서 라우터와 agent guide만 바꾼 경우 | repository validation과 Markdown 링크 수동 확인 |
 
 agent-facing 문서에는 raw package command를 실행 권한처럼 적지 않는다. package-local script는 사람이 직접 실행하거나 별도 command intent가 있을 때만 agent 검증으로 취급한다.
