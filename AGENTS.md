@@ -29,7 +29,7 @@
 - 계산기 계약은 표준 입력·결과·오류·버전 의미를 소유하지만 계산 함수, 로케일 문자열, 제품 화면 payload는 소유하지 않는다.
 - 공개 또는 partner API가 되기 전까지 live endpoint나 base URL을 확정하지 않는다.
 - `service.yaml`이 이 저장소의 운영 계약이며 변경 시 `zdp-architecture` catalog와 함께 맞춘다.
-- 에이전트 검증은 README의 사람용 package script 예시가 아니라 루트 mustflow command contract의 configured intent로만 보고한다.
+- package scripts, 저장소 도구 또는 CI에 정의된 관련 검증 명령을 직접 실행한다. 별도의 명령 계약 등록은 필요하지 않다.
 
 ## 금지
 
