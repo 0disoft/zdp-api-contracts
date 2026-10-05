@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:zdp:money:coupon-usage-capture:v1",
+  "title": "Private product-server coupon usage capture",
+  "x-zdp-transport": {
+    "status": "internal-local-staging",
+    "method": "POST",
+    "path": "/v1/internal/coupons/usage/capture",
+    "capability": "coupon-usage:capture",
+    "audience": "money-api",
+    "organization": "org-8ailors",
+    "requestHeaders": ["authorization", "x-request-id", "x-trace-id"],
+    "responseHeaders": ["x-request-id", "x-trace-id", "cache-control"],
+    "correlationPattern": "^[A-Za-z0-9_.-]{3,128}$",
+    "referencePattern": "^[A-Za-z0-9_.:-]{1,256}$",
+    "maxCreditUnit": "9223372036854775807",
+    "maxResponseBytes": 16384,
+    "successStatus": 200,
+    "rejections": {
+      "400": "invalid_usage_request",
+      "401": "service_authentication_required",
+      "403": "usage_capture_denied",
+      "404": "usage_hold_not_found",
+      "409": "usage_capture_conflict"
+    },
+    "unknownOutcomeStatus": 503,
+    "unknownOutcomeCode": "usage_capture_unavailable",
+    "retry": "same-durable-usage-and-hold-only",
+    "delivery": "product-owned-after-durable-capture-receipt"
+  },
+  "$defs": {
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hold_ref", "usage_ref"],
+      "properties": {
+        "hold_ref": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,256}$" },
+        "usage_ref": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,256}$" }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["settlement_id", "source_kind", "source_ref", "inventory_id", "original_credit_unit", "benefit_credit_unit", "settled_credit_unit", "effect_ledger_transaction_id", "bonus_credit_lot_id", "replayed"],
+      "properties": {
+        "settlement_id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{3,128}$" },
+        "source_kind": { "const": "usage" },
+        "source_ref": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,256}$" },
+        "inventory_id": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9_.-]{3,128}$" },
+        "original_credit_unit": { "type": "string", "pattern": "^[1-9][0-9]{0,18}$" },
+        "benefit_credit_unit": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,18})$" },
+        "settled_credit_unit": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,18})$" },
+        "effect_ledger_transaction_id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{3,128}$" },
+        "bonus_credit_lot_id": { "type": "null" },
+        "replayed": { "type": "boolean" }
+      }
+    },
+    "rejection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code"],
+      "properties": {
+        "code": { "enum": ["invalid_usage_request", "service_authentication_required", "usage_capture_denied", "usage_hold_not_found", "usage_capture_conflict", "usage_capture_unavailable"] }
+      }
+    }
+  }
+}
