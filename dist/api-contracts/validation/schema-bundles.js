@@ -158,6 +158,7 @@ export function validateSchemaDefinition(schemaBundle, schema, index, diagnostic
     }
     const allowedEmptyRequestSchemas = new Set([
         'AccountSettingsOverviewGetRequest',
+        'AccountPreferencesGetRequest',
         'CurrentPersonalAccountScopeGetRequest',
         'AuthSessionCurrentGetRequest',
         'OperatorSessionContextGetRequest',
