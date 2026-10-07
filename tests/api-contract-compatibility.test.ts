@@ -6,6 +6,9 @@ import {
   type ApiContractCompatibilityReport
 } from '../scripts/lib/contract-compatibility';
 import { loadApiContracts } from '../src/api-contracts/registry-loader';
+import { validateApiContracts } from '../src/api-contracts/registry-validator';
+import { API_CONTRACT_FAMILY_KEYS } from '../src/api-contracts/family-registry';
+import { FAMILY_COMPATIBILITY_STRATEGIES } from '../scripts/lib/compatibility-families';
 import type {
   ApiContracts,
   ApiRouteDefinition,
@@ -13,6 +16,32 @@ import type {
 } from '../src/api-contracts/types';
 
 describe('API contract compatibility gate', () => {
+  it('detects removal of a valid additional OIDC client', async () => {
+    const original = await loadApiContracts();
+    const base = structuredClone(original);
+    Object.assign(base.oidcClientRegistry, { entries: [...base.oidcClientRegistry.entries,
+      { ...base.oidcClientRegistry.entries[0], clientId: 'compatibility-test-client' }] });
+    expect(validateApiContracts(base).ok).toBe(true);
+    expect(validateApiContracts(original).ok).toBe(true);
+    expect(compareApiContracts(base, original).changes).toContainEqual(expect.objectContaining({
+      level: 'breaking', code: 'API_COMPAT_CONTRACT_FAMILY_CHANGED',
+      path: 'contracts/apis/core-api/oidc-client-registry.yaml#oidcClientRegistry'
+    }));
+  });
+
+  it('covers every registered family and detects changes in each structural family', async () => {
+    expect(Object.keys(FAMILY_COMPATIBILITY_STRATEGIES).sort()).toEqual([...API_CONTRACT_FAMILY_KEYS].sort());
+    const base = await loadApiContracts();
+    for (const key of API_CONTRACT_FAMILY_KEYS) {
+      if (FAMILY_COMPATIBILITY_STRATEGIES[key] !== 'structural') continue;
+      const head = structuredClone(base);
+      Object.assign(head[key], { status: 'compatibility-test-change' });
+      expect(compareApiContracts(base, head).level).toBe('breaking');
+    }
+    const reordered = structuredClone(base);
+    Object.assign(reordered.oidcClientRegistry, { requiredAuditEvents: [...reordered.oidcClientRegistry.requiredAuditEvents].reverse() });
+    expect(compareApiContracts(base, reordered).level).toBe('none');
+  });
   it('reports no compatibility change for identical contracts', async () => {
     const contracts = await loadApiContracts();
 

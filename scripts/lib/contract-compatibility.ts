@@ -9,6 +9,7 @@ import {
 import { highestLevel } from './compatibility-shared';
 import { compareAccessDecisionHttp } from './compatibility-access-http';
 import { compareCalculators } from './compatibility-calculators';
+import { compareRemainingContractFamilies } from './compatibility-families';
 import type {
   ApiContractCompatibilityChange,
   ApiContractCompatibilityReport
@@ -31,6 +32,7 @@ export function compareApiContracts(
   compareSdkGenerationInput(base, head, changes);
   compareAccessDecisionHttp(base.accessDecision.httpProfile, head.accessDecision.httpProfile, changes);
   compareCalculators(base, head, changes);
+  compareRemainingContractFamilies(base, head, changes);
 
   changes.sort((left, right) => {
     const levelWeight = { patch: 1, feature: 2, breaking: 3 } as const;

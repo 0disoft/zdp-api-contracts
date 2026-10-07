@@ -50,6 +50,7 @@ bun run compatibility:check --base-ref v0.32.0 --json
 | route skeleton | 허용 method·status·session effect와 required·forbidden 항목 변화 |
 | calculator catalog | 계산기 제거·기존 입력/출력/의미 변경·필수 입력 추가는 breaking, 새 계산기·선택 입력·출력 추가는 feature |
 | calculator conformance | 기존 벡터 수정·제거와 정밀도/반올림 정책 변경은 breaking, 새 벡터와 계약 버전 metadata 변경은 patch |
+| OIDC·결제·고객 정책·abuse·권한·제품 연결 계약 | 선언 순서를 제외한 구조 변화는 보수적으로 breaking. 새 계약에는 비교 전략 등록이 필수 |
 
 계산기 선언 순서와 YAML mapping 순서만 바뀐 경우는 의미 변화로 판정하지 않는다. 기존 필드의 세부 제한 변경은 보수적으로 breaking으로 판정한다.
 
