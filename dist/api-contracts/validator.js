@@ -30,7 +30,11 @@ const REQUIRED_CALCULATOR_IDS = [
     'discount',
     'age',
     'work-hours',
-    'fuel-cost'
+    'fuel-cost',
+    'percentage',
+    'margin-pricing',
+    'break-even-planning',
+    'compound-savings'
 ];
 const ALLOWED_CALCULATOR_LIFECYCLE_STATUSES = [
     'draft',
@@ -99,7 +103,11 @@ const REVIEWED_CALCULATOR_IDS = [
     'discount',
     'age',
     'work-hours',
-    'fuel-cost'
+    'fuel-cost',
+    'percentage',
+    'margin-pricing',
+    'break-even-planning',
+    'compound-savings'
 ];
 const DATE_DIFFERENCE_PRECISION_POLICY = 'exact_integer_calendar_days_years_0001_to_9999';
 const DATE_DIFFERENCE_ROUNDING_POLICY = 'not_applicable_exact_integer';
@@ -1889,10 +1897,10 @@ function validateCalculatorConformanceCase(contracts, testCase, index, diagnosti
         (testCase.options.decimalPlaces ?? -1) > CONFORMANCE_MAX_DECIMAL_PLACES)) {
         pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_DECIMAL_PLACES_OUT_OF_RANGE', `${path}.options.decimal_places`, `decimal_places must be an integer from 0 to ${CONFORMANCE_MAX_DECIMAL_PLACES}.`);
     }
-    validateConformanceKeys(Object.keys(testCase.input), definition.inputs.map((input) => input.id), `${path}.input`, diagnostics);
+    validateConformanceKeys(Object.keys(testCase.input), definition.inputs.map((input) => input.id), `${path}.input`, diagnostics, definition.inputs.filter((input) => input.required).map((input) => input.id));
     const unsupportedInputUnits = validateCalculatorConformanceInputs(contracts, definition, testCase, path, diagnostics);
     if (testCase.expected.status === 'success') {
-        validateConformanceKeys(Object.keys(testCase.expected.output), definition.outputs.map((output) => output.id), `${path}.expected.output`, diagnostics);
+        validateConformanceKeys(Object.keys(testCase.expected.output), definition.outputs.map((output) => output.id), `${path}.expected.output`, diagnostics, definition.outputs.filter((output) => output.required !== false).map((output) => output.id));
         for (const [field, output] of Object.entries(testCase.expected.output)) {
             const definitionOutput = definition.outputs.find((candidate) => candidate.id === field);
             if (definitionOutput?.valueKind === 'integer') {
@@ -2001,8 +2009,8 @@ function decimalPlacesInCanonicalValue(value) {
     const decimalPoint = value.indexOf('.');
     return decimalPoint === -1 ? 0 : value.length - decimalPoint - 1;
 }
-function validateConformanceKeys(actual, expected, path, diagnostics) {
-    for (const key of expected) {
+function validateConformanceKeys(actual, expected, path, diagnostics, required = expected) {
+    for (const key of required) {
         if (!actual.includes(key)) {
             pushCalculatorConformanceDiagnostic(diagnostics, 'API_CALCULATOR_CONFORMANCE_FIELD_MISSING', path, `Conformance fixture must include field \`${key}\`.`);
         }
@@ -2545,7 +2553,8 @@ function validateRouteDefinition(route, index, contracts, schemaBundlesByFile, d
         });
     }
     if (includesValue(MUTATING_METHODS_REQUIRING_IDEMPOTENCY, route.method) &&
-        route.idempotency !== REQUIRED_MUTATION_IDEMPOTENCY_POLICY) {
+        route.idempotency !== REQUIRED_MUTATION_IDEMPOTENCY_POLICY &&
+        !isSingleUsePasskeyLoginRoute(route)) {
         diagnostics.push({
             code: 'API_CATALOG_ROUTE_MUTATION_IDEMPOTENCY_NOT_REQUIRED',
             file: 'contracts/apis/catalog.yaml',
@@ -2652,6 +2661,9 @@ function validateRouteDefinition(route, index, contracts, schemaBundlesByFile, d
         diagnostics
     });
     for (const requiredErrorCode of SESSION_EFFECT_REQUIRED_ERROR_CODES[route.sessionEffect] ?? []) {
+        // Discoverable login deliberately masks restricted/unknown accounts alike.
+        if (requiredErrorCode === 'account_restricted' && isSingleUsePasskeyLoginRoute(route))
+            continue;
         if (!route.errorCodes.includes(requiredErrorCode)) {
             diagnostics.push({
                 code: 'API_CATALOG_ROUTE_SESSION_ERROR_CODE_MISSING',
@@ -2670,6 +2682,24 @@ function validateRouteDefinition(route, index, contracts, schemaBundlesByFile, d
             diagnostics
         });
     }
+}
+// These browser/gateway ceremonies are single-use, not replayable mutations.
+// The gateway still supplies the mandatory request key for private Edge proof.
+function isSingleUsePasskeyLoginRoute(route) {
+    const phase = route.operationId === 'core.auth.passkey_login_begin.create'
+        ? 'Begin'
+        : route.operationId === 'core.auth.passkey_login_complete.create'
+            ? 'Complete'
+            : null;
+    if (phase === null)
+        return false;
+    const prefix = 'contracts/apis/core-api/passkey-login.yaml#PasskeyLogin';
+    return route.method === 'POST' &&
+        route.path === `/v1/auth/passkey/login/${phase.toLowerCase()}` &&
+        route.serviceId === 'core-api' && route.ownerBoundary === 'identity' &&
+        route.authRequired === false && route.idempotency === 'not_required' &&
+        route.requestSchemaRef === `${prefix}${phase}Request` &&
+        route.responseSchemaRef === `${prefix}${phase}Response`;
 }
 function validateRouteResponseBodyContract(input) {
     const hasNoContentStatus = input.route.successStatuses.some((status) => input.noContentSuccessStatuses.includes(status));
@@ -2941,7 +2971,8 @@ function validateSchemaDefinition(schemaBundle, schema, index, diagnostics) {
         'CurrentPersonalAccountScopeGetRequest',
         'AuthSessionCurrentGetRequest',
         'OperatorSessionContextGetRequest',
-        'AbuseHealthGetRequest'
+        'AbuseHealthGetRequest',
+        'PasskeyLoginBeginRequest'
     ]);
     if (schema.requiredFields.length === 0 &&
         !(schema.kind === 'request' && allowedEmptyRequestSchemas.has(schema.id))) {

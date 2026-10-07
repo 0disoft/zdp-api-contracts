@@ -408,6 +408,7 @@ export interface CalculatorInputDefinition {
     readonly domain: string;
 }
 export interface CalculatorOutputDefinition {
+    readonly required?: boolean;
     readonly id: string;
     readonly valueKind: string;
     readonly unitDimension: string;

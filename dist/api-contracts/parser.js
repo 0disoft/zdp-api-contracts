@@ -1069,13 +1069,14 @@ function parseCalculatorInput(input, context) {
     };
 }
 function parseCalculatorOutput(output, context) {
-    assertOnlyKeys(output, ['id', 'value_kind', 'unit_dimension', 'unit_policy', 'unit_options'], context);
+    assertOnlyKeys(output, ['id', 'value_kind', 'unit_dimension', 'unit_policy', 'unit_options', 'required'], context);
     return {
         id: requiredString(output, 'id', context),
         valueKind: requiredString(output, 'value_kind', context),
         unitDimension: requiredString(output, 'unit_dimension', context),
         unitPolicy: requiredString(output, 'unit_policy', context),
-        unitOptions: requiredStringListAllowEmpty(output, 'unit_options', context)
+        unitOptions: requiredStringListAllowEmpty(output, 'unit_options', context),
+        ...(output.required === undefined ? {} : { required: requiredBoolean(output, 'required', context) })
     };
 }
 function parseCalculatorConformanceCase(testCase, index) {
