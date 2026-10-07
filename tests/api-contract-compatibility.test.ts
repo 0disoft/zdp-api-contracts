@@ -16,6 +16,24 @@ import type {
 } from '../src/api-contracts/types';
 
 describe('API contract compatibility gate', () => {
+  it('distinguishes OIDC client additions and revision increments from policy changes', async () => {
+    const base = await loadApiContracts();
+    const revised = structuredClone(base);
+    Object.assign(revised.oidcClientRegistry, { registryRevision: base.oidcClientRegistry.registryRevision + 1 });
+    Object.assign(revised.oidcClientRegistry.entries[0]!, { entryRevision: base.oidcClientRegistry.entries[0]!.entryRevision + 1 });
+    expect(validateApiContracts(revised).ok).toBe(true);
+    expect(compareApiContracts(base, revised).level).toBe('patch');
+    const added = structuredClone(base);
+    Object.assign(added.oidcClientRegistry, { entries: [...base.oidcClientRegistry.entries,
+      { ...base.oidcClientRegistry.entries[0], clientId: 'new-compatibility-client' }] });
+    expect(validateApiContracts(added).ok).toBe(true);
+    expect(compareApiContracts(base, added).level).toBe('feature');
+    Object.assign(revised.oidcClientRegistry.entries[0]!, { tokenEndpointAuthMethod: 'changed-policy' });
+    expect(compareApiContracts(base, revised).changes).toContainEqual(expect.objectContaining({
+      level: 'breaking', path: expect.stringContaining('.tokenEndpointAuthMethod')
+    }));
+    expect(compareApiContracts(revised, base).level).toBe('breaking');
+  });
   it('detects removal of a valid additional OIDC client', async () => {
     const original = await loadApiContracts();
     const base = structuredClone(original);
@@ -25,7 +43,7 @@ describe('API contract compatibility gate', () => {
     expect(validateApiContracts(original).ok).toBe(true);
     expect(compareApiContracts(base, original).changes).toContainEqual(expect.objectContaining({
       level: 'breaking', code: 'API_COMPAT_CONTRACT_FAMILY_CHANGED',
-      path: 'contracts/apis/core-api/oidc-client-registry.yaml#oidcClientRegistry'
+      path: 'contracts/apis/core-api/oidc-client-registry.yaml#oidcClientRegistry.entries.compatibility-test-client'
     }));
   });
 

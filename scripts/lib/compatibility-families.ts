@@ -18,11 +18,40 @@ export function compareRemainingContractFamilies(base: ApiContracts, head: ApiCo
     if (FAMILY_COMPATIBILITY_STRATEGIES[family.key] !== 'structural') continue;
     const left = family.key === 'accessDecision' ? withoutHttp(base.accessDecision) : base[family.key];
     const right = family.key === 'accessDecision' ? withoutHttp(head.accessDecision) : head[family.key];
-    if (canonical(left) === canonical(right)) continue;
-    changes.push({ level: 'breaking', code: 'API_COMPAT_CONTRACT_FAMILY_CHANGED',
-      path: `${family.sourcePath}#${family.key}`,
-      message: `Contract family \`${family.key}\` changed; review consumer compatibility and migration.` });
+    compareFields(left, right, `${family.sourcePath}#${family.key}`, family.key, changes);
   }
+}
+
+function compareFields(base: unknown, head: unknown, path: string, family: ApiContractFamilyKey, changes: ApiContractCompatibilityChange[]): void {
+  if (canonical(base) === canonical(head)) return;
+  if (isRecord(base) && isRecord(head)) {
+    for (const field of [...new Set([...Object.keys(base), ...Object.keys(head)])].sort()) {
+      compareFields(base[field], head[field], `${path}.${field}`, family, changes);
+    }
+    return;
+  }
+  if (family === 'oidcClientRegistry' && path.endsWith('.entries') && Array.isArray(base) && Array.isArray(head) &&
+    [...base, ...head].every(entry => isRecord(entry) && typeof entry.clientId === 'string')) {
+    const left = new Map(base.map(entry => [entry.clientId, entry]));
+    const right = new Map(head.map(entry => [entry.clientId, entry]));
+    for (const id of [...new Set([...left.keys(), ...right.keys()])].sort()) {
+      if (!left.has(id) || !right.has(id)) {
+        addFamilyChange(left.has(id) ? 'breaking' : 'feature', `${path}.${id}`, left.has(id) ? 'client removed' : 'client added', changes);
+      } else compareFields(left.get(id), right.get(id), `${path}.${id}`, family, changes);
+    }
+    return;
+  }
+  const revisionIncrease = family === 'oidcClientRegistry' && /\.(?:registryRevision|entryRevision)$/.test(path) &&
+    typeof base === 'number' && typeof head === 'number' && Number.isSafeInteger(base) && Number.isSafeInteger(head) && head > base;
+  addFamilyChange(revisionIncrease ? 'patch' : 'breaking', path, revisionIncrease ? 'revision increased' : 'field changed', changes);
+}
+
+function addFamilyChange(level: ApiContractCompatibilityChange['level'], path: string, description: string, changes: ApiContractCompatibilityChange[]): void {
+  changes.push({ level, code: 'API_COMPAT_CONTRACT_FAMILY_CHANGED', path, message: `Contract ${description} at \`${path}\`.` });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function withoutHttp(value: ApiContracts['accessDecision']) {

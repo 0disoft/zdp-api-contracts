@@ -7,6 +7,7 @@ import type {
   ApiContractChangeLevel,
   ApiContractCompatibilityChange
 } from './compatibility-types';
+import { compareTypedProperties } from './compatibility-typed-properties';
 import {
   addChange,
   compareAllowlist,
@@ -204,7 +205,11 @@ function compareSchemaProperties(
 ): void {
   const baseProperties = base.properties ?? null;
   const headProperties = head.properties ?? null;
-  if (canonicalJson(baseProperties) === canonicalJson(headProperties)) {
+  if (baseProperties !== null && headProperties !== null) {
+    compareTypedProperties(baseProperties, headProperties, base.kind, `${schemaPath}.properties`, changes, base.requiredFields, head.requiredFields);
+    return;
+  }
+  if (baseProperties === headProperties) {
     return;
   }
 
@@ -220,24 +225,6 @@ function compareSchemaProperties(
       ? `Schema \`${base.id}\` added typed property metadata.`
       : `Schema \`${base.id}\` changed or removed typed property metadata.`
   );
-}
-
-function canonicalJson(value: unknown): string {
-  return JSON.stringify(canonicalize(value));
-}
-
-function canonicalize(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(canonicalize);
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, entry]) => [key, canonicalize(entry)])
-    );
-  }
-  return value;
 }
 
 function compareSchemaFields(
