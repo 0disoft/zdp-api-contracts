@@ -17,7 +17,8 @@ export function withAccessDecisionHttpProfile(paths, decision) {
             post: {
                 ...operation,
                 parameters: [
-                    ...(operation.parameters ?? []),
+                    ...(operation.parameters ?? []).filter(parameter => parameter.in !== 'header' || typeof parameter.name !== 'string' ||
+                        !profile.requestMetadataHeaders.some(name => name.toLowerCase() === parameter.name.toLowerCase())),
                     ...profile.requestMetadataHeaders.map((name) => ({
                         name, in: 'header', required: true,
                         schema: { type: 'string', minLength: 1, maxLength: profile.maxIdentifierUtf8Bytes },

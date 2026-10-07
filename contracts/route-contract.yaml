@@ -1,5 +1,14 @@
 route_contract:
   status: skeleton
+  request_metadata_headers:
+    request_id: X-Request-ID
+    trace_id: X-Trace-ID
+    idempotency_key: Idempotency-Key
+  service_request_metadata_headers:
+    abuse-api:
+      request_id: X-Request-ID
+      trace_id: traceparent
+      idempotency_key: Idempotency-Key
   required_per_route:
     - resource
     - action

@@ -1,4 +1,4 @@
-import type { RouteContract } from '../types.js';
+import type { ApiRequestMetadataHeaders, RouteContract } from '../types.js';
 
 import { parseYamlObject, requiredNumberList, requiredObject, requiredString, requiredStringList } from './shared.js';
 
@@ -11,6 +11,16 @@ export function parseRouteContract(source: string): RouteContract {
   );
 
   return {
+    ...(routeContract.request_metadata_headers === undefined ? {} : {
+      requestMetadataHeaders: parseMetadataHeaders(requiredObject(routeContract, 'request_metadata_headers', 'route_contract'), 'request_metadata_headers')
+    }),
+    ...(routeContract.service_request_metadata_headers === undefined ? {} : {
+      serviceRequestMetadataHeaders: Object.fromEntries(Object.entries(
+        requiredObject(routeContract, 'service_request_metadata_headers', 'route_contract')
+      ).map(([service, value]) => [service, parseMetadataHeaders(
+        requiredObject({ value }, 'value', `service_request_metadata_headers.${service}`), `service_request_metadata_headers.${service}`
+      )]))
+    }),
     status: requiredString(
       routeContract,
       'status',
@@ -47,4 +57,15 @@ export function parseRouteContract(source: string): RouteContract {
       'contracts/route-contract.yaml#route_contract'
     )
   };
+}
+
+function parseMetadataHeaders(value: Record<string, unknown>, context: string): ApiRequestMetadataHeaders {
+  const keys = ['request_id', 'trace_id', 'idempotency_key'];
+  if (Object.keys(value).some(key => !keys.includes(key))) throw new Error(`Unknown metadata header field in ${context}.`);
+  const names = keys.map(key => requiredString(value, key, context));
+  if (names.some(name => !/^[A-Za-z][A-Za-z0-9-]*$/.test(name) || /^(?:authorization|cookie|set-cookie)$/i.test(name)) ||
+    new Set(names.map(name => name.toLowerCase())).size !== names.length) {
+    throw new Error(`Metadata headers in ${context} must be distinct non-credential HTTP header names.`);
+  }
+  return { requestId: names[0]!, traceId: names[1]!, idempotencyKey: names[2]! };
 }

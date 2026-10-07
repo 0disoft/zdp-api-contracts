@@ -450,8 +450,16 @@ export interface CalculatorOutputDefinition {
   readonly unitOptions: readonly string[];
 }
 
+export interface ApiRequestMetadataHeaders {
+  readonly requestId: string;
+  readonly traceId: string;
+  readonly idempotencyKey: string;
+}
+
 export interface RouteContract {
   readonly status: string;
+  readonly requestMetadataHeaders?: ApiRequestMetadataHeaders;
+  readonly serviceRequestMetadataHeaders?: Readonly<Record<string, ApiRequestMetadataHeaders>>;
   readonly requiredPerRoute: readonly string[];
   readonly allowedMethods: readonly string[];
   readonly allowedSuccessStatuses: readonly number[];

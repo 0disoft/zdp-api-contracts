@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import type {
   ApiContracts,
   ApiRouteDefinition
@@ -20,6 +21,13 @@ export function compareRouteContract(
   head: ApiContracts,
   changes: ApiContractCompatibilityChange[]
 ): void {
+  for (const field of ['requestMetadataHeaders', 'serviceRequestMetadataHeaders'] as const) {
+    if (!isDeepStrictEqual(base.route[field], head.route[field])) {
+      addChange(changes, base.route[field] === undefined ? 'feature' : 'breaking',
+        'API_COMPAT_ROUTE_METADATA_HEADERS_CHANGED', `contracts/route-contract.yaml#route_contract.${field}`,
+        'Request metadata HTTP header mapping changed.');
+    }
+  }
   compareRequiredSet(
     base.route.requiredPerRoute,
     head.route.requiredPerRoute,

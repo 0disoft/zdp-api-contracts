@@ -61,6 +61,8 @@ const PRODUCT_LINK_KEYS = [
 ];
 const ROUTE_CONTRACT_KEYS = [
     'status',
+    'request_metadata_headers',
+    'service_request_metadata_headers',
     'required_per_route',
     'allowed_methods',
     'allowed_success_statuses',

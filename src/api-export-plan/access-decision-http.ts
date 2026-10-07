@@ -23,7 +23,9 @@ export function withAccessDecisionHttpProfile(
       post: {
         ...operation,
         parameters: [
-          ...((operation.parameters ?? []) as readonly unknown[]),
+          ...((operation.parameters ?? []) as readonly Record<string, unknown>[]).filter(parameter =>
+            parameter.in !== 'header' || typeof parameter.name !== 'string' ||
+            !profile.requestMetadataHeaders.some(name => name.toLowerCase() === (parameter.name as string).toLowerCase())),
           ...profile.requestMetadataHeaders.map((name) => ({
             name, in: 'header', required: true,
             schema: { type: 'string', minLength: 1, maxLength: profile.maxIdentifierUtf8Bytes },

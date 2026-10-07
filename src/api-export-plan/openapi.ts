@@ -6,7 +6,8 @@ import type {
   ApiContracts,
   ApiRouteDefinition,
   ApiSchemaBundleContract,
-  ApiSchemaDefinition
+  ApiSchemaDefinition,
+  RouteContract
 } from '../api-contracts/types.js';
 import { validateApiContracts } from '../api-contracts/validator.js';
 import { withAccessDecisionHttpProfile } from './access-decision-http.js';
@@ -176,7 +177,7 @@ export async function buildOpenApi31Document(
     contracts
   );
   const paths = withAccessDecisionHttpProfile(
-    buildPaths(routes, contextResult.contexts), contracts.accessDecision
+    buildPaths(routes, contextResult.contexts, contracts.route), contracts.accessDecision
   );
   const title = options.title?.trim() || manifest.name;
 
@@ -410,14 +411,15 @@ function buildErrorEnvelopeSchema(contracts: ApiContracts): ApiOpenApiSchema {
 
 function buildPaths(
   routes: readonly ApiRouteDefinition[],
-  contexts: Readonly<Record<string, SchemaContext>>
+  contexts: Readonly<Record<string, SchemaContext>>,
+  routeContract: RouteContract
 ): Readonly<Record<string, ApiOpenApiPathItem>> {
   const paths: Record<string, Record<string, ApiOpenApiOperation>> = {};
 
   for (const route of routes) {
     const method = route.method.toLowerCase();
     const pathItem = paths[route.path] ?? {};
-    pathItem[method] = buildOperation(route, contexts);
+    pathItem[method] = buildOperation(route, contexts, routeContract);
     paths[route.path] = pathItem;
   }
 
@@ -437,7 +439,8 @@ function buildPaths(
 
 function buildOperation(
   route: ApiRouteDefinition,
-  contexts: Readonly<Record<string, SchemaContext>>
+  contexts: Readonly<Record<string, SchemaContext>>,
+  routeContract: RouteContract
 ): ApiOpenApiOperation {
   const requestContext = requireContext(contexts, route.requestSchemaRef);
   const pathParameterNames = extractPathParameters(route.path);
@@ -449,6 +452,18 @@ function buildOperation(
       ? { type: 'string' }
       : propertyToOpenApiSchema(requestContext.typed.properties[name])
   }));
+
+  const metadataHeaders = routeContract.serviceRequestMetadataHeaders?.[route.serviceId] ?? routeContract.requestMetadataHeaders;
+  if (metadataHeaders !== undefined) {
+    const requiredHeaders = [
+      ...(route.requestIdRequired ? [metadataHeaders.requestId] : []),
+      ...(route.traceIdRequired ? [metadataHeaders.traceId] : []),
+      ...(route.idempotency === 'required_idempotency_key' ? [metadataHeaders.idempotencyKey] : [])
+    ];
+    for (const name of requiredHeaders) {
+      parameters.push({ name, in: 'header', required: true, schema: { type: 'string', minLength: 1 } });
+    }
+  }
 
   if (route.method === 'GET') {
     const fields = uniqueSorted([

@@ -5,8 +5,46 @@ import {
   serializeOpenApi31Document
 } from '../src/api-export-plan/openapi';
 import { parseTypedSchemaBundle } from '../src/api-export-plan/typed-schema';
+import { readFileSync } from 'node:fs';
+import { loadApiContracts, parseRouteContract } from '../src/api-contracts/index';
+import { compareApiContracts } from '../scripts/lib/contract-compatibility';
 
 describe('OpenAPI 3.1 export', () => {
+  it('exports required HTTP metadata with service transports and deduplicates specialized profiles', async () => {
+    const result = await buildOpenApi31Document(process.cwd());
+    expect(result.ok).toBe(true);
+    const issue = result.document?.paths['/v1/abuse/challenges']?.post;
+    expect(issue).toMatchObject({ parameters: expect.arrayContaining([
+      { name: 'X-Request-ID', in: 'header', required: true, schema: { type: 'string', minLength: 1 } },
+      { name: 'traceparent', in: 'header', required: true, schema: { type: 'string', minLength: 1 } },
+      { name: 'Idempotency-Key', in: 'header', required: true, schema: { type: 'string', minLength: 1 } }
+    ]) });
+    const get = result.document?.paths['/v1/auth/sessions/current']?.get;
+    const getParameters = [...(get?.parameters as { name: string }[])];
+    expect(get).toMatchObject({ parameters: expect.arrayContaining([
+      expect.objectContaining({ name: 'X-Request-ID', in: 'header', required: true }),
+      expect.objectContaining({ name: 'X-Trace-ID', in: 'header', required: true })
+    ]) });
+    expect(getParameters.some(parameter => parameter.name === 'Idempotency-Key')).toBe(false);
+    const access = result.document?.paths['/v1/access/authorization-decisions']?.post;
+    const headers = (access?.parameters as { name: string; in: string }[]).filter(parameter => parameter.in === 'header');
+    expect(headers).toHaveLength(3);
+    expect(new Set(headers.map(header => header.name.toLowerCase())).size).toBe(3);
+  });
+
+  it('rejects invalid transport mappings and tracks header changes in compatibility checks', async () => {
+    const source = readFileSync('contracts/route-contract.yaml', 'utf8');
+    for (const invalid of ['X-Request-ID', 'Cookie', 'bad header']) {
+      expect(() => parseRouteContract(source.replace('trace_id: X-Trace-ID', `trace_id: ${invalid}`))).toThrow();
+    }
+    const contracts = await loadApiContracts();
+    const headers = contracts.route.requestMetadataHeaders!;
+    const renamed = { ...contracts, route: { ...contracts.route, requestMetadataHeaders: { ...headers, traceId: 'Trace-ID' } } };
+    expect(compareApiContracts(contracts, renamed).changes).toContainEqual(expect.objectContaining({
+      code: 'API_COMPAT_ROUTE_METADATA_HEADERS_CHANGED', level: 'breaking'
+    }));
+  });
+
   it('emits deterministic typed schemas and keeps restricted routes opt-in', async () => {
     const first = await buildOpenApi31Document(process.cwd());
     const second = await buildOpenApi31Document(process.cwd());

@@ -73,7 +73,7 @@ export async function buildOpenApi31Document(root = process.cwd(), options = {})
         .slice()
         .sort(compareRoutes);
     const components = buildSchemaComponents(contextResult.contexts, contracts);
-    const paths = withAccessDecisionHttpProfile(buildPaths(routes, contextResult.contexts), contracts.accessDecision);
+    const paths = withAccessDecisionHttpProfile(buildPaths(routes, contextResult.contexts, contracts.route), contracts.accessDecision);
     const title = options.title?.trim() || manifest.name;
     return {
         ok: true,
@@ -245,12 +245,12 @@ function buildErrorEnvelopeSchema(contracts) {
         'x-zdp-forbidden-fields': [...contracts.errorEnvelope.forbiddenFields]
     };
 }
-function buildPaths(routes, contexts) {
+function buildPaths(routes, contexts, routeContract) {
     const paths = {};
     for (const route of routes) {
         const method = route.method.toLowerCase();
         const pathItem = paths[route.path] ?? {};
-        pathItem[method] = buildOperation(route, contexts);
+        pathItem[method] = buildOperation(route, contexts, routeContract);
         paths[route.path] = pathItem;
     }
     return Object.fromEntries(Object.entries(paths)
@@ -260,7 +260,7 @@ function buildPaths(routes, contexts) {
         Object.fromEntries(Object.entries(pathItem).sort(([left], [right]) => left.localeCompare(right)))
     ]));
 }
-function buildOperation(route, contexts) {
+function buildOperation(route, contexts, routeContract) {
     const requestContext = requireContext(contexts, route.requestSchemaRef);
     const pathParameterNames = extractPathParameters(route.path);
     const parameters = pathParameterNames.map((name) => ({
@@ -271,6 +271,17 @@ function buildOperation(route, contexts) {
             ? { type: 'string' }
             : propertyToOpenApiSchema(requestContext.typed.properties[name])
     }));
+    const metadataHeaders = routeContract.serviceRequestMetadataHeaders?.[route.serviceId] ?? routeContract.requestMetadataHeaders;
+    if (metadataHeaders !== undefined) {
+        const requiredHeaders = [
+            ...(route.requestIdRequired ? [metadataHeaders.requestId] : []),
+            ...(route.traceIdRequired ? [metadataHeaders.traceId] : []),
+            ...(route.idempotency === 'required_idempotency_key' ? [metadataHeaders.idempotencyKey] : [])
+        ];
+        for (const name of requiredHeaders) {
+            parameters.push({ name, in: 'header', required: true, schema: { type: 'string', minLength: 1 } });
+        }
+    }
     if (route.method === 'GET') {
         const fields = uniqueSorted([
             ...requestContext.schema.requiredFields,
