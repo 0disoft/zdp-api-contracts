@@ -305,7 +305,32 @@ function parseProperty(
   value: unknown,
   file: string,
   path: string,
-  diagnostics: ApiContractDiagnostic[]
+  diagnostics: ApiContractDiagnostic[],
+  ancestors = new WeakSet<object>(),
+  depth = 0
+): ApiTypedSchemaProperty {
+  if (depth > 64 || (isRecord(value) && ancestors.has(value))) {
+    diagnostics.push(diagnostic(
+      depth > 64 ? 'API_TYPED_SCHEMA_DEPTH_EXCEEDED' : 'API_TYPED_SCHEMA_CYCLE',
+      file, path, 'Typed schema properties must be acyclic and at most 64 levels deep.'
+    ));
+    return unknownProperty();
+  }
+  if (isRecord(value)) ancestors.add(value);
+  try {
+    return parsePropertyValue(value, file, path, diagnostics, ancestors, depth);
+  } finally {
+    if (isRecord(value)) ancestors.delete(value);
+  }
+}
+
+function parsePropertyValue(
+  value: unknown,
+  file: string,
+  path: string,
+  diagnostics: ApiContractDiagnostic[],
+  ancestors: WeakSet<object>,
+  depth: number
 ): ApiTypedSchemaProperty {
   if (!isRecord(value)) {
     diagnostics.push(
@@ -378,7 +403,7 @@ function parseProperty(
       );
       items = unknownProperty();
     } else {
-      items = parseProperty(value.items, file, `${path}.items`, diagnostics);
+      items = parseProperty(value.items, file, `${path}.items`, diagnostics, ancestors, depth + 1);
     }
   } else if (Object.hasOwn(value, 'items')) {
     diagnostics.push(
@@ -399,7 +424,9 @@ function parseProperty(
       value.properties,
       file,
       `${path}.properties`,
-      diagnostics
+      diagnostics,
+      ancestors,
+      depth
     );
     requiredProperties = readOptionalStringList(
       value.required,
@@ -457,7 +484,9 @@ function parseNestedProperties(
   value: unknown,
   file: string,
   path: string,
-  diagnostics: ApiContractDiagnostic[]
+  diagnostics: ApiContractDiagnostic[],
+  ancestors: WeakSet<object>,
+  depth: number
 ): Readonly<Record<string, ApiTypedSchemaProperty>> {
   if (value === undefined) {
     return {};
@@ -478,7 +507,7 @@ function parseNestedProperties(
       .sort((left, right) => left.localeCompare(right))
       .map((field) => [
         field,
-        parseProperty(value[field], file, `${path}.${field}`, diagnostics)
+        parseProperty(value[field], file, `${path}.${field}`, diagnostics, ancestors, depth + 1)
       ])
   );
 }
