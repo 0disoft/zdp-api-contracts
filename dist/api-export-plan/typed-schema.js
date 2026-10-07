@@ -142,7 +142,22 @@ function parseSchemaDefinition(bundle, schema, rawSchema, diagnostics) {
         ]))
     };
 }
-function parseProperty(value, file, path, diagnostics) {
+function parseProperty(value, file, path, diagnostics, ancestors = new WeakSet(), depth = 0) {
+    if (depth > 64 || (isRecord(value) && ancestors.has(value))) {
+        diagnostics.push(diagnostic(depth > 64 ? 'API_TYPED_SCHEMA_DEPTH_EXCEEDED' : 'API_TYPED_SCHEMA_CYCLE', file, path, 'Typed schema properties must be acyclic and at most 64 levels deep.'));
+        return unknownProperty();
+    }
+    if (isRecord(value))
+        ancestors.add(value);
+    try {
+        return parsePropertyValue(value, file, path, diagnostics, ancestors, depth);
+    }
+    finally {
+        if (isRecord(value))
+            ancestors.delete(value);
+    }
+}
+function parsePropertyValue(value, file, path, diagnostics, ancestors, depth) {
     if (!isRecord(value)) {
         diagnostics.push(diagnostic('API_TYPED_SCHEMA_PROPERTY_INVALID', file, path, 'Schema property must be an object.'));
         return unknownProperty();
@@ -170,7 +185,7 @@ function parseProperty(value, file, path, diagnostics) {
             items = unknownProperty();
         }
         else {
-            items = parseProperty(value.items, file, `${path}.items`, diagnostics);
+            items = parseProperty(value.items, file, `${path}.items`, diagnostics, ancestors, depth + 1);
         }
     }
     else if (Object.hasOwn(value, 'items')) {
@@ -180,7 +195,7 @@ function parseProperty(value, file, path, diagnostics) {
     let requiredProperties = [];
     let additionalProperties = false;
     if (type === 'object') {
-        properties = parseNestedProperties(value.properties, file, `${path}.properties`, diagnostics);
+        properties = parseNestedProperties(value.properties, file, `${path}.properties`, diagnostics, ancestors, depth);
         requiredProperties = readOptionalStringList(value.required, file, `${path}.required`, diagnostics);
         for (const field of requiredProperties) {
             if (!Object.hasOwn(properties, field)) {
@@ -207,7 +222,7 @@ function parseProperty(value, file, path, diagnostics) {
         additionalProperties
     };
 }
-function parseNestedProperties(value, file, path, diagnostics) {
+function parseNestedProperties(value, file, path, diagnostics, ancestors, depth) {
     if (value === undefined) {
         return {};
     }
@@ -219,7 +234,7 @@ function parseNestedProperties(value, file, path, diagnostics) {
         .sort((left, right) => left.localeCompare(right))
         .map((field) => [
         field,
-        parseProperty(value[field], file, `${path}.${field}`, diagnostics)
+        parseProperty(value[field], file, `${path}.${field}`, diagnostics, ancestors, depth + 1)
     ]));
 }
 function parseEnumValues(value, type, nullable, file, path, diagnostics) {
