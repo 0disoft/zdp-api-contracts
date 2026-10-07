@@ -8,6 +8,9 @@ POST body는 `birth_year`와 `interests` 두 필드만 허용한다. 전체 교�
 `{"birth_year":null,"interests":[]}`는 선택 정보를 삭제한다. 같은 값을 다시 저장해도
 결과 상태는 동일하다. mutation에 `idempotency-key`를 보내며 같은 세션·키·내용의
 재시도는 감사 중복 없이 204, 같은 키로 내용을 바꾸면 409다. 새 저장 작업에는 새 키를 쓴다.
+선택값을 저장하는 요청은 private `x-zdp-profile-consent: account-optional-profile-v1`
+헤더가 필수이며 Core가 재검증한다. 비우기(clear)에는 이 헤더가 필요 없다. 동의는 body로
+보내지 않고 body는 `birth_year`, `interests` 두 필드를 그대로 유지한다.
 원문 없이 HMAC fingerprint만 보관하며 24시간 재시도 기한 뒤 다음 저장 때 정리하고
 탈퇴 시 삭제한다. request id는 요청마다 새로 만든다.
 성공은 body 없는 204, 조회는 200이다. 런타임 오류는 400/401/403/413/503의

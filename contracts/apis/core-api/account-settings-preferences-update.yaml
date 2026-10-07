@@ -12,6 +12,11 @@ schema_bundle:
       kind: request
       carries_secret_material: false
       required_fields: [birth_year, interests]
+      required_headers:
+        - name: x-zdp-profile-consent
+          value: account-optional-profile-v1
+          required_when: 선택값을 저장하는 요청(birth_year 또는 interests가 비어 있지 않음). 비우기(clear)에는 불필요하다.
+          note: 선택 동의는 body가 아니라 이 private 헤더로 전달하고 Core가 재검증한다. BFF는 동의 여부를 판정하는 권한 주체가 아니다. body는 birth_year, interests 두 필드 그대로다.
       properties:
         birth_year:
           type: integer
