@@ -46,10 +46,18 @@ jobs:
         run: bun run check
 
       - name: Check contract compatibility
-        if: github.event_name == 'pull_request'
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: bun run compatibility:check --base-ref "$BASE_SHA"
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ]; then
+            echo '::error::Compatibility baseline is missing.'
+            exit 1
+          fi
+          if [[ "$BASE_SHA" =~ ^0+$ ]]; then
+            echo 'No preceding commit exists for this initial push; package checks still apply.'
+          else
+            bun run compatibility:check --base-ref "$BASE_SHA"
+          fi
 
       - name: Check export plan
         run: bun run export:plan

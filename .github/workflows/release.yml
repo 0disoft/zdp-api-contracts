@@ -96,6 +96,14 @@ jobs:
       - name: Verify package contracts
         run: bun run check
 
+      - name: Check compatibility against preceding release
+        run: |
+          if baseline=$(git describe --tags --match 'v[0-9]*' --abbrev=0 "$GITHUB_SHA^" 2>/dev/null); then
+            bun run compatibility:check --base-ref "$baseline"
+          else
+            echo 'No preceding release exists; package checks still apply.'
+          fi
+
       - name: Verify export plan
         run: bun run export:plan
 
