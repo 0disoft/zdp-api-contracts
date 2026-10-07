@@ -1,0 +1,1 @@
+{"version":3,"file":"sensitive-action-authorization.d.ts","sourceRoot":"","sources":["../../../src/api-contracts/validation/sensitive-action-authorization.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,qBAAqB,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAIvE,wBAAgB,oCAAoC,CAClD,SAAS,EAAE,YAAY,EACvB,WAAW,EAAE,qBAAqB,EAAE,GACnC,IAAI,CAmCN"}

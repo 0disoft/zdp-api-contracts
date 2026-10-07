@@ -1,4 +1,4 @@
-import type { AbuseChallengeContract, AccessDecisionContract, ApiCatalogContract, ApiContracts, ApiSchemaBundleContract, CalculatorCatalogContract, CalculatorConformanceContract, CreditPurchaseContract, CustomerPolicyRegistryContract, ErrorEnvelopeContract, OidcClientRegistryContract, OidcProductSessionContract, OidcProviderRuntimeContract, ProductLinkHandoffContract, RouteContract, SdkGenerationInputContract, SensitiveActionAuthorizationContract, WebhookContract } from './types.js';
+import type { ApiContracts } from './types.js';
 interface ContractLoadFailure {
     readonly name: string;
     readonly file: string;
@@ -16,22 +16,21 @@ export declare class ApiContractLoadError extends Error {
  * risk: data_consistency
  */
 export declare function loadApiContracts(root?: string): Promise<ApiContracts>;
-export declare function parseAbuseChallengeContract(source: string): AbuseChallengeContract;
-export declare function parseCreditPurchaseContract(source: string): CreditPurchaseContract;
-export declare function parseCustomerPolicyRegistryContract(source: string): CustomerPolicyRegistryContract;
-export declare function parseOidcProductSessionContract(source: string): OidcProductSessionContract;
-export declare function parseOidcClientRegistryContract(source: string): OidcClientRegistryContract;
-export declare function parseOidcProviderRuntimeContract(source: string): OidcProviderRuntimeContract;
-export declare function parseSensitiveActionAuthorizationContract(source: string): SensitiveActionAuthorizationContract;
-export declare function parseAccessDecisionContract(source: string): AccessDecisionContract;
-export declare function parseProductLinkHandoffContract(source: string): ProductLinkHandoffContract;
-export declare function parseRouteContract(source: string): RouteContract;
-export declare function parseErrorEnvelopeContract(source: string): ErrorEnvelopeContract;
-export declare function parseWebhookContract(source: string): WebhookContract;
-export declare function parseSdkGenerationInputContract(source: string): SdkGenerationInputContract;
-export declare function parseApiCatalogContract(source: string): ApiCatalogContract;
-export declare function parseCalculatorCatalogContract(source: string): CalculatorCatalogContract;
-export declare function parseCalculatorConformanceContract(source: string): CalculatorConformanceContract;
-export declare function parseApiSchemaBundleContract(source: string, file?: string): ApiSchemaBundleContract;
-export {};
+export { parseAbuseChallengeContract } from './parsers/abuse-challenge.js';
+export { parseCreditPurchaseContract } from './parsers/credit-purchase.js';
+export { parseCustomerPolicyRegistryContract } from './parsers/customer-policy-registry.js';
+export { parseOidcProductSessionContract } from './parsers/oidc-product-session.js';
+export { parseOidcClientRegistryContract } from './parsers/oidc-client-registry.js';
+export { parseOidcProviderRuntimeContract } from './parsers/oidc-provider-runtime.js';
+export { parseSensitiveActionAuthorizationContract } from './parsers/sensitive-action-authorization.js';
+export { parseAccessDecisionContract } from './parsers/access-decision.js';
+export { parseProductLinkHandoffContract } from './parsers/product-link-handoff.js';
+export { parseRouteContract } from './parsers/route.js';
+export { parseErrorEnvelopeContract } from './parsers/error-envelope.js';
+export { parseWebhookContract } from './parsers/webhook.js';
+export { parseSdkGenerationInputContract } from './parsers/sdk-generation-input.js';
+export { parseApiCatalogContract } from './parsers/api-catalog.js';
+export { parseCalculatorCatalogContract } from './parsers/calculator-catalog.js';
+export { parseCalculatorConformanceContract } from './parsers/calculator-conformance.js';
+export { parseApiSchemaBundleContract } from './parsers/api-schema-bundle.js';
 //# sourceMappingURL=parser.d.ts.map

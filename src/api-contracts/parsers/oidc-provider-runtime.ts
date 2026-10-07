@@ -1,0 +1,184 @@
+import type { OidcProviderRuntimeContract } from '../types.js';
+
+import { assertOnlyKeys, parseYamlObject, requiredBoolean, requiredNumber, requiredObject, requiredString, requiredStringList } from './shared.js';
+
+export function parseOidcProviderRuntimeContract(
+  source: string
+): OidcProviderRuntimeContract {
+  const file = 'contracts/apis/core-api/oidc-provider-runtime.yaml';
+  const data = parseYamlObject(source, file);
+  assertOnlyKeys(data, ['oidc_provider_runtime'], file);
+  const context = `${file}#oidc_provider_runtime`;
+  const contract = requiredObject(data, 'oidc_provider_runtime', file);
+  assertOnlyKeys(
+    contract,
+    [
+      'schema_version',
+      'status',
+      'owner_boundary',
+      'pilot_environment',
+      'issuer',
+      'discovery_path',
+      'authorization_path',
+      'token_path',
+      'jwks_path',
+      'revocation_path',
+      'end_session_path',
+      'authorization_code_ttl_seconds',
+      'authorization_code_single_use',
+      'authorization_code_storage_policy',
+      'authorization_code_required_bindings',
+      'access_token_ttl_seconds',
+      'id_token_ttl_seconds',
+      'refresh_token_policy',
+      'client_assertion_algorithm',
+      'client_assertion_ttl_seconds',
+      'client_assertion_jti_single_use',
+      'client_assertion_binding_policy',
+      'signing_algorithm',
+      'signing_key_rotation_days',
+      'retired_key_verification_seconds',
+      'jwks_cache_max_age_seconds',
+      'central_session_idle_seconds',
+      'central_session_absolute_seconds',
+      'product_session_idle_max_seconds',
+      'product_session_absolute_max_seconds',
+      'sensitive_action_fresh_seconds',
+      'revocation_max_staleness_seconds',
+      'product_session_revalidation_policy',
+      'required_denial_reasons',
+      'forbidden_values'
+    ],
+    context
+  );
+
+  return {
+    schemaVersion: requiredNumber(contract, 'schema_version', context),
+    status: requiredString(contract, 'status', context),
+    ownerBoundary: requiredString(contract, 'owner_boundary', context),
+    pilotEnvironment: requiredString(
+      contract,
+      'pilot_environment',
+      context
+    ),
+    issuer: requiredString(contract, 'issuer', context),
+    discoveryPath: requiredString(contract, 'discovery_path', context),
+    authorizationPath: requiredString(contract, 'authorization_path', context),
+    tokenPath: requiredString(contract, 'token_path', context),
+    jwksPath: requiredString(contract, 'jwks_path', context),
+    revocationPath: requiredString(contract, 'revocation_path', context),
+    endSessionPath: requiredString(contract, 'end_session_path', context),
+    authorizationCodeTtlSeconds: requiredNumber(
+      contract,
+      'authorization_code_ttl_seconds',
+      context
+    ),
+    authorizationCodeSingleUse: requiredBoolean(
+      contract,
+      'authorization_code_single_use',
+      context
+    ),
+    authorizationCodeStoragePolicy: requiredString(
+      contract,
+      'authorization_code_storage_policy',
+      context
+    ),
+    authorizationCodeRequiredBindings: requiredStringList(
+      contract,
+      'authorization_code_required_bindings',
+      context
+    ),
+    accessTokenTtlSeconds: requiredNumber(
+      contract,
+      'access_token_ttl_seconds',
+      context
+    ),
+    idTokenTtlSeconds: requiredNumber(
+      contract,
+      'id_token_ttl_seconds',
+      context
+    ),
+    refreshTokenPolicy: requiredString(
+      contract,
+      'refresh_token_policy',
+      context
+    ),
+    clientAssertionAlgorithm: requiredString(
+      contract,
+      'client_assertion_algorithm',
+      context
+    ),
+    clientAssertionTtlSeconds: requiredNumber(
+      contract,
+      'client_assertion_ttl_seconds',
+      context
+    ),
+    clientAssertionJtiSingleUse: requiredBoolean(
+      contract,
+      'client_assertion_jti_single_use',
+      context
+    ),
+    clientAssertionBindingPolicy: requiredString(
+      contract,
+      'client_assertion_binding_policy',
+      context
+    ),
+    signingAlgorithm: requiredString(contract, 'signing_algorithm', context),
+    signingKeyRotationDays: requiredNumber(
+      contract,
+      'signing_key_rotation_days',
+      context
+    ),
+    retiredKeyVerificationSeconds: requiredNumber(
+      contract,
+      'retired_key_verification_seconds',
+      context
+    ),
+    jwksCacheMaxAgeSeconds: requiredNumber(
+      contract,
+      'jwks_cache_max_age_seconds',
+      context
+    ),
+    centralSessionIdleSeconds: requiredNumber(
+      contract,
+      'central_session_idle_seconds',
+      context
+    ),
+    centralSessionAbsoluteSeconds: requiredNumber(
+      contract,
+      'central_session_absolute_seconds',
+      context
+    ),
+    productSessionIdleMaxSeconds: requiredNumber(
+      contract,
+      'product_session_idle_max_seconds',
+      context
+    ),
+    productSessionAbsoluteMaxSeconds: requiredNumber(
+      contract,
+      'product_session_absolute_max_seconds',
+      context
+    ),
+    sensitiveActionFreshSeconds: requiredNumber(
+      contract,
+      'sensitive_action_fresh_seconds',
+      context
+    ),
+    revocationMaxStalenessSeconds: requiredNumber(
+      contract,
+      'revocation_max_staleness_seconds',
+      context
+    ),
+    productSessionRevalidationPolicy: requiredString(
+      contract,
+      'product_session_revalidation_policy',
+      context
+    ),
+    requiredDenialReasons: requiredStringList(
+      contract,
+      'required_denial_reasons',
+      context
+    ),
+    forbiddenValues: requiredStringList(contract, 'forbidden_values', context)
+  };
+}

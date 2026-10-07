@@ -1,0 +1,1 @@
+{"version":3,"file":"oidc-provider-runtime.d.ts","sourceRoot":"","sources":["../../../src/api-contracts/parsers/oidc-provider-runtime.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,2BAA2B,EAAE,MAAM,aAAa,CAAC;AAI/D,wBAAgB,gCAAgC,CAC9C,MAAM,EAAE,MAAM,GACb,2BAA2B,CAiL7B"}

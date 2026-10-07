@@ -1,0 +1,21 @@
+import type { ApiContractDiagnostic, ApiContracts, ApiSchemaBundleContract } from '../types.js';
+export declare const CREDIT_PURCHASE_FILE = "contracts/apis/money-api/credit-purchase.yaml";
+export declare const CREDIT_PURCHASE_OPERATION_IDS: readonly ["money.credit_pack_catalog_projections.get", "money.credit_checkout_intents.create", "money.credit_checkout_intents.status.get", "money.credit_checkout_return_receipts.exchange"];
+export declare const CREDIT_PURCHASE_CHECKOUT_STATES: readonly ["created", "payment_pending", "credit_issuance_pending", "completed", "review_required", "failed", "cancelled", "expired"];
+export declare const CREDIT_PURCHASE_PAYMENT_STATES: readonly ["not_started", "pending", "succeeded", "review_required", "failed", "cancelled", "expired"];
+export declare const CREDIT_PURCHASE_CREDIT_ISSUANCE_STATES: readonly ["not_started", "pending", "succeeded", "review_required", "failed"];
+export declare const CREDIT_PURCHASE_RETURN_RECEIPT_STATES: readonly ["not_issued", "available", "consumed", "expired"];
+export declare const CREDIT_PURCHASE_NON_TERMINAL_STATES: readonly ["created", "payment_pending", "credit_issuance_pending", "review_required"];
+export declare const CREDIT_PURCHASE_TERMINAL_STATES: readonly ["completed", "failed", "cancelled", "expired"];
+export declare const CREDIT_PURCHASE_INTENT_BINDINGS: readonly ["product_ref", "ship_tier_id", "scope_type", "scope_ref", "environment", "locale", "return_target_id"];
+export declare const CREDIT_PURCHASE_RETURN_RECEIPT_BINDINGS: readonly ["return_receipt", "product_ref", "return_target_id"];
+export declare const CREDIT_PURCHASE_SERVER_REVALIDATED_CLAIMS: readonly ["product_ref", "ship_tier_id", "scope_type", "scope_ref", "environment", "account_payment_eligibility", "catalog_sale_state", "provider_capability"];
+export declare const CREDIT_PURCHASE_SNAPSHOT_REFS: readonly ["catalog_version", "price_snapshot_ref", "tax_snapshot_ref", "benefit_snapshot_ref"];
+export declare const CREDIT_PURCHASE_SEPARATED_IDENTIFIERS: readonly ["checkout_intent_ref", "operation_ref", "payment_attempt_ref", "provider_object_ref", "ledger_issuance_ref", "return_receipt_ref"];
+export declare const CREDIT_PURCHASE_PAYMENT_EVIDENCE: readonly ["signed_provider_webhook", "provider_state_query", "reconciliation"];
+export declare const CREDIT_PURCHASE_COMPLETION_EVIDENCE: readonly ["payment_status_succeeded", "credit_issuance_status_succeeded"];
+export declare const CREDIT_PURCHASE_FORBIDDEN_URL_VALUES: readonly ["provider_token", "payment_credential", "central_session", "raw_price_snapshot"];
+export declare const CREDIT_PURCHASE_FORBIDDEN_CONSUMER_USES: readonly ["client_supplied_price_or_credits_as_authority", "success_redirect_as_payment_proof", "return_receipt_as_reusable_bearer", "product_local_credit_issuance", "arbitrary_return_url"];
+export declare const CREDIT_PURCHASE_CLIENT_AUTHORITY_FIELDS: readonly ["amount", "currency", "credits", "bonus_credits", "tax_amount", "price_snapshot"];
+export declare function validateCreditPurchase(contracts: ApiContracts, schemaBundlesByFile: ReadonlyMap<string, ApiSchemaBundleContract>, diagnostics: ApiContractDiagnostic[]): void;
+//# sourceMappingURL=credit-purchase.d.ts.map

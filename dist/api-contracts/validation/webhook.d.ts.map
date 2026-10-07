@@ -1,0 +1,1 @@
+{"version":3,"file":"webhook.d.ts","sourceRoot":"","sources":["../../../src/api-contracts/validation/webhook.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,qBAAqB,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAEvE,eAAO,MAAM,yBAAyB,2IAQ5B,CAAC;AAEX,eAAO,MAAM,0BAA0B,yGAI7B,CAAC;AAEX,wBAAgB,uBAAuB,CACrC,SAAS,EAAE,YAAY,EACvB,WAAW,EAAE,qBAAqB,EAAE,GACnC,IAAI,CA+BN"}
