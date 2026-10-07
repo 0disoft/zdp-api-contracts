@@ -24,6 +24,19 @@ test('request enum expansion is compatible while response expansion breaks exhau
   expect(compare(head, base, 'response').map(item => item.level)).toEqual(['feature']);
 });
 
+test('format constraints respect request and response direction without treating replacements as safe', () => {
+  const plain = { entries: { type: 'array', items: { type: 'string' } } };
+  const email = { entries: { type: 'array', items: { type: 'string', format: 'email' } } };
+  const uri = { entries: { type: 'array', items: { type: 'string', format: 'uri' } } };
+  expect(compare(plain, email).map(item => item.level)).toEqual(['breaking']);
+  expect(compare(email, plain).map(item => item.level)).toEqual(['feature']);
+  expect(compare(plain, email, 'response').map(item => item.level)).toEqual(['feature']);
+  expect(compare(email, plain, 'response').map(item => item.level)).toEqual(['breaking']);
+  for (const kind of ['request', 'response', 'unknown']) {
+    expect(compare(email, uri, kind).map(item => item.level)).toEqual(['breaking']);
+  }
+});
+
 test('optional properties are additive but required input additions remain breaking', () => {
   const base = { payload: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] } };
   const head = { payload: { type: 'object', properties: { name: { type: 'string' }, note: { type: 'string' } }, required: ['name'] } };

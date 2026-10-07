@@ -29,7 +29,12 @@ function compareProperty(base: Property, head: Property, kind: string, path: str
     const narrowed = base.type === 'number' && head.type === 'integer';
     change(!(kind === 'request' ? widened : narrowed), `${path}.type`, 'type changed', changes);
   }
-  if ((base.format ?? null) !== (head.format ?? null)) change(true, `${path}.format`, 'format changed', changes);
+  const beforeFormat = base.format ?? null, afterFormat = head.format ?? null;
+  if (beforeFormat !== afterFormat) {
+    const replaced = beforeFormat !== null && afterFormat !== null;
+    const breaking = replaced || (kind === 'request' ? afterFormat !== null : kind === 'response' ? beforeFormat !== null : true);
+    change(breaking, `${path}.format`, 'format changed', changes);
+  }
   for (const key of ['nullable', 'additional_properties'] as const) {
     const before = base[key] ?? false, after = head[key] ?? false;
     if (before !== after) change(kind === 'request' ? after !== true : after === true, `${path}.${key}`, 'constraint changed', changes);
