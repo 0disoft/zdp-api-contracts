@@ -359,6 +359,46 @@ routes:
       - session_expired
       - account_restricted
       - workspace_access_denied
+  - operation_id: core.account.preferences.get
+    service_id: core-api
+    resource: account_preferences
+    action: get
+    method: GET
+    path: /v1/account-settings/preferences
+    success_statuses: [200]
+    request_schema_ref: contracts/apis/core-api/account-settings-preferences.yaml#AccountPreferencesGetRequest
+    response_schema_ref: contracts/apis/core-api/account-settings-preferences.yaml#AccountPreferencesGetResponse
+    auth_required: true
+    permission_check: core.identity.account_settings.read_self
+    audit_event: core.account.preferences.read
+    idempotency: not_required
+    owner_boundary: identity
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes: [authentication_failed, session_revoked, session_expired, account_restricted]
+  - operation_id: core.account.preferences.update
+    service_id: core-api
+    resource: account_preferences
+    action: update
+    method: POST
+    path: /v1/account-settings/preferences
+    success_statuses: [204]
+    request_schema_ref: contracts/apis/core-api/account-settings-preferences-update.yaml#AccountPreferencesUpdateRequest
+    response_schema_ref: null
+    auth_required: true
+    permission_check: core.identity.account_settings.update_self
+    audit_event: core.account.preferences.updated
+    idempotency: required_idempotency_key
+    owner_boundary: identity
+    tenant_boundary: organization
+    request_id_required: true
+    trace_id_required: true
+    session_effect: none
+    credential_policy: no_refresh_token_plaintext_no_provider_secret_no_authorization_or_cookie_header_payload
+    error_codes: [authentication_failed, session_revoked, session_expired, account_restricted]
   - operation_id: core.admin.operator_session_context.get
     service_id: core-api
     resource: operator_session_context

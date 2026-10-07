@@ -203,6 +203,7 @@ export function validateSchemaDefinition(
 
   const allowedEmptyRequestSchemas = new Set([
     'AccountSettingsOverviewGetRequest',
+    'AccountPreferencesGetRequest',
     'CurrentPersonalAccountScopeGetRequest',
     'AuthSessionCurrentGetRequest',
     'OperatorSessionContextGetRequest',

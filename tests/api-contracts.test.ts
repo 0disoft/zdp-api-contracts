@@ -403,7 +403,7 @@ describe('api contract checker', () => {
     expect(registration).toMatchObject({
       carriesSecretMaterial: true,
       secretMaterialPolicy: 'password_verifier_input_only_never_echo',
-      requiredFields: ['login_id', 'password', 'policy_set_resolution_ref'],
+      requiredFields: ['login_id', 'password', 'policy_set_resolution_ref', 'minimum_age_confirmed', 'age_policy_ref'],
       optionalFields: ['locale'],
       secretFields: ['password']
     });
@@ -1448,6 +1448,8 @@ describe('api contract checker', () => {
       'core.auth.sessions.revoke_current',
       'core.auth.sessions.get_current',
       'core.account.settings_overview.get',
+      'core.account.preferences.get',
+      'core.account.preferences.update',
       'core.admin.operator_session_context.get',
       'core.access.authorization_decisions.create',
       'core.auth.product_link_challenges.create',
@@ -1994,6 +1996,8 @@ describe('api contract checker', () => {
       'contracts/apis/abuse-api/health.yaml',
       'contracts/apis/core-api/access-decision.yaml',
       'contracts/apis/core-api/account-settings-overview.yaml',
+      'contracts/apis/core-api/account-settings-preferences-update.yaml',
+      'contracts/apis/core-api/account-settings-preferences.yaml',
       'contracts/apis/core-api/auth-session-consumer.yaml',
       'contracts/apis/core-api/auth-session.yaml',
       'contracts/apis/core-api/current-personal-account-scope.yaml',
@@ -2554,6 +2558,10 @@ function loadCommittedContracts(): ApiContracts {
         readFileSync(join(process.cwd(), 'contracts/apis/core-api/passkey-login.yaml'), 'utf8'),
         'contracts/apis/core-api/passkey-login.yaml'
       ),
+      ...['account-settings-preferences.yaml','account-settings-preferences-update.yaml'].map(name => {
+        const file=`contracts/apis/core-api/${name}`;
+        return parseApiSchemaBundleContract(readFileSync(join(process.cwd(),file),'utf8'),file);
+      }),
       parseApiSchemaBundleContract(
         readFileSync(
           join(

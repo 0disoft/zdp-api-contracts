@@ -29,6 +29,8 @@ schema_bundle:
         - login_id
         - password
         - policy_set_resolution_ref
+        - minimum_age_confirmed
+        - age_policy_ref
       optional_fields:
         - locale
       secret_fields:

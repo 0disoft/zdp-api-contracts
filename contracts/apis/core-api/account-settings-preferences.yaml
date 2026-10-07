@@ -1,0 +1,43 @@
+schema_bundle:
+  service_id: core-api
+  owner_boundary: identity
+  status: contract-only
+  purpose: 비공개 선택 프로필의 본인 조회와 원자적 교체. 출생연도는 자기신고이며 연령 인증이나 이용 자격 증명이 아니다.
+  common_envelope:
+    required_request_metadata: [request_id, trace_id]
+    required_response_metadata: [request_id, trace_id]
+    forbidden_payload_values: [authorization_header, cookie_header, refresh_token_plaintext, provider_secret, raw_provider_error, raw_customer_payload, stack_trace, screen_component_payload]
+  schemas:
+    - id: AccountPreferencesGetRequest
+      kind: request
+      carries_secret_material: false
+      required_fields: []
+      properties: {}
+    - id: AccountPreferencesGetResponse
+      kind: response
+      carries_secret_material: false
+      session_effect: none
+      required_fields: [birth_year, interests, age_status, age_source, age_verified, age_as_of_year, interest_catalog_version]
+      properties:
+        birth_year:
+          type: integer
+          nullable: true
+        interests:
+          type: array
+          items:
+            type: string
+            enum: [technology, programming, design, science, business, productivity, education, books, music, gaming, sports, travel, cooking, art]
+        age_status:
+          type: string
+          enum: [unknown, under_14, minor, adult, needs_confirmation]
+        age_source:
+          type: string
+          enum: [unknown, self_reported]
+        age_verified:
+          type: boolean
+          enum: [false]
+        age_as_of_year:
+          type: integer
+        interest_catalog_version:
+          type: string
+          enum: [account-interests-v1]

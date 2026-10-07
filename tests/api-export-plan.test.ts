@@ -66,6 +66,8 @@ describe('api export plan', () => {
       'core.auth.sessions.revoke_current',
       'core.auth.sessions.get_current',
       'core.account.settings_overview.get',
+      'core.account.preferences.get',
+      'core.account.preferences.update',
       'core.access.authorization_decisions.create',
       'core.auth.product_link_challenges.create',
       'core.auth.product_link_challenges.complete',
@@ -508,6 +510,10 @@ function loadCommittedContracts(): ApiContracts {
         readFileSync(join(process.cwd(), 'contracts/apis/core-api/passkey-login.yaml'), 'utf8'),
         'contracts/apis/core-api/passkey-login.yaml'
       ),
+      ...['account-settings-preferences.yaml','account-settings-preferences-update.yaml'].map(name => {
+        const file=`contracts/apis/core-api/${name}`;
+        return parseApiSchemaBundleContract(readFileSync(join(process.cwd(),file),'utf8'),file);
+      }),
       parseApiSchemaBundleContract(
         readFileSync(
           join(
