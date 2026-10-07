@@ -1,6 +1,6 @@
 import type { ApiContractDiagnostic } from '../api-contracts/types.js';
-declare const OPENAPI_VERSION: "3.1.0";
-declare const JSON_SCHEMA_DIALECT: "https://json-schema.org/draft/2020-12/schema";
+declare const OPENAPI_VERSION: '3.1.0';
+declare const JSON_SCHEMA_DIALECT: 'https://json-schema.org/draft/2020-12/schema';
 export type ApiOpenApiSchema = Readonly<Record<string, unknown>>;
 export type ApiOpenApiOperation = Readonly<Record<string, unknown>>;
 export type ApiOpenApiPathItem = Readonly<Record<string, ApiOpenApiOperation>>;

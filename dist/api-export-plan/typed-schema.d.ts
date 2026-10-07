@@ -1,5 +1,5 @@
 import type { ApiContractDiagnostic, ApiSchemaBundleContract } from '../api-contracts/types.js';
-declare const DECLARED_PROPERTY_TYPES: readonly ["string", "integer", "number", "boolean", "array", "object"];
+declare const DECLARED_PROPERTY_TYPES: readonly ['string', 'integer', 'number', 'boolean', 'array', 'object'];
 export type ApiDeclaredSchemaPropertyType = (typeof DECLARED_PROPERTY_TYPES)[number];
 export type ApiSchemaPropertyType = ApiDeclaredSchemaPropertyType | 'unknown';
 export type ApiSchemaEnumValue = string | number | boolean | null;
