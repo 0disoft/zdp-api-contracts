@@ -48,6 +48,10 @@ bun run compatibility:check --base-ref v0.32.0 --json
 | webhook contract | required·forbidden control 변화 |
 | SDK generation input | source contract, target, required metadata, 금지 ownership과 값 변화 |
 | route skeleton | 허용 method·status·session effect와 required·forbidden 항목 변화 |
+| calculator catalog | 계산기 제거·기존 입력/출력/의미 변경·필수 입력 추가는 breaking, 새 계산기·선택 입력·출력 추가는 feature |
+| calculator conformance | 기존 벡터 수정·제거와 정밀도/반올림 정책 변경은 breaking, 새 벡터와 계약 버전 metadata 변경은 patch |
+
+계산기 선언 순서와 YAML mapping 순서만 바뀐 경우는 의미 변화로 판정하지 않는다. 기존 필드의 세부 제한 변경은 보수적으로 breaking으로 판정한다.
 
 현재 parser가 base 계약을 읽지 못하면 세부 diff 대신 `API_COMPAT_BASELINE_CONTRACT_UNREADABLE` breaking 변경으로 처리한다. 이 경우에도 충분한 버전 상승과 마이그레이션 문서 없이는 통과하지 않는다.
 

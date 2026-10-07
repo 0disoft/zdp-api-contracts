@@ -236,6 +236,65 @@ describe('API contract compatibility gate', () => {
     });
   });
 
+  it('detects calculator expected-result changes and requires migration', async () => {
+    const base = await loadApiContracts();
+    const head = structuredClone(base);
+    const item = head.calculatorConformance.cases.find((item) => item.id === 'percentage-change.basic-increase')!;
+    if (item.expected.status !== 'success') throw new Error('Expected success fixture');
+    Object.assign(item.expected.output.percentage_change!, { value: '12345.00' });
+    const report = compareApiContracts(base, head);
+    expect(report.changes).toContainEqual(expect.objectContaining({
+      level: 'breaking', code: 'API_COMPAT_CALCULATOR_CONFORMANCE_CHANGED',
+      path: 'contracts/calculators/conformance.yaml#cases.percentage-change.basic-increase'
+    }));
+    expect(evaluateApiContractVersionGate({ baseVersion: '0.49.0', headVersion: '0.49.1', report }).ok).toBe(false);
+  });
+
+  it('detects removed calculators, required inputs, and precision changes', async () => {
+    const base = await loadApiContracts();
+    for (const mutate of [
+      (head: ApiContracts) => Object.assign(head.calculatorCatalog, { definitions: head.calculatorCatalog.definitions.slice(1) }),
+      (head: ApiContracts) => Object.assign(head.calculatorCatalog.definitions[0]!, { precisionPolicy: 'changed_precision' }),
+      (head: ApiContracts) => Object.assign(head.calculatorConformance, { roundingMode: 'changed_rounding' }),
+      (head: ApiContracts) => {
+        const definition = head.calculatorCatalog.definitions[0]!;
+        Object.assign(definition, { inputs: [...definition.inputs, { ...definition.inputs[0], id: 'required_extra', required: true }] });
+      }
+    ]) {
+      const head = structuredClone(base);
+      mutate(head);
+      expect(compareApiContracts(base, head).level).toBe('breaking');
+    }
+  });
+
+  it('classifies new calculators and optional inputs as features, new vectors as patches', async () => {
+    const base = await loadApiContracts();
+    const newCalculator = structuredClone(base);
+    Object.assign(newCalculator.calculatorCatalog, { definitions: [...base.calculatorCatalog.definitions, { ...base.calculatorCatalog.definitions[0], id: 'new-calculator' }] });
+    expect(compareApiContracts(base, newCalculator).level).toBe('feature');
+    const optional = structuredClone(base);
+    const definition = optional.calculatorCatalog.definitions[0]!;
+    Object.assign(definition, { inputs: [...definition.inputs, { ...definition.inputs[0], id: 'optional_extra', required: false }] });
+    expect(compareApiContracts(base, optional).level).toBe('feature');
+    const vector = structuredClone(base);
+    Object.assign(vector.calculatorConformance, { cases: [...base.calculatorConformance.cases, { ...base.calculatorConformance.cases[0], id: 'extra-vector' }] });
+    expect(compareApiContracts(base, vector).level).toBe('patch');
+  });
+
+  it('ignores calculator declaration order and equivalent output requiredness', async () => {
+    const base = await loadApiContracts();
+    const head = structuredClone(base);
+    Object.assign(head.calculatorCatalog, { definitions: [...head.calculatorCatalog.definitions].reverse() });
+    Object.assign(head.calculatorConformance, { cases: [...head.calculatorConformance.cases].reverse() });
+    const definition = head.calculatorCatalog.definitions[0]!;
+    Object.assign(definition, {
+      inputs: [...definition.inputs].reverse(),
+      outputs: definition.outputs.map((output) => ({ ...output, required: output.required ?? true })),
+      semanticRules: [...definition.semanticRules].reverse()
+    });
+    expect(compareApiContracts(base, head)).toEqual({ level: 'none', changes: [] });
+  });
+
   it('requires a major bump for stable breaking changes', () => {
     const result = evaluateApiContractVersionGate({
       baseVersion: '1.7.4',
