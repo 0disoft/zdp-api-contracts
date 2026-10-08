@@ -144,7 +144,8 @@ const API_SCHEMA_DEFINITION_KEYS = [
     'required_fields',
     'optional_fields',
     'secret_fields',
-    'properties'
+    'properties',
+    'request_headers'
 ];
 const SCHEMA_BUNDLE_COMPANION_ROOT_BY_FILE = {
     'contracts/apis/abuse-api/challenge.yaml': 'abuse_challenge',

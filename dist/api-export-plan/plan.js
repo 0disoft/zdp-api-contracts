@@ -121,7 +121,7 @@ export function buildApiExportPlan(contracts) {
             ...contracts.route.noContentSuccessStatuses
         ],
         operationIds: exportableRoutes.map((route) => route.operationId),
-        typedFetchOperationMap: buildTypedFetchOperationMap(exportableRoutes),
+        typedFetchOperationMap: buildTypedFetchOperationMap(exportableRoutes, contracts.schemaBundles),
         schemaModelMap: buildSchemaModelMap(contracts.schemaBundles),
         mutatingMethodsRequiringIdempotency: [
             ...MUTATING_METHODS_REQUIRING_IDEMPOTENCY
@@ -134,10 +134,13 @@ export function buildApiExportPlan(contracts) {
         diagnostics: []
     };
 }
-function buildTypedFetchOperationMap(routes) {
+function buildTypedFetchOperationMap(routes, bundles) {
     const operationMap = {};
+    const headersByRef = new Map(bundles.flatMap(bundle => bundle.schemas.map(schema => [`${bundle.file}#${schema.id}`, schema.requestHeaders])));
     for (const route of routes) {
+        const headerRules = headersByRef.get(route.requestSchemaRef);
         operationMap[route.operationId] = {
+            ...(headerRules?.length ? { requestHeaders: structuredClone(headerRules) } : {}),
             operationId: route.operationId,
             method: route.method,
             path: route.path,

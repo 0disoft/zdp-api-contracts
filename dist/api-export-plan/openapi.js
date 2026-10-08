@@ -282,6 +282,16 @@ function buildOperation(route, contexts, routeContract) {
             parameters.push({ name, in: 'header', required: true, schema: { type: 'string', minLength: 1 } });
         }
     }
+    for (const rule of requestContext.schema.requestHeaders ?? []) {
+        if (parameters.some(parameter => parameter.in === 'header' && String(parameter.name).toLowerCase() === rule.name)) {
+            throw new Error(`Request header ${rule.name} collides with transport metadata.`);
+        }
+        parameters.push({ name: rule.name, in: 'header', required: rule.requiredWhen === 'always',
+            schema: { type: 'string', const: rule.value },
+            ...(rule.requiredWhen === 'always' ? {} : { 'x-zdp-required-when': {
+                    any_nonempty_fields: rule.requiredWhen.anyNonemptyFields
+                } }) });
+    }
     if (route.method === 'GET') {
         const fields = uniqueSorted([
             ...requestContext.schema.requiredFields,
