@@ -6,10 +6,35 @@ import {
 } from '../src/api-export-plan/openapi';
 import { parseTypedSchemaBundle } from '../src/api-export-plan/typed-schema';
 import { readFileSync } from 'node:fs';
+import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { parse, stringify } from 'yaml';
 import { loadApiContracts, parseRouteContract } from '../src/api-contracts/index';
 import { compareApiContracts } from '../scripts/lib/contract-compatibility';
 
 describe('OpenAPI 3.1 export', () => {
+  it('rejects request header collisions through the real OpenAPI loading path', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'zdp-openapi-header-collision-'));
+    try {
+      await cp('contracts', join(root, 'contracts'), { recursive: true });
+      const contracts = await loadApiContracts();
+      const route = contracts.apiCatalog.routes.find(route => route.exportPolicy == null &&
+        route.requestIdRequired && route.traceIdRequired && route.idempotency === 'required_idempotency_key')!;
+      const metadata = contracts.route.serviceRequestMetadataHeaders?.[route.serviceId] ?? contracts.route.requestMetadataHeaders!;
+      const [file, id] = route.requestSchemaRef.split('#');
+      const data = parse(readFileSync(file!, 'utf8'));
+      const schema = data.schema_bundle.schemas.find((schema: { id: string }) => schema.id === id);
+      for (const name of [metadata.requestId, metadata.traceId, metadata.idempotencyKey]) {
+        schema.request_headers = [{ name: name.toLowerCase(), value: 'fixture', required_when: 'always' }];
+        await writeFile(join(root, file!), stringify(data));
+        const result = await buildOpenApi31Document(root);
+        expect(result.ok).toBe(false);
+        expect(result.document).toBeNull();
+        expect(result.diagnostics).toContainEqual(expect.objectContaining({ code: 'API_EXPORT_PLAN_REQUEST_HEADER_COLLISION' }));
+      }
+    } finally { await rm(root, { recursive: true, force: true }); }
+  }, 15_000);
   it('exports required HTTP metadata with service transports and deduplicates specialized profiles', async () => {
     const result = await buildOpenApi31Document(process.cwd());
     expect(result.ok).toBe(true);

@@ -11,6 +11,7 @@ import { validateSdkGenerationInputContract } from './validation/sdk-generation-
 import { validateApiCatalogContract } from './validation/api-catalog.js';
 
 import { validateSchemaBundles } from './validation/schema-bundles.js';
+import { validateTransportHeaderCollisions } from './validation/request-headers.js';
 
 import { validateCustomerPolicyRegistry } from './validation/customer-policy-registry.js';
 
@@ -61,6 +62,7 @@ export function validateApiContracts(
   validateSdkGenerationInputContract(contracts, diagnostics);
   validateApiCatalogContract(contracts, schemaBundlesByFile, diagnostics);
   validateSchemaBundles(contracts, schemaBundlesByFile, diagnostics);
+  diagnostics.push(...validateTransportHeaderCollisions(contracts));
   validateCustomerPolicyRegistry(contracts, schemaBundlesByFile, diagnostics);
   validateCreditPurchase(contracts, schemaBundlesByFile, diagnostics);
   validateAbuseChallenge(contracts, schemaBundlesByFile, diagnostics);
