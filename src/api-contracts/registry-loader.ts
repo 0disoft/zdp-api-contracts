@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
-import { isAbsolute, relative, resolve } from 'node:path';
+import { readFile, realpath } from 'node:fs/promises';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
 import {
   API_CONTRACT_FAMILY_KEYS,
   API_CONTRACT_FAMILY_REGISTRY,
@@ -165,7 +165,7 @@ async function readContractSource(root: string, sourcePath: string): Promise<str
   const relativeFile = relative(resolvedRoot, resolvedFile);
 
   if (
-    relativeFile.startsWith('..') ||
+    relativeFile === '..' || relativeFile.startsWith(`..${sep}`) ||
     isAbsolute(relativeFile) ||
     relativeFile.length === 0
   ) {
@@ -174,7 +174,14 @@ async function readContractSource(root: string, sourcePath: string): Promise<str
     );
   }
 
-  return readFile(resolvedFile, 'utf8');
+  const realRoot = await realpath(resolvedRoot);
+  const realFile = await realpath(resolvedFile);
+  const realRelativeFile = relative(realRoot, realFile);
+  if (realRelativeFile === '..' || realRelativeFile.startsWith(`..${sep}`) ||
+      isAbsolute(realRelativeFile) || realRelativeFile.length === 0) {
+    throw new Error(`Contract path \`${sourcePath}\` must resolve within the repository root.`);
+  }
+  return readFile(realFile, 'utf8');
 }
 
 function throwContractLoadFailures(

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { fileURLToPath } from 'node:url';
+import { cp, mkdir, mkdtemp, rename, rm, symlink } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import {
   API_CONTRACT_FAMILY_KEYS,
   API_CONTRACT_FAMILY_REGISTRY,
@@ -20,6 +23,32 @@ import { buildApiExportPlan } from '../src/api-export-plan/registry-plan';
 const repositoryRoot = fileURLToPath(new URL('..', import.meta.url));
 
 describe('api contract family registry', () => {
+  it('rejects links to repository-external families and catalog-discovered schema bundles', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'zdp-contract-links-'));
+    try {
+      for (const sourcePath of ['contracts', 'contracts/apis/support-api']) {
+        const checkout = join(root, sourcePath === 'contracts' ? 'families' : 'schemas');
+        await mkdir(checkout);
+        await cp(join(repositoryRoot, 'contracts'), join(checkout, 'contracts'), { recursive: true });
+        const original = join(checkout, sourcePath);
+        const external = join(root, sourcePath === 'contracts' ? 'external-families' : 'external-schemas');
+        await rename(original, external);
+        await symlink(external, original, process.platform === 'win32' ? 'junction' : 'dir');
+        await expect(loadApiContracts(checkout)).rejects.toThrow('repository root');
+      }
+    } finally { await rm(root, { recursive: true, force: true }); }
+  }, 15_000);
+
+  it('allows contract links that resolve within the repository', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'zdp-contract-internal-link-'));
+    try {
+      const target = join(root, 'local-contracts');
+      await cp(join(repositoryRoot, 'contracts'), target, { recursive: true });
+      await symlink(target, join(root, 'contracts'), process.platform === 'win32' ? 'junction' : 'dir');
+      expect((await loadApiContracts(root)).schemaBundles.length).toBeGreaterThan(0);
+    } finally { await rm(root, { recursive: true, force: true }); }
+  }, 15_000);
+
   it('keeps singleton families complete, ordered, and uniquely owned', () => {
     expect(
       API_CONTRACT_FAMILY_REGISTRY.map((registration) => registration.key)
