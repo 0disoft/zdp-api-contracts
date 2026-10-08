@@ -8,6 +8,27 @@ function compare(base: Record<string, unknown>, head: Record<string, unknown>, k
   return changes;
 }
 
+test('reports cyclic property comparisons instead of overflowing the stack', () => {
+  const cyclic: Record<string, unknown> = { type: 'array' };
+  cyclic.items = cyclic;
+  const ordinary = { type: 'array', items: { type: 'string' } };
+  for (const [base, head] of [[cyclic, cyclic], [cyclic, ordinary], [ordinary, cyclic]]) {
+    expect(compare({ payload: base }, { payload: head })).toContainEqual(expect.objectContaining({
+      level: 'breaking', code: 'API_COMPAT_SCHEMA_TRAVERSAL_INVALID'
+    }));
+  }
+});
+
+test('bounds nested comparisons without rejecting shared acyclic properties', () => {
+  let nested: Record<string, unknown> = { type: 'string' };
+  for (let index = 0; index < 70; index++) nested = { type: 'array', items: nested };
+  expect(compare({ payload: nested }, { payload: nested })).toContainEqual(expect.objectContaining({
+    code: 'API_COMPAT_SCHEMA_TRAVERSAL_INVALID'
+  }));
+  const shared = { type: 'object', properties: { name: { type: 'string' } } };
+  expect(compare({ first: shared, second: shared }, { first: shared, second: shared })).toEqual([]);
+});
+
 test('enum and nested required ordering and explicit defaults preserve compatibility', () => {
   const base = { payload: { type: 'object', properties: { status: { type: 'string', enum: ['a', 'b'] }, count: { type: 'integer' } }, required: ['status', 'count'] } };
   const head = { payload: { type: 'object', additional_properties: false, nullable: false,

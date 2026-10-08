@@ -4,10 +4,21 @@ type Property = Record<string, unknown>;
 const record = (value: unknown): Property => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Property : {};
 const list = (value: unknown): readonly unknown[] => Array.isArray(value) ? value : [];
 const set = (value: unknown) => new Set(list(value).map(item => JSON.stringify(item)));
+interface Traversal {
+  readonly base: WeakSet<object>;
+  readonly head: WeakSet<object>;
+}
 
 /** Typed request constraints describe accepted inputs; response constraints describe promised outputs. */
 export function compareTypedProperties(baseValue: unknown, headValue: unknown, kind: string, path: string,
   changes: ApiContractCompatibilityChange[], baseRequired: readonly unknown[] = [], headRequired: readonly unknown[] = []): void {
+  comparePropertySet(baseValue, headValue, kind, path, changes, baseRequired, headRequired,
+    { base: new WeakSet(), head: new WeakSet() }, 0);
+}
+
+function comparePropertySet(baseValue: unknown, headValue: unknown, kind: string, path: string,
+  changes: ApiContractCompatibilityChange[], baseRequired: readonly unknown[], headRequired: readonly unknown[],
+  traversal: Traversal, depth: number): void {
   const base = record(baseValue), head = record(headValue);
   for (const field of [...new Set([...Object.keys(base), ...Object.keys(head)])].sort()) {
     const fieldPath = `${path}.${field}`;
@@ -18,12 +29,30 @@ export function compareTypedProperties(baseValue: unknown, headValue: unknown, k
     } else {
       const wasRequired = baseRequired.includes(field), isRequired = headRequired.includes(field);
       if (wasRequired !== isRequired) change(kind === 'request' ? isRequired : wasRequired, `${fieldPath}.required`, 'requiredness changed', changes);
-      compareProperty(record(base[field]), record(head[field]), kind, fieldPath, changes);
+      compareProperty(record(base[field]), record(head[field]), kind, fieldPath, changes, traversal, depth);
     }
   }
 }
 
-function compareProperty(base: Property, head: Property, kind: string, path: string, changes: ApiContractCompatibilityChange[]): void {
+function compareProperty(base: Property, head: Property, kind: string, path: string,
+  changes: ApiContractCompatibilityChange[], traversal: Traversal, depth: number): void {
+  if (depth > 64 || traversal.base.has(base) || traversal.head.has(head)) {
+    changes.push({ level: 'breaking', code: 'API_COMPAT_SCHEMA_TRAVERSAL_INVALID', path,
+      message: 'Typed schema comparison requires acyclic properties at most 64 levels deep.' });
+    return;
+  }
+  traversal.base.add(base);
+  traversal.head.add(head);
+  try {
+    comparePropertyValue(base, head, kind, path, changes, traversal, depth);
+  } finally {
+    traversal.base.delete(base);
+    traversal.head.delete(head);
+  }
+}
+
+function comparePropertyValue(base: Property, head: Property, kind: string, path: string,
+  changes: ApiContractCompatibilityChange[], traversal: Traversal, depth: number): void {
   if (base.type !== head.type) {
     const widened = base.type === 'integer' && head.type === 'number';
     const narrowed = base.type === 'number' && head.type === 'integer';
@@ -49,10 +78,11 @@ function compareProperty(base: Property, head: Property, kind: string, path: str
     change(kind === 'request' ? narrowed : widened, `${path}.enum`, 'enum domain changed', changes);
   }
   if (base.type === 'object' && head.type === 'object') {
-    compareTypedProperties(record(base.properties), record(head.properties), kind, `${path}.properties`, changes, list(base.required), list(head.required));
+    comparePropertySet(record(base.properties), record(head.properties), kind, `${path}.properties`, changes,
+      list(base.required), list(head.required), traversal, depth + 1);
   }
   if (base.type === 'array' && head.type === 'array') {
-    compareProperty(record(base.items), record(head.items), kind, `${path}.items`, changes);
+    compareProperty(record(base.items), record(head.items), kind, `${path}.items`, changes, traversal, depth + 1);
   }
 }
 
