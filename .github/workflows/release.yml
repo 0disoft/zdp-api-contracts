@@ -121,7 +121,7 @@ jobs:
         run: |
           package_name="$(node -p "require('./package.json').name")"
           package_version="$(node -p "require('./package.json').version")"
-          max_attempts=12
+          max_attempts=60
           attempt=1
 
           while [ "$attempt" -le "$max_attempts" ]; do
