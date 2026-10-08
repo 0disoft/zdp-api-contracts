@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:zdp:money:coupon-usage-compensation:v1",
+  "title": "제품 전달 실패에 따른 내부 쿠폰 사용 보상",
+  "x-zdp-transport": {
+    "status": "internal-local-staging",
+    "method": "POST",
+    "path": "/v1/internal/coupons/usage/compensate",
+    "capability": "coupon-usage:compensate",
+    "audience": "money-api",
+    "organization": "org-8ailors",
+    "requestHeaders": ["authorization", "x-request-id", "x-trace-id"],
+    "responseHeaders": ["x-request-id", "x-trace-id", "cache-control"],
+    "correlationPattern": "^[A-Za-z0-9_.-]{3,128}$",
+    "referencePattern": "^[A-Za-z0-9_.:-]{1,256}$",
+    "maxCreditUnit": "9223372036854775807",
+    "maxResponseBytes": 16384,
+    "successStatus": 200,
+    "rejections": {
+      "400": "invalid_compensation_request",
+      "401": "service_authentication_required",
+      "403": "usage_compensation_denied",
+      "404": "usage_capture_not_found",
+      "409": "usage_compensation_conflict"
+    },
+    "unknownOutcomeStatus": 503,
+    "unknownOutcomeCode": "usage_compensation_unavailable",
+    "retry": "same-durable-usage-hold-and-failure-only",
+    "failureEvidence": "product-owned-durable-confirmed-terminal-failure",
+    "captureTimeout": "reconcile-capture-never-compensate-unknown-outcome",
+    "deliveryAfterCompensation": "forbidden"
+  },
+  "$defs": {
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hold_ref", "usage_ref", "failure_ref"],
+      "properties": {
+        "hold_ref": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,256}$" },
+        "usage_ref": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,256}$" },
+        "failure_ref": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,256}$" }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["settlement_id", "failure_ref", "reversal_transaction_id", "restored_credit_unit", "restored_benefit_credit_unit", "replayed"],
+      "properties": {
+        "settlement_id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{3,128}$" },
+        "failure_ref": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,256}$" },
+        "reversal_transaction_id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{3,128}$" },
+        "restored_credit_unit": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,18})$" },
+        "restored_benefit_credit_unit": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,18})$" },
+        "replayed": { "type": "boolean" }
+      }
+    },
+    "rejection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code"],
+      "properties": {
+        "code": { "enum": ["invalid_compensation_request", "service_authentication_required", "usage_compensation_denied", "usage_capture_not_found", "usage_compensation_conflict", "usage_compensation_unavailable"] }
+      }
+    }
+  }
+}
