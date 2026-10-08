@@ -41,6 +41,21 @@ interface SarifReport {
 }
 
 describe('public contract checker CLI', () => {
+  it('rejects malformed success responses instead of counting their status keys as evidence', () => {
+    const compare = (response: unknown) => compareOpenApiRouteCatalog(JSON.stringify({
+      openapi: '3.1.0', 'x-zdp-service-id': 'demo-api', paths: {
+        '/v1/widgets': { post: { operationId: 'demo.widgets.create', responses: { '201': response } } }
+      }
+    }), 'openapi.json', [createRoute()]);
+    for (const response of [null, [], 'Created', 201, true]) {
+      const result = compare(response);
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics).toContainEqual(expect.objectContaining({
+        code: 'API_OPENAPI_RESPONSE_INVALID', path: 'paths./v1/widgets.post.responses.201'
+      }));
+    }
+    expect(compare({ $ref: '#/components/responses/Created' }).ok).toBe(true);
+  });
   it('publishes the Node CLI through the package bin map', () => {
     const manifest: unknown = JSON.parse(
       readFileSync(join(process.cwd(), 'package.json'), 'utf8')
