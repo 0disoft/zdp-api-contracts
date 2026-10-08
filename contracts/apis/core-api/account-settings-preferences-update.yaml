@@ -17,6 +17,11 @@ schema_bundle:
       kind: request
       carries_secret_material: false
       required_fields: [birth_year, interests]
+      request_headers:
+        - name: x-zdp-profile-consent
+          value: account-optional-profile-v1
+          required_when:
+            any_nonempty_fields: [birth_year, interests]
       properties:
         birth_year:
           type: integer

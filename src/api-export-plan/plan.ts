@@ -148,7 +148,7 @@ export function buildApiExportPlan(
     ],
     operationIds: exportableRoutes.map((route) => route.operationId),
     typedFetchOperationMap: buildTypedFetchOperationMap(
-      exportableRoutes
+      exportableRoutes, contracts.schemaBundles
     ),
     schemaModelMap: buildSchemaModelMap(contracts.schemaBundles),
     mutatingMethodsRequiringIdempotency: [
@@ -165,12 +165,16 @@ export function buildApiExportPlan(
 }
 
 function buildTypedFetchOperationMap(
-  routes: readonly ApiRouteDefinition[]
+  routes: readonly ApiRouteDefinition[], bundles: readonly ApiSchemaBundleContract[]
 ): Readonly<Record<string, ApiTypedFetchOperation>> {
   const operationMap: Record<string, ApiTypedFetchOperation> = {};
+  const headersByRef = new Map<string, ApiSchemaDefinition['requestHeaders']>(bundles.flatMap(bundle => bundle.schemas.map(schema =>
+    [`${bundle.file}#${schema.id}`, schema.requestHeaders] as const)));
 
   for (const route of routes) {
+    const headerRules = headersByRef.get(route.requestSchemaRef);
     operationMap[route.operationId] = {
+      ...(headerRules?.length ? { requestHeaders: structuredClone(headerRules) } : {}),
       operationId: route.operationId,
       method: route.method,
       path: route.path,

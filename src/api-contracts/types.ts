@@ -542,6 +542,12 @@ export interface ApiSchemaCommonEnvelope {
   readonly forbiddenPayloadValues: readonly string[];
 }
 
+export interface ApiRequestHeaderRule {
+  readonly name: string;
+  readonly value: string;
+  readonly requiredWhen: 'always' | { readonly anyNonemptyFields: readonly string[] };
+}
+
 export interface ApiSchemaDefinition {
   readonly id: string;
   readonly kind: string;
@@ -552,6 +558,7 @@ export interface ApiSchemaDefinition {
   readonly optionalFields: readonly string[];
   readonly secretFields: readonly string[];
   readonly properties?: unknown;
+  readonly requestHeaders?: readonly ApiRequestHeaderRule[];
 }
 
 export interface ApiContractDiagnostic {
@@ -596,6 +603,7 @@ export interface ApiExportPlanResult {
 }
 
 export interface ApiTypedFetchOperation {
+  readonly requestHeaders?: readonly ApiRequestHeaderRule[];
   readonly operationId: string;
   readonly method: string;
   readonly path: string;

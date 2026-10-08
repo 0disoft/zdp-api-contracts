@@ -1,4 +1,5 @@
 import type { ApiSchemaDefinition, ApiSchemaBundleContract } from '../types.js';
+import { parseRequestHeaders } from './request-headers.js';
 
 import { optionalString, parseYamlObject, requiredBoolean, requiredObject, requiredRecordListAllowEmpty, requiredString, requiredStringList, requiredStringListAllowEmpty } from './shared.js';
 
@@ -56,6 +57,9 @@ export function parseApiSchemaDefinition(
   schema: Record<string, unknown>,
   context: string
 ): ApiSchemaDefinition {
+  const requestHeaders = parseRequestHeaders(schema.request_headers,
+    [...requiredStringListAllowEmpty(schema, 'required_fields', context), ...optionalStringList(schema, 'optional_fields', context)], context);
+  if (requestHeaders.length && schema.kind !== 'request') throw new Error(`${context}: only request schemas may declare request_headers.`);
   return {
     id: requiredString(schema, 'id', context),
     kind: requiredString(schema, 'kind', context),
@@ -73,7 +77,8 @@ export function parseApiSchemaDefinition(
     requiredFields: requiredStringListAllowEmpty(schema, 'required_fields', context),
     optionalFields: optionalStringList(schema, 'optional_fields', context),
     secretFields: optionalStringList(schema, 'secret_fields', context),
-    properties: schema.properties ?? null
+    properties: schema.properties ?? null,
+    ...(requestHeaders.length ? { requestHeaders } : {})
   };
 }
 

@@ -140,6 +140,20 @@ function compareSchema(
   changes: ApiContractCompatibilityChange[]
 ): void {
   const schemaPath = `${file}#${base.id}`;
+  const baseHeaders = new Map((base.requestHeaders ?? []).map(rule => [rule.name, rule]));
+  const headHeaders = new Map((head.requestHeaders ?? []).map(rule => [rule.name, rule]));
+  const canonicalRule = (rule: NonNullable<ApiSchemaDefinition['requestHeaders']>[number]) => JSON.stringify({
+    ...rule, requiredWhen: rule.requiredWhen === 'always' ? 'always' : { anyNonemptyFields: [...rule.requiredWhen.anyNonemptyFields].sort() }
+  });
+  for (const [name, rule] of headHeaders) {
+    const previous = baseHeaders.get(name);
+    if (!previous || canonicalRule(previous) !== canonicalRule(rule)) addChange(changes, 'breaking',
+      'API_COMPAT_REQUEST_HEADER_CHANGED', `${schemaPath}.request_headers.${name}`, `Request header ${name} gained or changed a required value/condition.`);
+  }
+  for (const name of baseHeaders.keys()) {
+    if (!headHeaders.has(name)) addChange(changes, 'patch', 'API_COMPAT_REQUEST_HEADER_REMOVED',
+      `${schemaPath}.request_headers.${name}`, `Request header ${name} is no longer required.`);
+  }
   compareBreakingScalar(
     base.kind,
     head.kind,
