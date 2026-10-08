@@ -32,6 +32,20 @@ import type {
 } from '../src/api-contracts/types';
 
 describe('api contract checker', () => {
+  it('reports prototype-named session effects without throwing', () => {
+    const original = loadCommittedContracts();
+    for (const sessionEffect of ['constructor', 'toString', '__proto__']) {
+      const result = validateApiContracts({ ...original, apiCatalog: {
+        ...original.apiCatalog, routes: original.apiCatalog.routes.map((route, index) =>
+          index === 0 ? { ...route, sessionEffect } : route)
+      } });
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics).toContainEqual(expect.objectContaining({
+        code: 'API_CATALOG_ROUTE_SESSION_EFFECT_INVALID'
+      }));
+    }
+  });
+
   it('validates the committed API contracts', () => {
     const result = validateApiContracts(loadCommittedContracts());
 

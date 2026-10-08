@@ -14,6 +14,7 @@ const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
  * permissive properties unless strictTypedSchemas is enabled.
  */
 export async function buildOpenApi31Document(root = process.cwd(), options = {}) {
+    options = { ...options };
     let contracts;
     try {
         contracts = await loadApiContracts(root);
@@ -275,11 +276,15 @@ function buildOperation(route, contexts, routeContract) {
     if (metadataHeaders !== undefined) {
         const requiredHeaders = [
             ...(route.requestIdRequired ? [metadataHeaders.requestId] : []),
-            ...(route.traceIdRequired ? [metadataHeaders.traceId] : []),
-            ...(route.idempotency === 'required_idempotency_key' ? [metadataHeaders.idempotencyKey] : [])
+            ...(route.traceIdRequired ? [metadataHeaders.traceId] : [])
         ];
         for (const name of requiredHeaders) {
             parameters.push({ name, in: 'header', required: true, schema: { type: 'string', minLength: 1 } });
+        }
+        if (route.idempotency !== 'not_required') {
+            parameters.push({ name: metadataHeaders.idempotencyKey, in: 'header',
+                required: route.idempotency === 'required_idempotency_key',
+                schema: { type: 'string', minLength: 1 } });
         }
     }
     for (const rule of requestContext.schema.requestHeaders ?? []) {

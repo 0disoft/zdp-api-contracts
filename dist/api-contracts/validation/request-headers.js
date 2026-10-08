@@ -8,7 +8,7 @@ export function validateTransportHeaderCollisions(contracts) {
         const names = new Set([
             ...(route.requestIdRequired ? [metadata.requestId] : []),
             ...(route.traceIdRequired ? [metadata.traceId] : []),
-            ...(route.idempotency === 'required_idempotency_key' ? [metadata.idempotencyKey] : [])
+            ...(route.idempotency !== 'not_required' ? [metadata.idempotencyKey] : [])
         ].map(name => name.toLowerCase()));
         return (context.schema.requestHeaders ?? []).flatMap((rule, index) => names.has(rule.name.toLowerCase()) ? [{
                 code: 'API_EXPORT_PLAN_REQUEST_HEADER_COLLISION', file: context.file,

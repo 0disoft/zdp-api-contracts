@@ -327,7 +327,10 @@ export function validateRouteDefinition(route, index, contracts, schemaBundlesBy
         noContentSuccessStatuses: contracts.route.noContentSuccessStatuses,
         diagnostics
     });
-    for (const requiredErrorCode of SESSION_EFFECT_REQUIRED_ERROR_CODES[route.sessionEffect] ?? []) {
+    const requiredSessionErrorCodes = Object.hasOwn(SESSION_EFFECT_REQUIRED_ERROR_CODES, route.sessionEffect)
+        ? SESSION_EFFECT_REQUIRED_ERROR_CODES[route.sessionEffect] ?? []
+        : [];
+    for (const requiredErrorCode of requiredSessionErrorCodes) {
         // Discoverable login deliberately masks restricted/unknown accounts alike.
         if (requiredErrorCode === 'account_restricted' && isSingleUsePasskeyLoginRoute(route))
             continue;

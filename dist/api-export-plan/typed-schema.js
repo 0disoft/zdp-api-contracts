@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, realpath } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { parse } from 'yaml';
 const DECLARED_PROPERTY_TYPES = [
@@ -30,11 +30,18 @@ export async function loadTypedSchemaRegistry(root, bundles) {
         const relativeFile = relative(resolvedRoot, resolvedFile);
         if (relativeFile === '..' ||
             relativeFile.startsWith(`..${sep}`) ||
-            isAbsolute(relativeFile)) {
+            isAbsolute(relativeFile) || relativeFile.length === 0) {
             return failedBundle(bundle.file, 'API_TYPED_SCHEMA_PATH_ESCAPE', 'schema_bundle', `Typed schema source \`${bundle.file}\` must remain under the package root.`);
         }
         try {
-            return parseTypedSchemaBundle(await readFile(resolvedFile, 'utf8'), bundle);
+            const realRoot = await realpath(resolvedRoot);
+            const realFile = await realpath(resolvedFile);
+            const realRelativeFile = relative(realRoot, realFile);
+            if (realRelativeFile === '..' || realRelativeFile.startsWith(`..${sep}`) ||
+                isAbsolute(realRelativeFile) || realRelativeFile.length === 0) {
+                return failedBundle(bundle.file, 'API_TYPED_SCHEMA_PATH_ESCAPE', 'schema_bundle', `Typed schema source \`${bundle.file}\` must resolve within the package root.`);
+            }
+            return parseTypedSchemaBundle(await readFile(realFile, 'utf8'), bundle);
         }
         catch (error) {
             return failedBundle(bundle.file, 'API_TYPED_SCHEMA_READ_FAILED', 'schema_bundle', error instanceof Error ? error.message : String(error));
