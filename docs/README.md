@@ -30,6 +30,7 @@
 | 공통 귤 충전과 복귀 | `contracts/credit-purchase.md` |
 | 공통 고객 정책 레지스트리 | `contracts/customer-policy-registry.md` |
 | 공통 계정 설정 overview | `contracts/account-settings-overview.md` |
+| 개인 계정 현금 결제 내역 | `account-payments.md` |
 | 패스키 로그인과 비공개 전달 경계 | `contracts/passkey-login.md` |
 
 ## Boundary
