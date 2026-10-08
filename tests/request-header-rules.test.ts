@@ -5,8 +5,20 @@ import { buildApiExportPlan } from '../src/api-export-plan/registry-plan';
 import { compareApiContracts } from '../scripts/lib/contract-compatibility';
 import { parseRequestHeaders } from '../src/api-contracts/parsers/request-headers';
 import { parseRouteContract } from '../src/api-contracts/parsers/route';
+import { validateTransportHeaderCollisions } from '../src/api-contracts/validation/request-headers';
 import { readFileSync } from 'node:fs';
 import { parse, stringify } from 'yaml';
+
+test('unmapped prototype-named services use global transport headers without throwing', async () => {
+  const contracts = await loadApiContracts();
+  for (const serviceId of ['constructor', 'toString', '__proto__']) {
+    const result = validateTransportHeaderCollisions({ ...contracts,
+      route: { ...contracts.route, serviceRequestMetadataHeaders: {} },
+      apiCatalog: { ...contracts.apiCatalog, routes: contracts.apiCatalog.routes.map(route => ({ ...route, serviceId })) }
+    });
+    expect(result).toEqual([]);
+  }
+});
 
 test('reserves authentication and transport headers in both fixed rules and metadata mappings', () => {
   const source = parse(readFileSync('contracts/route-contract.yaml', 'utf8'));

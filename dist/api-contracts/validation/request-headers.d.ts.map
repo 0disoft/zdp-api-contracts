@@ -1,1 +1,1 @@
-{"version":3,"file":"request-headers.d.ts","sourceRoot":"","sources":["../../../src/api-contracts/validation/request-headers.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,qBAAqB,EAAE,YAAY,EAAuB,MAAM,aAAa,CAAC;AAE5F,wBAAgB,iCAAiC,CAAC,SAAS,EAAE,YAAY,GAAG,SAAS,qBAAqB,EAAE,CAkB3G"}
+{"version":3,"file":"request-headers.d.ts","sourceRoot":"","sources":["../../../src/api-contracts/validation/request-headers.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,qBAAqB,EAAE,YAAY,EAAuB,MAAM,aAAa,CAAC;AAG5F,wBAAgB,iCAAiC,CAAC,SAAS,EAAE,YAAY,GAAG,SAAS,qBAAqB,EAAE,CAkB3G"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"request-metadata-headers.d.ts","sourceRoot":"","sources":["../../src/api-contracts/request-metadata-headers.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,yBAAyB,EAAE,aAAa,EAAE,MAAM,YAAY,CAAC;AAE3E,wBAAgB,6BAA6B,CAC3C,QAAQ,EAAE,aAAa,EACvB,SAAS,EAAE,MAAM,GAChB,yBAAyB,GAAG,SAAS,CAKvC"}

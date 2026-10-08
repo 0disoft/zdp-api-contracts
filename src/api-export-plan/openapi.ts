@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { loadApiContracts } from '../api-contracts/registry-loader.js';
+import { resolveRequestMetadataHeaders } from '../api-contracts/request-metadata-headers.js';
 import type {
   ApiContractDiagnostic,
   ApiContracts,
@@ -454,7 +455,7 @@ function buildOperation(
       : propertyToOpenApiSchema(requestContext.typed.properties[name])
   }));
 
-  const metadataHeaders = routeContract.serviceRequestMetadataHeaders?.[route.serviceId] ?? routeContract.requestMetadataHeaders;
+  const metadataHeaders = resolveRequestMetadataHeaders(routeContract, route.serviceId);
   if (metadataHeaders !== undefined) {
     const requiredHeaders = [
       ...(route.requestIdRequired ? [metadataHeaders.requestId] : []),

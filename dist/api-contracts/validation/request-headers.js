@@ -1,8 +1,9 @@
+import { resolveRequestMetadataHeaders } from '../request-metadata-headers.js';
 export function validateTransportHeaderCollisions(contracts) {
     const schemas = new Map(contracts.schemaBundles.flatMap(bundle => bundle.schemas.map(schema => [`${bundle.file}#${schema.id}`, { file: bundle.file, schema }])));
     return contracts.apiCatalog.routes.flatMap(route => {
         const context = schemas.get(route.requestSchemaRef);
-        const metadata = contracts.route.serviceRequestMetadataHeaders?.[route.serviceId] ?? contracts.route.requestMetadataHeaders;
+        const metadata = resolveRequestMetadataHeaders(contracts.route, route.serviceId);
         if (!context || !metadata)
             return [];
         const names = new Set([
