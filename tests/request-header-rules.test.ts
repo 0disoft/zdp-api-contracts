@@ -65,3 +65,19 @@ test('rejects ambiguous and undeclared header rules', () => {
     expect(() => parseRequestHeaders(rules, ['birth_year'], 'fixture')).toThrow();
   }
 });
+test('metadata header casing does not require a breaking contract migration', async () => {
+  const base = await loadApiContracts();
+  const head = structuredClone(base);
+  const lowercaseHeaders = (headers: Record<string, string>) =>
+    Object.fromEntries(Object.entries(headers).map(([key, value]) => [key, value.toLowerCase()]));
+  Object.assign(head.route, {
+    requestMetadataHeaders: lowercaseHeaders({ ...base.route.requestMetadataHeaders! }),
+    serviceRequestMetadataHeaders: Object.fromEntries(Object.entries(base.route.serviceRequestMetadataHeaders!)
+      .map(([service, headers]) => [service, lowercaseHeaders({ ...headers })]))
+  });
+  expect(compareApiContracts(base, head).changes.filter(change => change.code === 'API_COMPAT_ROUTE_METADATA_HEADERS_CHANGED')).toEqual([]);
+  Object.assign(head.route.requestMetadataHeaders!, { requestId: 'X-Different-Request-ID' });
+  expect(compareApiContracts(base, head).changes).toContainEqual(expect.objectContaining({
+    code: 'API_COMPAT_ROUTE_METADATA_HEADERS_CHANGED', level: 'breaking'
+  }));
+});

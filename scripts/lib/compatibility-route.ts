@@ -22,7 +22,7 @@ export function compareRouteContract(
   changes: ApiContractCompatibilityChange[]
 ): void {
   for (const field of ['requestMetadataHeaders', 'serviceRequestMetadataHeaders'] as const) {
-    if (!isDeepStrictEqual(base.route[field], head.route[field])) {
+    if (!isDeepStrictEqual(canonicalMetadataHeaders(base.route[field]), canonicalMetadataHeaders(head.route[field]))) {
       addChange(changes, base.route[field] === undefined ? 'feature' : 'breaking',
         'API_COMPAT_ROUTE_METADATA_HEADERS_CHANGED', `contracts/route-contract.yaml#route_contract.${field}`,
         'Request metadata HTTP header mapping changed.');
@@ -63,6 +63,12 @@ export function compareRouteContract(
     'API_COMPAT_ROUTE_FORBIDDEN_SHAPE',
     changes
   );
+}
+
+function canonicalMetadataHeaders(value: unknown): unknown {
+  if (typeof value === 'string') return value.toLowerCase();
+  if (value === null || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, canonicalMetadataHeaders(entry)]));
 }
 
 export function compareRoutes(
