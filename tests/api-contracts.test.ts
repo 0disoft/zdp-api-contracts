@@ -2187,6 +2187,24 @@ describe('api contract checker', () => {
     );
   });
 
+  it('rejects equivalent path templates even across different HTTP methods', () => {
+    const contracts = loadCommittedContracts();
+    const route = routeByOperation(contracts, 'core.auth.registrations.create');
+    const paths = ['/v1/fixtures/{id}', '/v1/fixtures/{name}'];
+    for (const method of ['POST', 'GET']) {
+      const result = validateApiContracts({ ...contracts, apiCatalog: { ...contracts.apiCatalog, routes: [
+        { ...route, path: paths[0]! },
+        { ...route, operationId: 'fixture.get', method, path: paths[1]! }
+      ] } });
+      expect(result.diagnostics.map(item => item.code)).toContain('API_CATALOG_ROUTE_PATH_TEMPLATE_DUPLICATE');
+    }
+    const result = validateApiContracts({ ...contracts, apiCatalog: { ...contracts.apiCatalog, routes: [
+      { ...route, path: paths[0]! },
+      { ...route, operationId: 'fixture.get', method: 'GET', path: paths[0]! }
+    ] } });
+    expect(result.diagnostics.map(item => item.code)).not.toContain('API_CATALOG_ROUTE_PATH_TEMPLATE_DUPLICATE');
+  });
+
   it('fails when route operation ids or method paths are duplicated', () => {
     const contracts = loadCommittedContracts();
     const route = routeByOperation(contracts, 'core.auth.registrations.create');

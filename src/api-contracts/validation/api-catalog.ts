@@ -646,8 +646,21 @@ export function validateUniqueRouteKeys(
 ): void {
   const seenOperationIds = new Map<string, number>();
   const seenMethodPaths = new Map<string, number>();
+  const seenPathTemplates = new Map<string, { readonly path: string; readonly index: number }>();
 
   routes.forEach((route, index) => {
+    const template = route.path.replace(/\{[^{}]+\}/g, '{}');
+    const previousTemplate = seenPathTemplates.get(template);
+    if (previousTemplate !== undefined && previousTemplate.path !== route.path) {
+      diagnostics.push({
+        code: 'API_CATALOG_ROUTE_PATH_TEMPLATE_DUPLICATE',
+        file: 'contracts/apis/catalog.yaml',
+        path: `routes[${index}].path`,
+        message: `API route path \`${route.path}\` differs only in parameter names from routes[${previousTemplate.index}].`
+      });
+    } else if (previousTemplate === undefined) {
+      seenPathTemplates.set(template, { path: route.path, index });
+    }
     const operationIndex = seenOperationIds.get(route.operationId);
     if (operationIndex !== undefined) {
       diagnostics.push({
