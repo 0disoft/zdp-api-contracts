@@ -841,6 +841,12 @@ describe('api contract checker', () => {
     ).toThrow(
       'contracts/apis/catalog.yaml#api_catalog must not declare unknown field `statuz`'
     );
+    for (const field of ['export_polciy', 'authorization_polciy', 'unexpected']) {
+      expect(() => parseApiCatalogContract(source.replace(
+        '    service_id: support-intake-api',
+        `    ${field}: fixture\n    service_id: support-intake-api`
+      ))).toThrow(`contracts/apis/catalog.yaml#routes[0] must not declare unknown field \`${field}\``);
+    }
   });
 
   it('keeps desktop product linking single-use and bound to S256 proof', () => {

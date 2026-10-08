@@ -47,6 +47,13 @@ export function parseApiRouteDefinition(
   index: number
 ): ApiRouteDefinition {
   const context = `contracts/apis/catalog.yaml#routes[${index}]`;
+  assertOnlyKeys(route, [
+    'operation_id', 'service_id', 'resource', 'action', 'method', 'path',
+    'success_statuses', 'request_schema_ref', 'response_schema_ref', 'auth_required',
+    'permission_check', 'audit_event', 'idempotency', 'owner_boundary', 'tenant_boundary',
+    'request_id_required', 'trace_id_required', 'session_effect', 'credential_policy',
+    'export_policy', 'authorization_policy', 'error_codes'
+  ], context);
 
   return {
     operationId: requiredString(route, 'operation_id', context),
