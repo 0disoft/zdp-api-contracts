@@ -67,6 +67,20 @@ test('optional properties are additive but required input additions remain break
   expect(compare(base, head, 'response').map(item => item.level)).toEqual(['feature']);
 });
 
+test('adding a typed optional field constrains previously allowed extra request values', () => {
+  const open = { payload: { type: 'object', additional_properties: true, properties: {} } };
+  const closed = { payload: { type: 'object', additional_properties: false, properties: {} } };
+  const withNote = { payload: { type: 'object', additional_properties: true,
+    properties: { note: { type: 'string' } } } };
+  // Previously { payload: { note: 42 } } was valid for the open request object.
+  expect(compare(open, withNote)).toContainEqual(expect.objectContaining({
+    path: 'schema.properties.payload.properties.note', level: 'breaking'
+  }));
+  const closedWithNote = { payload: { ...withNote.payload, additional_properties: false } };
+  expect(compare(closed, closedWithNote).map(item => item.level)).toEqual(['feature']);
+  expect(compare(open, withNote, 'response').map(item => item.level)).toEqual(['feature']);
+});
+
 test('array item constraints and nullable domains respect input/output direction', () => {
   const base = { entries: { type: 'array', items: { type: 'string', nullable: false } } };
   const head = { entries: { type: 'array', items: { type: 'string', nullable: true } } };

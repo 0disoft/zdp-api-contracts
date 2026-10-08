@@ -18,12 +18,12 @@ export function compareTypedProperties(baseValue: unknown, headValue: unknown, k
 
 function comparePropertySet(baseValue: unknown, headValue: unknown, kind: string, path: string,
   changes: ApiContractCompatibilityChange[], baseRequired: readonly unknown[], headRequired: readonly unknown[],
-  traversal: Traversal, depth: number): void {
+  traversal: Traversal, depth: number, baseAllowsExtraProperties = false): void {
   const base = record(baseValue), head = record(headValue);
   for (const field of [...new Set([...Object.keys(base), ...Object.keys(head)])].sort()) {
     const fieldPath = `${path}.${field}`;
     if (!Object.hasOwn(base, field)) {
-      change(kind === 'request' && headRequired.includes(field), fieldPath, 'property added', changes);
+      change(kind === 'request' && (headRequired.includes(field) || baseAllowsExtraProperties), fieldPath, 'property added', changes);
     } else if (!Object.hasOwn(head, field)) {
       change(true, fieldPath, 'property removed', changes);
     } else {
@@ -79,7 +79,7 @@ function comparePropertyValue(base: Property, head: Property, kind: string, path
   }
   if (base.type === 'object' && head.type === 'object') {
     comparePropertySet(record(base.properties), record(head.properties), kind, `${path}.properties`, changes,
-      list(base.required), list(head.required), traversal, depth + 1);
+      list(base.required), list(head.required), traversal, depth + 1, base.additional_properties === true);
   }
   if (base.type === 'array' && head.type === 'array') {
     compareProperty(record(base.items), record(head.items), kind, `${path}.items`, changes, traversal, depth + 1);
