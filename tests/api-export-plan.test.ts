@@ -25,6 +25,22 @@ import type { ApiContracts } from '../src/api-contracts/types';
 import { buildApiExportPlan } from '../src/api-export-plan/plan';
 
 describe('api export plan', () => {
+  it('rejects transport header collisions before building SDK operations', () => {
+    const original = loadCommittedContracts();
+    const route = original.apiCatalog.routes.find(route => route.requestIdRequired)!;
+    const headers = original.route.serviceRequestMetadataHeaders?.[route.serviceId] ?? original.route.requestMetadataHeaders!;
+    for (const name of [headers.requestId.toLowerCase(), headers.requestId.toUpperCase()]) {
+      const contracts: ApiContracts = { ...original, schemaBundles: original.schemaBundles.map(bundle => ({ ...bundle,
+        schemas: bundle.schemas.map(schema => `${bundle.file}#${schema.id}` === route.requestSchemaRef ? { ...schema,
+          requestHeaders: [{ name, value: 'fixture', requiredWhen: 'always' as const }]
+        } : schema)
+      })) };
+      const result = buildApiExportPlan(contracts);
+      expect(result.ok).toBe(false);
+      expect(result.plan).toBeNull();
+      expect(result.diagnostics).toContainEqual(expect.objectContaining({ code: 'API_EXPORT_PLAN_REQUEST_HEADER_COLLISION' }));
+    }
+  });
   it('builds a dry-run plan without writing generated artifacts', () => {
     const result = buildApiExportPlan(loadCommittedContracts());
 
