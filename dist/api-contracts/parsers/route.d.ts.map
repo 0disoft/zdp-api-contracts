@@ -1,1 +1,1 @@
-{"version":3,"file":"route.d.ts","sourceRoot":"","sources":["../../../src/api-contracts/parsers/route.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAA6B,aAAa,EAAE,MAAM,aAAa,CAAC;AAI5E,wBAAgB,kBAAkB,CAAC,MAAM,EAAE,MAAM,GAAG,aAAa,CAuDhE"}
+{"version":3,"file":"route.d.ts","sourceRoot":"","sources":["../../../src/api-contracts/parsers/route.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAA6B,aAAa,EAAE,MAAM,aAAa,CAAC;AAK5E,wBAAgB,kBAAkB,CAAC,MAAM,EAAE,MAAM,GAAG,aAAa,CAuDhE"}

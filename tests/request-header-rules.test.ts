@@ -4,6 +4,30 @@ import { buildOpenApi31Document } from '../src/api-export-plan/openapi';
 import { buildApiExportPlan } from '../src/api-export-plan/registry-plan';
 import { compareApiContracts } from '../scripts/lib/contract-compatibility';
 import { parseRequestHeaders } from '../src/api-contracts/parsers/request-headers';
+import { parseRouteContract } from '../src/api-contracts/parsers/route';
+import { readFileSync } from 'node:fs';
+import { parse, stringify } from 'yaml';
+
+test('reserves authentication and transport headers in both fixed rules and metadata mappings', () => {
+  const source = parse(readFileSync('contracts/route-contract.yaml', 'utf8'));
+  for (const name of ['authorization', 'proxy-authorization', 'proxy-authenticate', 'cookie', 'set-cookie',
+    'accept', 'accept-encoding', 'content-type', 'content-length', 'content-encoding',
+    'host', 'connection', 'keep-alive', 'proxy-connection', 'transfer-encoding', 'te', 'trailer', 'upgrade']) {
+    expect(() => parseRequestHeaders([{ name, value: 'v1', required_when: 'always' }], [], 'fixture')).toThrow();
+    for (const field of ['request_id', 'trace_id', 'idempotency_key']) {
+      const changed = structuredClone(source);
+      changed.route_contract.request_metadata_headers[field] = name.toUpperCase();
+      expect(() => parseRouteContract(stringify(changed))).toThrow();
+    }
+    const scoped = structuredClone(source);
+    scoped.route_contract.service_request_metadata_headers = { fixture: {
+      request_id: name, trace_id: 'X-Trace-ID', idempotency_key: 'Idempotency-Key'
+    } };
+    expect(() => parseRouteContract(stringify(scoped))).toThrow();
+  }
+  expect(parseRequestHeaders([{ name: 'x-product-consent', value: 'v1', required_when: 'always' }], [], 'fixture'))
+    .toHaveLength(1);
+});
 
 test('exports conditional consent to OpenAPI and typed SDK without making clear requests require it', async () => {
   const contracts = await loadApiContracts();

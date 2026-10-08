@@ -1,3 +1,4 @@
+import { isReservedRequestHeaderName } from './http-header-name.js';
 import { parseYamlObject, requiredNumberList, requiredObject, requiredString, requiredStringList } from './shared.js';
 export function parseRouteContract(source) {
     const data = parseYamlObject(source, 'contracts/route-contract.yaml');
@@ -23,7 +24,7 @@ function parseMetadataHeaders(value, context) {
     if (Object.keys(value).some(key => !keys.includes(key)))
         throw new Error(`Unknown metadata header field in ${context}.`);
     const names = keys.map(key => requiredString(value, key, context));
-    if (names.some(name => !/^[A-Za-z][A-Za-z0-9-]*$/.test(name) || /^(?:authorization|cookie|set-cookie)$/i.test(name)) ||
+    if (names.some(name => !/^[A-Za-z][A-Za-z0-9-]*$/.test(name) || isReservedRequestHeaderName(name)) ||
         new Set(names.map(name => name.toLowerCase())).size !== names.length) {
         throw new Error(`Metadata headers in ${context} must be distinct non-credential HTTP header names.`);
     }

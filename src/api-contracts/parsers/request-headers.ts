@@ -1,4 +1,5 @@
 import type { ApiRequestHeaderRule } from '../types.js';
+import { isReservedRequestHeaderName } from './http-header-name.js';
 
 export function parseRequestHeaders(value: unknown, fields: readonly string[], context: string): readonly ApiRequestHeaderRule[] {
   if (value === undefined) return [];
@@ -9,7 +10,7 @@ export function parseRequestHeaders(value: unknown, fields: readonly string[], c
     const rule = entry as Record<string, unknown>;
     if (Object.keys(rule).some(key => !['name', 'value', 'required_when'].includes(key)) ||
       typeof rule.name !== 'string' || !/^[a-z][a-z0-9-]{0,126}$/.test(rule.name) ||
-      /^(authorization|cookie|set-cookie|proxy-authorization)$/.test(rule.name) || names.has(rule.name) ||
+      isReservedRequestHeaderName(rule.name) || names.has(rule.name) ||
       typeof rule.value !== 'string' || !/^[\x21-\x7e]{1,128}$/.test(rule.value)) {
       throw new Error(`${context}: invalid or duplicate request header name/value.`);
     }
