@@ -14,6 +14,16 @@ import { loadApiContracts, parseRouteContract } from '../src/api-contracts/index
 import { compareApiContracts } from '../scripts/lib/contract-compatibility';
 
 describe('OpenAPI 3.1 export', () => {
+  it('captures restricted route opt-in before loading contracts', async () => {
+    const options = { includeRestrictedRoutes: false, title: 'Requested title' };
+    const pending = buildOpenApi31Document(process.cwd(), options);
+    options.includeRestrictedRoutes = true;
+    options.title = 'Changed title';
+    const result = await pending;
+    expect(result.ok).toBe(true);
+    expect(result.document?.info.title).toBe('Requested title');
+    expect(result.document?.paths['/v1/admin/session-context']).toBeUndefined();
+  });
   it('exports optional idempotency headers and rejects their schema-header collisions', async () => {
     const root = await mkdtemp(join(tmpdir(), 'zdp-openapi-optional-idempotency-'));
     try {

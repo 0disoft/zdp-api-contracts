@@ -85,6 +85,7 @@ export async function buildOpenApi31Document(
   root = process.cwd(),
   options: ApiOpenApi31BuildOptions = {}
 ): Promise<ApiOpenApi31BuildResult> {
+  options = { ...options };
   let contracts: ApiContracts;
   try {
     contracts = await loadApiContracts(root);
