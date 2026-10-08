@@ -4,12 +4,18 @@ import { buildApiExportPlan } from './registry-plan.js';
 export async function runApiExportPlanCli(
   argv: readonly string[]
 ): Promise<number> {
-  if (argv.includes('--help') || argv.includes('-h')) {
+  let options: ReturnType<typeof readOptions>;
+  try {
+    options = readOptions(argv);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    console.error(helpText());
+    return 2;
+  }
+  if (options.help) {
     printHelp();
     return 0;
   }
-
-  const options = readOptions(argv);
 
   try {
     const result = buildApiExportPlan(await loadApiContracts(options.root));
@@ -49,32 +55,34 @@ export async function runApiExportPlanCli(
 function readOptions(argv: readonly string[]): {
   readonly root: string;
   readonly json: boolean;
+  readonly help: boolean;
 } {
-  return {
-    root: readStringOption(argv, '--root') ?? process.cwd(),
-    json: argv.includes('--json')
-  };
-}
-
-function readStringOption(
-  argv: readonly string[],
-  optionName: string
-): string | null {
+  let root: string | undefined;
+  let json = false;
+  let help = false;
   for (let index = 0; index < argv.length; index += 1) {
-    if (argv[index] !== optionName) {
-      continue;
+    const arg = argv[index];
+    if (arg === '--json') { json = true; continue; }
+    if (arg === '--help' || arg === '-h') { help = true; continue; }
+    if (arg === '--root') {
+      if (root !== undefined) throw new Error('Duplicate option: --root.');
+      const value = argv[++index];
+      if (value === undefined || !value.trim() || value.startsWith('-')) throw new Error('Option --root requires a path.');
+      root = value;
+    } else {
+      throw new Error(`Unexpected argument: ${arg}.`);
     }
-
-    const value = argv[index + 1];
-    return value === undefined || value.startsWith('--') ? null : value;
   }
-
-  return null;
+  return { root: root ?? process.cwd(), json, help };
 }
 
 function printHelp(): void {
-  console.log(`Usage:
+  console.log(helpText());
+}
+
+function helpText(): string {
+  return `Usage:
   bun scripts/plan-api-exports.ts [--root <path>] [--json]
 
-Builds a dry-run API export plan for OpenAPI, SDK generation input, webhook schema, and docs contract output without writing generated artifacts.`);
+Builds a dry-run API export plan for OpenAPI, SDK generation input, webhook schema, and docs contract output without writing generated artifacts.`;
 }
