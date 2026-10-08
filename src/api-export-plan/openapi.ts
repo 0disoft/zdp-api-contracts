@@ -457,11 +457,15 @@ function buildOperation(
   if (metadataHeaders !== undefined) {
     const requiredHeaders = [
       ...(route.requestIdRequired ? [metadataHeaders.requestId] : []),
-      ...(route.traceIdRequired ? [metadataHeaders.traceId] : []),
-      ...(route.idempotency === 'required_idempotency_key' ? [metadataHeaders.idempotencyKey] : [])
+      ...(route.traceIdRequired ? [metadataHeaders.traceId] : [])
     ];
     for (const name of requiredHeaders) {
       parameters.push({ name, in: 'header', required: true, schema: { type: 'string', minLength: 1 } });
+    }
+    if (route.idempotency !== 'not_required') {
+      parameters.push({ name: metadataHeaders.idempotencyKey, in: 'header',
+        required: route.idempotency === 'required_idempotency_key',
+        schema: { type: 'string', minLength: 1 } });
     }
   }
 

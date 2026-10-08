@@ -14,6 +14,34 @@ import { loadApiContracts, parseRouteContract } from '../src/api-contracts/index
 import { compareApiContracts } from '../scripts/lib/contract-compatibility';
 
 describe('OpenAPI 3.1 export', () => {
+  it('exports optional idempotency headers and rejects their schema-header collisions', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'zdp-openapi-optional-idempotency-'));
+    try {
+      await cp('contracts', join(root, 'contracts'), { recursive: true });
+      await cp('package.json', join(root, 'package.json'));
+      const file = 'contracts/apis/catalog.yaml';
+      const catalog = parse(readFileSync(file, 'utf8'));
+      const source = catalog.routes.find((route: { operation_id: string }) => route.operation_id === 'core.auth.sessions.get_current');
+      const route = { ...source, operation_id: 'core.auth.sessions.optional_get', path: '/v1/auth/sessions/optional', idempotency: 'optional_idempotency_key' };
+      catalog.routes.push(route);
+      await writeFile(join(root, file), stringify(catalog));
+      const result = await buildOpenApi31Document(root);
+      expect(result.diagnostics).toEqual([]);
+      expect(result.document?.paths[route.path]?.get?.parameters).toEqual(expect.arrayContaining([
+        { name: 'Idempotency-Key', in: 'header', required: false, schema: { type: 'string', minLength: 1 } }
+      ]));
+      const [schemaFile, id] = route.request_schema_ref.split('#');
+      const bundle = parse(readFileSync(schemaFile, 'utf8'));
+      bundle.schema_bundle.schemas.find((schema: { id: string }) => schema.id === id).request_headers = [
+        { name: 'idempotency-key', value: 'fixed', required_when: 'always' }
+      ];
+      await writeFile(join(root, schemaFile), stringify(bundle));
+      const invalid = await buildOpenApi31Document(root);
+      expect(invalid.document).toBeNull();
+      expect(invalid.diagnostics).toContainEqual(expect.objectContaining({ code: 'API_EXPORT_PLAN_REQUEST_HEADER_COLLISION' }));
+    } finally { await rm(root, { recursive: true, force: true }); }
+  }, 15_000);
+
   it('rejects request header collisions through the real OpenAPI loading path', async () => {
     const root = await mkdtemp(join(tmpdir(), 'zdp-openapi-header-collision-'));
     try {
