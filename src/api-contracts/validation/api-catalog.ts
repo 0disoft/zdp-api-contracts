@@ -84,6 +84,11 @@ export const SESSION_EFFECT_REQUIRED_ERROR_CODES: Record<string, readonly string
 
 export const OPERATION_ID_PATTERN = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
 
+function isValidRoutePath(path: string): boolean {
+  if (!path.startsWith('/') || /[?#\s\u0000-\u001f\u007f]/u.test(path)) return false;
+  return !/[{}]/u.test(path.replace(/\{[^{}/]+\}/gu, ''));
+}
+
 export interface ResolvedSchemaRef {
   readonly bundle: ApiSchemaBundleContract;
   readonly schema: ApiSchemaDefinition;
@@ -215,12 +220,12 @@ export function validateRouteDefinition(
     });
   }
 
-  if (!route.path.startsWith('/')) {
+  if (!isValidRoutePath(route.path)) {
     diagnostics.push({
       code: 'API_CATALOG_ROUTE_PATH_INVALID',
       file: 'contracts/apis/catalog.yaml',
       path: `${routePath}.path`,
-      message: `API route \`${route.operationId}\` path must start with \`/\`.`
+      message: `API route \`${route.operationId}\` path must start with \`/\` and contain no query, fragment, whitespace, control characters or malformed template braces.`
     });
   }
 
