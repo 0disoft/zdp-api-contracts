@@ -131,7 +131,7 @@ describe('npm trusted publishing workflow', () => {
     expect(existing.run).toContain('published_git_head');
     expect(existing.run).toContain('!= "$GITHUB_SHA"');
     expect(result.run).toContain('published_integrity');
-    expect(result.run).toContain('max_attempts=12');
+    expect(result.run).toContain('max_attempts=60');
   });
 
   it('installs the published package and verifies registry signatures and provenance', () => {
