@@ -30,4 +30,4 @@ schema_bundle:
           type: array
           items:
             type: string
-            enum: [technology, programming, design, science, business, productivity, education, books, music, gaming, sports, travel, cooking, art]
+            enum: [technology, programming, design, science, business, productivity, education, books, music, gaming, sports, travel, cooking, art, personal_finance, foreign_languages, beauty, pets]
