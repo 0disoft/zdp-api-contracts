@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:zdp:core:account-notification-policy:v1",
+  "title": "회원 쿠폰 수령 로그인 토스트 정책",
+  "x-zdp-transport": {
+    "status": "private-account-bff-source",
+    "path": "/v1/account-settings/notification-policy",
+    "methods": ["GET", "POST"],
+    "successStatus": 200,
+    "maxBodyBytes": 512,
+    "maxResponseBytes": 1024,
+    "revisionMaximum": "9223372036854775807",
+    "owner": "zdp-core-platform",
+    "scope": "current-session-personal-account",
+    "defaultEnabled": true,
+    "conflictStatus": 409,
+    "recovery": "read-current-policy-before-another-update",
+    "disabledOrUnavailable": "skip-announce-without-advancing-money-watermark",
+    "securityOrMarketingConsent": "unchanged"
+  },
+  "$defs": {
+    "revision": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,18})$" },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coupon_received_login_toast", "expected_revision"],
+      "properties": {
+        "coupon_received_login_toast": { "type": "boolean" },
+        "expected_revision": { "$ref": "#/$defs/revision" }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coupon_received_login_toast", "revision"],
+      "properties": {
+        "coupon_received_login_toast": { "type": "boolean" },
+        "revision": { "$ref": "#/$defs/revision" }
+      }
+    }
+  }
+}
