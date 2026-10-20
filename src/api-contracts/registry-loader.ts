@@ -95,8 +95,21 @@ export async function loadApiContracts(
   }
   assertCompleteSingletonContracts(loadedFamilies);
 
+  let schemaBundleFiles: readonly string[];
+  try {
+    schemaBundleFiles = listApiSchemaBundleSourcePaths(loadedFamilies.apiCatalog);
+  } catch (error) {
+    // Registry validation above guarantees a registered catalog source.
+    const catalog = registrations.find((registration) => registration.key === 'apiCatalog')!;
+    throw new ApiContractLoadError([{
+      name: catalog.name,
+      file: catalog.sourcePath,
+      message: error instanceof Error ? error.message : String(error)
+    }]);
+  }
+
   const schemaBundleResults = await Promise.all(
-    listApiSchemaBundleSourcePaths(loadedFamilies.apiCatalog).map((file) =>
+    schemaBundleFiles.map((file) =>
       loadSchemaBundle(root, file)
     )
   );
