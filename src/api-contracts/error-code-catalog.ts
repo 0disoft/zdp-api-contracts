@@ -1,7 +1,6 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { parse } from 'yaml';
 import { ApiContractLoadError } from './parser.js';
+import { readContractSource } from './contract-source.js';
 import type {
   ApiContractDiagnostic,
   ApiContracts,
@@ -50,7 +49,7 @@ export async function loadErrorCodeCatalog(
   root = process.cwd()
 ): Promise<ErrorCodeCatalogContract> {
   try {
-    const source = await readFile(join(root, ERROR_CODE_CATALOG_FILE), 'utf8');
+    const source = await readContractSource(root, ERROR_CODE_CATALOG_FILE);
     return parseErrorCodeCatalog(source);
   } catch (error) {
     throw new ApiContractLoadError([{

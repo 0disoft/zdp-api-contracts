@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runApiContractCheckCli } from '../src/api-contracts/cli';
@@ -11,6 +11,30 @@ const cases = [
   { name: 'malformed YAML', source: 'error_code_catalog:\n  entries: [\n' },
   { name: 'invalid catalog shape', source: 'error_code_catalog: []\n' }
 ] as const;
+
+test('catalog loader rejects repository-external links and permits repository-internal links', async () => {
+  const fixture = await mkdtemp(join(tmpdir(), 'zdp-error-catalog-links-'));
+  try {
+    const source = await readFile(ERROR_CODE_CATALOG_FILE, 'utf8');
+    const checkout = join(fixture, 'checkout');
+    const external = join(fixture, 'external-contracts');
+    const internal = join(checkout, 'local-contracts');
+    await mkdir(internal, { recursive: true });
+    await mkdir(external);
+    await writeFile(join(external, 'error-code-catalog.yaml'), source);
+    await writeFile(join(internal, 'error-code-catalog.yaml'), source);
+    const link = join(checkout, 'contracts');
+    const linkType = process.platform === 'win32' ? 'junction' : 'dir';
+
+    await symlink(external, link, linkType);
+    await expect(loadErrorCodeCatalog(checkout)).rejects.toThrow('repository root');
+    await rm(link, { recursive: true });
+    await symlink(internal, link, linkType);
+    expect((await loadErrorCodeCatalog(checkout)).entries.length).toBeGreaterThan(0);
+  } finally {
+    await rm(fixture, { recursive: true, force: true });
+  }
+});
 
 for (const { name, source } of cases) {
   test(`catalog load diagnostics identify the file and preserve the cause for ${name}`, async () => {

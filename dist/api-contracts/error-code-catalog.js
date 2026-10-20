@@ -1,7 +1,6 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { parse } from 'yaml';
 import { ApiContractLoadError } from './parser.js';
+import { readContractSource } from './contract-source.js';
 export const ERROR_CODE_CATALOG_FILE = 'contracts/error-code-catalog.yaml';
 export const SHARED_ERROR_OWNER_SERVICE_ID = 'shared';
 const ERROR_CODE_CATALOG_SCHEMA_VERSION = 1;
@@ -16,7 +15,7 @@ const ERROR_CODE_LIFECYCLE_STATUSES = [
 ];
 export async function loadErrorCodeCatalog(root = process.cwd()) {
     try {
-        const source = await readFile(join(root, ERROR_CODE_CATALOG_FILE), 'utf8');
+        const source = await readContractSource(root, ERROR_CODE_CATALOG_FILE);
         return parseErrorCodeCatalog(source);
     }
     catch (error) {
