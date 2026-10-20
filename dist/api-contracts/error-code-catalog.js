@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse } from 'yaml';
+import { ApiContractLoadError } from './parser.js';
 export const ERROR_CODE_CATALOG_FILE = 'contracts/error-code-catalog.yaml';
 export const SHARED_ERROR_OWNER_SERVICE_ID = 'shared';
 const ERROR_CODE_CATALOG_SCHEMA_VERSION = 1;
@@ -14,8 +15,17 @@ const ERROR_CODE_LIFECYCLE_STATUSES = [
     'retired'
 ];
 export async function loadErrorCodeCatalog(root = process.cwd()) {
-    const source = await readFile(join(root, ERROR_CODE_CATALOG_FILE), 'utf8');
-    return parseErrorCodeCatalog(source);
+    try {
+        const source = await readFile(join(root, ERROR_CODE_CATALOG_FILE), 'utf8');
+        return parseErrorCodeCatalog(source);
+    }
+    catch (error) {
+        throw new ApiContractLoadError([{
+                name: 'error-code-catalog',
+                file: ERROR_CODE_CATALOG_FILE,
+                message: error instanceof Error ? error.message : String(error)
+            }]);
+    }
 }
 export function parseErrorCodeCatalog(source) {
     const parsed = parse(source);

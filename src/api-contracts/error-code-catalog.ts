@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse } from 'yaml';
+import { ApiContractLoadError } from './parser.js';
 import type {
   ApiContractDiagnostic,
   ApiContracts,
@@ -48,8 +49,16 @@ export interface ErrorCodeCatalogEntry {
 export async function loadErrorCodeCatalog(
   root = process.cwd()
 ): Promise<ErrorCodeCatalogContract> {
-  const source = await readFile(join(root, ERROR_CODE_CATALOG_FILE), 'utf8');
-  return parseErrorCodeCatalog(source);
+  try {
+    const source = await readFile(join(root, ERROR_CODE_CATALOG_FILE), 'utf8');
+    return parseErrorCodeCatalog(source);
+  } catch (error) {
+    throw new ApiContractLoadError([{
+      name: 'error-code-catalog',
+      file: ERROR_CODE_CATALOG_FILE,
+      message: error instanceof Error ? error.message : String(error)
+    }]);
+  }
 }
 
 export function parseErrorCodeCatalog(
