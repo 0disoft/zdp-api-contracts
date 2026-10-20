@@ -1,3 +1,5 @@
+import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import type {
   ApiContractDiagnostic,
   ApiContractValidationResult
@@ -22,13 +24,14 @@ export interface ApiContractCheckReport {
 
 export function renderApiContractCheckReport(
   report: ApiContractCheckReport,
-  format: ApiContractCheckFormat
+  format: ApiContractCheckFormat,
+  cwd = process.cwd()
 ): string {
   if (format === 'json') {
     return `${JSON.stringify(report, null, 2)}\n`;
   }
   if (format === 'sarif') {
-    return `${JSON.stringify(toSarif(report), null, 2)}\n`;
+    return `${JSON.stringify(toSarif(report, resolve(cwd)), null, 2)}\n`;
   }
   return renderText(report);
 }
@@ -73,10 +76,16 @@ function appendDiagnostics(
   }
 }
 
-function toSarif(report: ApiContractCheckReport): Record<string, unknown> {
+function toSarif(report: ApiContractCheckReport, cwd: string): Record<string, unknown> {
   const diagnostics = [
-    ...report.contractValidation.diagnostics,
-    ...(report.openApiComparison?.diagnostics ?? [])
+    ...report.contractValidation.diagnostics.map((diagnostic) => ({
+      ...diagnostic,
+      file: resolve(cwd, report.root, diagnostic.file)
+    })),
+    ...(report.openApiComparison?.diagnostics ?? []).map((diagnostic) => ({
+      ...diagnostic,
+      file: resolve(cwd, diagnostic.file)
+    }))
   ];
   const ruleIds = Array.from(
     new Set(diagnostics.map((diagnostic) => diagnostic.code))
@@ -88,6 +97,9 @@ function toSarif(report: ApiContractCheckReport): Record<string, unknown> {
     version: '2.1.0',
     runs: [
       {
+        originalUriBaseIds: {
+          '%SRCROOT%': { uri: pathToFileURL(`${cwd}${sep}`).href }
+        },
         tool: {
           driver: {
             name: 'zdp-api-contracts',
@@ -114,9 +126,7 @@ function toSarif(report: ApiContractCheckReport): Record<string, unknown> {
           locations: [
             {
               physicalLocation: {
-                artifactLocation: {
-                  uri: normalizePath(diagnostic.file)
-                },
+                artifactLocation: artifactLocation(diagnostic.file, cwd),
                 region: { startLine: 1 }
               },
               logicalLocations: [
@@ -135,6 +145,13 @@ function toSarif(report: ApiContractCheckReport): Record<string, unknown> {
   };
 }
 
-function normalizePath(value: string): string {
-  return value.replaceAll('\\', '/');
+function artifactLocation(file: string, cwd: string): Record<string, string> {
+  const path = relative(cwd, file);
+  if (isAbsolute(path)) {
+    return { uri: pathToFileURL(file).href };
+  }
+  return {
+    uri: (path || '.').replaceAll('\\', '/').split('/').map(encodeURIComponent).join('/'),
+    uriBaseId: '%SRCROOT%'
+  };
 }

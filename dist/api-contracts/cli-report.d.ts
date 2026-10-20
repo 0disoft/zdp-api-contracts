@@ -13,5 +13,5 @@ export interface ApiContractCheckReport {
     readonly contractValidation: ApiContractValidationResult;
     readonly openApiComparison: OpenApiComparisonReport | null;
 }
-export declare function renderApiContractCheckReport(report: ApiContractCheckReport, format: ApiContractCheckFormat): string;
+export declare function renderApiContractCheckReport(report: ApiContractCheckReport, format: ApiContractCheckFormat, cwd?: string): string;
 //# sourceMappingURL=cli-report.d.ts.map

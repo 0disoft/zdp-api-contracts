@@ -320,7 +320,7 @@ async function emitReport(
   options: ParsedCliOptions,
   runtime: ApiContractCheckCliRuntime
 ): Promise<void> {
-  const rendered = renderApiContractCheckReport(report, options.format);
+  const rendered = renderApiContractCheckReport(report, options.format, runtime.cwd);
   if (options.output === null || options.output === '-') {
     runtime.writeStdout(rendered);
     return;

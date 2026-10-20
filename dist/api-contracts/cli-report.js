@@ -1,9 +1,11 @@
-export function renderApiContractCheckReport(report, format) {
+import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
+export function renderApiContractCheckReport(report, format, cwd = process.cwd()) {
     if (format === 'json') {
         return `${JSON.stringify(report, null, 2)}\n`;
     }
     if (format === 'sarif') {
-        return `${JSON.stringify(toSarif(report), null, 2)}\n`;
+        return `${JSON.stringify(toSarif(report, resolve(cwd)), null, 2)}\n`;
     }
     return renderText(report);
 }
@@ -35,10 +37,16 @@ function appendDiagnostics(lines, diagnostics) {
         lines.push(`${diagnostic.code} ${diagnostic.file}#${diagnostic.path}: ${diagnostic.message}`);
     }
 }
-function toSarif(report) {
+function toSarif(report, cwd) {
     const diagnostics = [
-        ...report.contractValidation.diagnostics,
-        ...(report.openApiComparison?.diagnostics ?? [])
+        ...report.contractValidation.diagnostics.map((diagnostic) => ({
+            ...diagnostic,
+            file: resolve(cwd, report.root, diagnostic.file)
+        })),
+        ...(report.openApiComparison?.diagnostics ?? []).map((diagnostic) => ({
+            ...diagnostic,
+            file: resolve(cwd, diagnostic.file)
+        }))
     ];
     const ruleIds = Array.from(new Set(diagnostics.map((diagnostic) => diagnostic.code))).sort();
     return {
@@ -46,6 +54,9 @@ function toSarif(report) {
         version: '2.1.0',
         runs: [
             {
+                originalUriBaseIds: {
+                    '%SRCROOT%': { uri: pathToFileURL(`${cwd}${sep}`).href }
+                },
                 tool: {
                     driver: {
                         name: 'zdp-api-contracts',
@@ -72,9 +83,7 @@ function toSarif(report) {
                     locations: [
                         {
                             physicalLocation: {
-                                artifactLocation: {
-                                    uri: normalizePath(diagnostic.file)
-                                },
+                                artifactLocation: artifactLocation(diagnostic.file, cwd),
                                 region: { startLine: 1 }
                             },
                             logicalLocations: [
@@ -92,7 +101,14 @@ function toSarif(report) {
         ]
     };
 }
-function normalizePath(value) {
-    return value.replaceAll('\\', '/');
+function artifactLocation(file, cwd) {
+    const path = relative(cwd, file);
+    if (isAbsolute(path)) {
+        return { uri: pathToFileURL(file).href };
+    }
+    return {
+        uri: (path || '.').replaceAll('\\', '/').split('/').map(encodeURIComponent).join('/'),
+        uriBaseId: '%SRCROOT%'
+    };
 }
 //# sourceMappingURL=cli-report.js.map
