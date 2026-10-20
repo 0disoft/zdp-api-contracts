@@ -14,6 +14,36 @@ import { loadApiContracts, parseRouteContract } from '../src/api-contracts/index
 import { compareApiContracts } from '../scripts/lib/contract-compatibility';
 
 describe('OpenAPI 3.1 export', () => {
+  it('preserves individual contract loading failures and schema source locations', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'zdp-openapi-load-failures-'));
+    try {
+      await cp('contracts', join(root, 'contracts'), { recursive: true });
+      const missing = ['contracts/route-contract.yaml', 'contracts/error-envelope.yaml'];
+      for (const file of missing) await rm(join(root, file));
+      const result = await buildOpenApi31Document(root);
+      expect(result.ok).toBe(false);
+      expect(result.document).toBeNull();
+      expect(result.diagnostics).toHaveLength(2);
+      for (const file of missing) {
+        expect(result.diagnostics).toContainEqual(expect.objectContaining({
+          code: 'API_OPENAPI_CONTRACT_LOAD_FAILED', file, path: 'root',
+          message: expect.stringContaining('ENOENT')
+        }));
+        await cp(file, join(root, file));
+      }
+      const file = 'contracts/apis/support-api/intake.yaml';
+      await writeFile(join(root, file), 'schema_bundle: [\n');
+      const invalid = await buildOpenApi31Document(root);
+      expect(invalid.ok).toBe(false);
+      expect(invalid.document).toBeNull();
+      expect(invalid.diagnostics).toHaveLength(1);
+      expect(invalid.diagnostics[0]).toMatchObject({
+        code: 'API_OPENAPI_CONTRACT_LOAD_FAILED', file, path: 'root',
+        message: expect.stringContaining('line 2')
+      });
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
   it('captures restricted route opt-in before loading contracts', async () => {
     const options = { includeRestrictedRoutes: false, title: 'Requested title' };
     const pending = buildOpenApi31Document(process.cwd(), options);

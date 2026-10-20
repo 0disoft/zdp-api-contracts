@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { loadApiContracts } from '../api-contracts/registry-loader.js';
+import { ApiContractLoadError } from '../api-contracts/parser.js';
 import { resolveRequestMetadataHeaders } from '../api-contracts/request-metadata-headers.js';
 import type {
   ApiContractDiagnostic,
@@ -91,6 +92,14 @@ export async function buildOpenApi31Document(
   try {
     contracts = await loadApiContracts(root);
   } catch (error) {
+    if (error instanceof ApiContractLoadError) {
+      return failedBuild(error.failures.map((failure) => diagnostic(
+        'API_OPENAPI_CONTRACT_LOAD_FAILED',
+        failure.file,
+        'root',
+        failure.message
+      )));
+    }
     return failedBuild([
       diagnostic(
         'API_OPENAPI_CONTRACT_LOAD_FAILED',
