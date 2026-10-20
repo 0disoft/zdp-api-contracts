@@ -25,7 +25,8 @@ describe('OpenAPI 3.1 export', () => {
         route.operation_id === 'core.auth.sessions.get_current');
       const cases = [
         { path: '/v1/parameter-probe/{case-id}/{case.id}/{사용자}/{1key}', names: ['case-id', 'case.id', '사용자', '1key'] },
-        { path: '/v1/repeated-parameter/{case_id}/{case_id}', names: ['case_id'] }
+        { path: '/v1/repeated-parameter/{case_id}/{case_id}', names: ['case_id'] },
+        { path: '/v1/prototype-parameter/{constructor}/{toString}/{__proto__}/{hasOwnProperty}', names: ['constructor', 'toString', '__proto__', 'hasOwnProperty'] }
       ];
       catalog.routes.push(...cases.map(({ path }, index) => ({
         ...source, operation_id: `core.auth.sessions.parameter_probe_${index}`, path
@@ -35,10 +36,11 @@ describe('OpenAPI 3.1 export', () => {
       expect(result.diagnostics).toEqual([]);
       expect(result.ok).toBe(true);
       for (const { path, names } of cases) {
-        const parameters = result.document?.paths[path]?.get?.parameters as { name: string; in: string; required: boolean }[];
+        const parameters = result.document?.paths[path]?.get?.parameters as { name: string; in: string; required: boolean; schema: unknown }[];
         const pathParameters = parameters.filter(parameter => parameter.in === 'path');
         expect(pathParameters.map(parameter => parameter.name)).toEqual(names);
         expect(pathParameters.every(parameter => parameter.required)).toBe(true);
+        expect(pathParameters.map(parameter => parameter.schema)).toEqual(names.map(() => ({ type: 'string' })));
       }
     } finally { await rm(root, { recursive: true, force: true }); }
   });

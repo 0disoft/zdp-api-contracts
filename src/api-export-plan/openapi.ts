@@ -455,14 +455,19 @@ function buildOperation(
 ): ApiOpenApiOperation {
   const requestContext = requireContext(contexts, route.requestSchemaRef);
   const pathParameterNames = extractPathParameters(route.path);
-  const parameters: Record<string, unknown>[] = pathParameterNames.map((name) => ({
-    name,
-    in: 'path',
-    required: true,
-    schema: requestContext.typed.properties[name] === undefined
-      ? { type: 'string' }
-      : propertyToOpenApiSchema(requestContext.typed.properties[name])
-  }));
+  const parameters: Record<string, unknown>[] = pathParameterNames.map((name) => {
+    const property = Object.hasOwn(requestContext.typed.properties, name)
+      ? requestContext.typed.properties[name]
+      : undefined;
+    return {
+      name,
+      in: 'path',
+      required: true,
+      schema: property === undefined
+        ? { type: 'string' }
+        : propertyToOpenApiSchema(property)
+    };
+  });
 
   const metadataHeaders = resolveRequestMetadataHeaders(routeContract, route.serviceId);
   if (metadataHeaders !== undefined) {
