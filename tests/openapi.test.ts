@@ -14,6 +14,35 @@ import { loadApiContracts, parseRouteContract } from '../src/api-contracts/index
 import { compareApiContracts } from '../scripts/lib/contract-compatibility';
 
 describe('OpenAPI 3.1 export', () => {
+  it('exports every accepted path placeholder exactly once', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'zdp-openapi-path-parameters-'));
+    try {
+      await cp('contracts', join(root, 'contracts'), { recursive: true });
+      await cp('package.json', join(root, 'package.json'));
+      const file = 'contracts/apis/catalog.yaml';
+      const catalog = parse(readFileSync(file, 'utf8'));
+      const source = catalog.routes.find((route: { operation_id: string }) =>
+        route.operation_id === 'core.auth.sessions.get_current');
+      const cases = [
+        { path: '/v1/parameter-probe/{case-id}/{case.id}/{사용자}/{1key}', names: ['case-id', 'case.id', '사용자', '1key'] },
+        { path: '/v1/repeated-parameter/{case_id}/{case_id}', names: ['case_id'] }
+      ];
+      catalog.routes.push(...cases.map(({ path }, index) => ({
+        ...source, operation_id: `core.auth.sessions.parameter_probe_${index}`, path
+      })));
+      await writeFile(join(root, file), stringify(catalog));
+      const result = await buildOpenApi31Document(root);
+      expect(result.diagnostics).toEqual([]);
+      expect(result.ok).toBe(true);
+      for (const { path, names } of cases) {
+        const parameters = result.document?.paths[path]?.get?.parameters as { name: string; in: string; required: boolean }[];
+        const pathParameters = parameters.filter(parameter => parameter.in === 'path');
+        expect(pathParameters.map(parameter => parameter.name)).toEqual(names);
+        expect(pathParameters.every(parameter => parameter.required)).toBe(true);
+      }
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
   it('preserves individual contract loading failures and schema source locations', async () => {
     const root = await mkdtemp(join(tmpdir(), 'zdp-openapi-load-failures-'));
     try {

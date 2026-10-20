@@ -610,9 +610,10 @@ function componentRef(context: SchemaContext): string {
 }
 
 function extractPathParameters(path: string): readonly string[] {
-  return Array.from(path.matchAll(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g))
+  const names = Array.from(path.matchAll(/\{([^{}/]+)\}/gu))
     .map((match) => match[1])
     .filter((value): value is string => value !== undefined);
+  return Array.from(new Set(names));
 }
 
 function successDescription(status: number): string {
