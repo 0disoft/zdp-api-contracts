@@ -41,6 +41,34 @@ interface SarifReport {
 }
 
 describe('public contract checker CLI', () => {
+  it('rejects short options used as missing values before loading contracts or writing reports', async () => {
+    for (const option of ['--root', '--output', '--openapi', '--service', '--format']) {
+      for (const value of ['-h', '-x']) {
+        const capture = createCapture();
+        const exitCode = await runApiContractCheckCli(
+          [option, value],
+          capture.runtime
+        );
+
+        expect(exitCode).toBe(2);
+        expect(capture.stdout()).toBe('');
+        expect(capture.stderr()).toContain(`${option} requires a value.`);
+      }
+    }
+  });
+
+  it('keeps the single dash output sentinel available', async () => {
+    const capture = createCapture();
+    const exitCode = await runApiContractCheckCli(
+      ['--output', '-', '--json'],
+      capture.runtime
+    );
+
+    expect(exitCode).toBe(0);
+    expect(JSON.parse(capture.stdout()).ok).toBe(true);
+    expect(capture.stderr()).toBe('');
+  });
+
   it('rejects malformed success responses instead of counting their status keys as evidence', () => {
     const compare = (response: unknown) => compareOpenApiRouteCatalog(JSON.stringify({
       openapi: '3.1.0', 'x-zdp-service-id': 'demo-api', paths: {

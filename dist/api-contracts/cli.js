@@ -158,7 +158,7 @@ function splitInlineOption(argument) {
 }
 function requireNextValue(argv, index, option) {
     const value = argv[index + 1];
-    if (value === undefined || value.startsWith('--')) {
+    if (value === undefined || (value.startsWith('-') && value !== '-')) {
         throw new CliUsageError(`${option} requires a value.`);
     }
     return value;
