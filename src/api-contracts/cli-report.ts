@@ -84,7 +84,12 @@ function toSarif(report: ApiContractCheckReport, cwd: string): Record<string, un
     })),
     ...(report.openApiComparison?.diagnostics ?? []).map((diagnostic) => ({
       ...diagnostic,
-      file: resolve(cwd, diagnostic.file)
+      // A missing service is diagnosed in the contract catalog, not the OpenAPI file.
+      file: resolve(
+        cwd,
+        diagnostic.code === 'API_OPENAPI_SERVICE_NOT_FOUND' ? report.root : '.',
+        diagnostic.file
+      )
     }))
   ];
   const ruleIds = Array.from(

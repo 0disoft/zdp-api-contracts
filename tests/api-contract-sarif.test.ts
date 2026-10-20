@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { renderApiContractCheckReport, type ApiContractCheckReport } from '../src/api-contracts/cli-report';
 import { runApiContractCheckCli } from '../src/api-contracts/cli';
@@ -61,4 +62,26 @@ test('SARIF CLI locations use the supplied invocation directory for a missing co
 
   expect(exitCode).toBe(1);
   expect(location?.href).toBe(pathToFileURL(resolve(cwd, 'missing contracts/contracts/route-contract.yaml')).href);
+});
+
+test('SARIF unknown-service comparison points to the selected contract catalog outside the invocation directory', async () => {
+  const root = process.cwd();
+  const cwd = mkdtempSync(join(tmpdir(), 'zdp-sarif-service-'));
+  try {
+    const file = 'api #100%.json';
+    writeFileSync(join(cwd, file), JSON.stringify({
+      openapi: '3.1.0', 'x-zdp-service-id': 'unknown-service', paths: {}
+    }));
+    let stdout = '';
+    const exitCode = await runApiContractCheckCli(['--root', root, '--openapi', file, '--sarif'], {
+      cwd, writeStdout: (text) => { stdout += text; }, writeStderr: () => {}
+    });
+
+    expect(exitCode).toBe(1);
+    expect(JSON.parse(stdout).runs[0].results[0].ruleId).toBe('API_OPENAPI_SERVICE_NOT_FOUND');
+    const [location] = artifactUrls(stdout);
+    expect(location?.href).toBe(pathToFileURL(resolve(root, 'contracts/apis/catalog.yaml')).href);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
 });
