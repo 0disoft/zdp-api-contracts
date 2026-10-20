@@ -75,7 +75,11 @@ describe('public contract checker CLI', () => {
         '/v1/widgets': { post: { operationId: 'demo.widgets.create', responses: { '201': response } } }
       }
     }), 'openapi.json', [createRoute()]);
-    for (const response of [null, [], 'Created', 201, true]) {
+    for (const response of [
+      null, [], 'Created', 201, true, {}, { description: null },
+      { description: 201 }, { $ref: null }, { $ref: 201 },
+      { $ref: '' }, { $ref: '   ' }, { $ref: [], description: 'Created' }
+    ]) {
       const result = compare(response);
       expect(result.ok).toBe(false);
       expect(result.diagnostics).toContainEqual(expect.objectContaining({
@@ -83,6 +87,8 @@ describe('public contract checker CLI', () => {
       }));
     }
     expect(compare({ $ref: '#/components/responses/Created' }).ok).toBe(true);
+    expect(compare({ description: 'Created' }).ok).toBe(true);
+    expect(compare({ description: '' }).ok).toBe(true);
   });
   it('publishes the Node CLI through the package bin map', () => {
     const manifest: unknown = JSON.parse(

@@ -286,10 +286,16 @@ function readSuccessStatuses(
   const statuses: number[] = [];
   for (const responseStatus of Object.keys(value)) {
     if (/^2\d\d$/.test(responseStatus)) {
-      if (!isRecord(value[responseStatus])) {
+      const response = value[responseStatus];
+      const validResponse = isRecord(response) && (
+        Object.hasOwn(response, '$ref')
+          ? nonEmptyString(response.$ref) !== null
+          : typeof response.description === 'string'
+      );
+      if (!validResponse) {
         diagnostics.push(createDiagnostic(
           'API_OPENAPI_RESPONSE_INVALID', file, `${path}.${responseStatus}`,
-          'OpenAPI success responses must declare a response object or reference.'
+          'OpenAPI success responses must declare a string description or a non-empty string $ref.'
         ));
         continue;
       }
