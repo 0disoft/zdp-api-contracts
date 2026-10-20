@@ -59,7 +59,7 @@
     "build:emit": "tsc -p tsconfig.build.json",
     "dist:check": "bun run build && bun scripts/check-generated-dist.ts",
     "check": "tsc --noEmit && bun test && bun run contracts:check && bun run openapi:check",
-    "check:tsgo": "tsgo --noEmit",
+    "check:tsgo": "tsc --noEmit",
     "test": "bun test",
     "contracts:check": "bun scripts/check-api-contracts.ts",
     "compatibility:check": "bun scripts/check-contract-compatibility.ts",
@@ -71,8 +71,7 @@
     "smoke:published": "bun scripts/smoke-published-package.ts"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.2",
-    "@typescript/native-preview": "7.0.0-dev.20260707.2",
+    "@types/bun": "^1.4.3",
     "typescript": "^7.0.2"
   },
   "dependencies": {
