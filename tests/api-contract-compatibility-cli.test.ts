@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { execFileSync } from 'node:child_process';
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -29,6 +29,48 @@ test('invalid baseline refs preserve other temporary files', async () => {
       expect(stderr).toContain('API contract compatibility check failed.');
       for (const marker of markers) expect(await readFile(marker, 'utf8')).toBe('preserved');
     }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+}, 15_000);
+
+test('failed baseline reads finish pending writes before removing their temporary directory', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'contract-compatibility-failure-'));
+  try {
+    await mkdir(join(root, 'scripts/lib'), { recursive: true });
+    await mkdir(join(root, 'src/api-contracts'), { recursive: true });
+    await mkdir(join(root, '.tmp/contract-compatibility'), { recursive: true });
+    await writeFile(join(root, '.tmp/contract-compatibility/other-run.txt'), 'preserved');
+    const source = await readFile('scripts/check-contract-compatibility.ts', 'utf8');
+    expect(source).toContain("from 'node:child_process'");
+    await writeFile(join(root, 'scripts/check-contract-compatibility.ts'),
+      source.replace("from 'node:child_process'", "from '../git-failure'"));
+    await writeFile(join(root, 'scripts/lib/contract-compatibility.ts'),
+      'export const compareApiContracts = () => {}; export const evaluateApiContractVersionGate = () => {};');
+    await writeFile(join(root, 'src/api-contracts/registry-loader.ts'),
+      'export const loadApiContracts = async () => { throw Error("Unexpected contract load"); };');
+    // Substitute only the Git process port; exercise real mkdir/write/cleanup.
+    await writeFile(join(root, 'git-failure.ts'), String.raw`
+      import { promisify } from 'node:util';
+      export const execFile = () => {};
+      execFile[promisify.custom] = async (_command, args) => {
+        if (args[0] === 'ls-tree') return { stdout: 'contracts/failed.yaml\0contracts/delayed.yaml\0' };
+        if (args[1].endsWith('failed.yaml')) throw Error('Injected baseline read failure');
+        await new Promise(resolve => setTimeout(resolve, 750));
+        return { stdout: 'delayed contract content' };
+      };
+    `);
+    const child = Bun.spawn([process.execPath,
+      join(root, 'scripts/check-contract-compatibility.ts'), '--base-ref', 'fixture'],
+      { cwd: root, stdout: 'pipe', stderr: 'pipe' });
+    const [stdout, stderr, exit] = await Promise.all([
+      new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited
+    ]);
+    expect(exit).toBe(1);
+    expect(stdout).toBe('');
+    expect(stderr).toContain('Injected baseline read failure');
+    expect(await readdir(join(root, '.tmp/contract-compatibility'))).toEqual(['other-run.txt']);
+    expect(await readFile(join(root, '.tmp/contract-compatibility/other-run.txt'), 'utf8')).toBe('preserved');
   } finally {
     await rm(root, { recursive: true, force: true });
   }

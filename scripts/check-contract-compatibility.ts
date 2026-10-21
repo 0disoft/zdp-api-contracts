@@ -144,7 +144,7 @@ async function materializeContractsAtRef(
     throw new Error(`Base ref \`${baseRef}\` does not contain contracts/.`);
   }
 
-  await Promise.all(
+  const results = await Promise.allSettled(
     contractFiles.map(async (path) => {
       assertSafeContractPath(path);
       const content = await gitText(['show', `${baseRef}:${path}`]);
@@ -153,6 +153,10 @@ async function materializeContractsAtRef(
       await writeFile(destination, content, 'utf8');
     })
   );
+  // Finish every write before run() removes the shared temporary root on failure.
+  for (const result of results) {
+    if (result.status === 'rejected') throw result.reason;
+  }
 }
 
 async function readMigrationDocument(
