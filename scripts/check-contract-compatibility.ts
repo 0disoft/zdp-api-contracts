@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import {
   mkdir,
+  mkdtemp,
   readFile,
   rm,
   writeFile
@@ -29,14 +30,12 @@ async function run(argv: readonly string[]): Promise<number> {
     return 0;
   }
 
-  const temporaryRoot = join(
-    repositoryRoot,
-    '.tmp',
-    'contract-compatibility',
-    safeDirectoryName(options.baseRef)
-  );
+  let temporaryRoot: string | undefined;
 
   try {
+    const temporaryParent = join(repositoryRoot, '.tmp', 'contract-compatibility');
+    await mkdir(temporaryParent, { recursive: true });
+    temporaryRoot = await mkdtemp(join(temporaryParent, 'base-'));
     await materializeContractsAtRef(options.baseRef, temporaryRoot);
     const [headContracts, basePackageSource, headPackageSource] =
       await Promise.all([
@@ -93,7 +92,9 @@ async function run(argv: readonly string[]): Promise<number> {
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
   } finally {
-    await rm(temporaryRoot, { recursive: true, force: true });
+    if (temporaryRoot !== undefined) {
+      await rm(temporaryRoot, { recursive: true, force: true });
+    }
   }
 }
 
@@ -126,7 +127,6 @@ async function materializeContractsAtRef(
   baseRef: string,
   destinationRoot: string
 ): Promise<void> {
-  await rm(destinationRoot, { recursive: true, force: true });
   const listing = await gitText([
     'ls-tree',
     '-r',
@@ -199,10 +199,6 @@ function assertSafeContractPath(path: string): void {
   ) {
     throw new Error(`Unsafe contract path returned by git: \`${path}\`.`);
   }
-}
-
-function safeDirectoryName(value: string): string {
-  return value.replaceAll(/[^A-Za-z0-9._-]/gu, '_').slice(0, 120) || 'base';
 }
 
 function parseOptions(argv: readonly string[]): {
