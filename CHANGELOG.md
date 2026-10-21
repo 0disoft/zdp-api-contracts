@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.52.0
+
+- 계정 관심사에 `personal_finance`, `foreign_languages`, `beauty`, `pets`를 추가했다. 응답 enum 확장에 따른 소비자 변경은 `docs/migrations/v0.51.1-to-v0.52.0.md`를 따른다.
+- 계정 로그인 알림 정책의 JSON Schema를 추가했다.
+- CLI 옵션 오류, SARIF 파일 위치, 계약 로딩 오류와 OpenAPI 경로 매개변수 처리를 수정했다. 계약 파일의 저장소 경계와 OpenAPI 성공 응답 검사도 보완했다.
+- 호환성 검사의 임시 파일 정리와 한글 파일명 처리를 수정하고, Bun 타입을 갱신하면서 중복 TypeScript preview 의존성을 제거했다.
+
 ## 0.51.1
 
 - npm 게시 지연 대기와 이를 검증하는 테스트를 함께 갱신했다. 0.51.0의 계약 변경을 포함한다.
