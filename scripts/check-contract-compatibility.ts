@@ -131,13 +131,13 @@ async function materializeContractsAtRef(
     'ls-tree',
     '-r',
     '--name-only',
+    '-z',
     baseRef,
     '--',
     'contracts'
   ]);
   const contractFiles = listing
-    .split(/\r?\n/u)
-    .map((path) => path.trim())
+    .split('\0')
     .filter((path) => path.length > 0);
 
   if (contractFiles.length === 0) {
