@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- OIDC refresh token opt-in 계약을 추가했다. 기존 client는 `authorization_code`만 유지하고, registry `allowed_grant_types`에 `refresh_token`을 명시한 client만 12시간 이내 refresh token을 받는다. request·response field와 회전·hash 저장·server-side BFF 경계를 validator로 고정했다.
+- OIDC client registry·product session·provider runtime 계약에 refresh token opt-in 필드를 추가했다. 기존 client는 `authorization_code`만 유지하고, registry `allowed_grant_types`에 `refresh_token`을 명시한 client만 12시간 이내 refresh token을 받는다. 0.52.0 YAML 생산자는 `docs/migrations/v0.52.0-to-v0.53.0.md`의 필수 필드를 추가해야 하며, 이 변경은 사용자 활성화나 npm 릴리스가 아니다.
 
 ## 0.52.0
 
