@@ -23,6 +23,8 @@ export function parseOidcClientRegistryContract(
       'update_policy',
       'environment_isolation',
       'client_id_reuse_policy',
+      'allowed_grant_type_sets',
+      'refresh_token_grant_policy',
       'lifecycle',
       'immutable_fields',
       'security_sensitive_fields',
@@ -33,6 +35,11 @@ export function parseOidcClientRegistryContract(
     context
   );
   const entries = requiredRecordListNonEmpty(contract, 'entries', context);
+  const grantTypeSets = requiredRecordListNonEmpty(
+    contract,
+    'allowed_grant_type_sets',
+    context
+  );
 
   return {
     schemaVersion: requiredNumber(contract, 'schema_version', context),
@@ -51,6 +58,19 @@ export function parseOidcClientRegistryContract(
     clientIdReusePolicy: requiredString(
       contract,
       'client_id_reuse_policy',
+      context
+    ),
+    allowedGrantTypeSets: grantTypeSets.map((set, index) => {
+      const setContext = `${context}.allowed_grant_type_sets[${index}]`;
+      assertOnlyKeys(set, ['name', 'grant_types'], setContext);
+      return {
+        name: requiredString(set, 'name', setContext),
+        grantTypes: requiredStringList(set, 'grant_types', setContext)
+      };
+    }),
+    refreshTokenGrantPolicy: requiredString(
+      contract,
+      'refresh_token_grant_policy',
       context
     ),
     lifecycle: parseOidcClientRegistryLifecycle(

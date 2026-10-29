@@ -41,6 +41,7 @@ export const OIDC_CLIENT_REGISTRY_SECURITY_SENSITIVE_FIELDS = [
   'exact_post_logout_redirect_uris',
   'allowed_scope_refs',
   'allowed_audience_refs',
+  'allowed_grant_types',
   'token_endpoint_auth_method',
   'jwks_ref',
   'session_policy_ref',
@@ -48,6 +49,15 @@ export const OIDC_CLIENT_REGISTRY_SECURITY_SENSITIVE_FIELDS = [
   'runtime_boundary',
   'callback_handler_ref'
 ] as const;
+
+export const OIDC_CLIENT_GRANT_TYPE_SETS = [
+  { name: 'authorization_code_only', grantTypes: ['authorization_code'] },
+  {
+    name: 'refresh_token_opt_in',
+    grantTypes: ['authorization_code', 'refresh_token']
+  }
+] as const;
+
 
 export const OIDC_CLIENT_REGISTRY_AUDIT_EVENTS = [
   'oidc_client.registered',
@@ -82,7 +92,7 @@ export function validateOidcClientRegistry(
   };
 
   if (
-    contract.schemaVersion !== 2 ||
+    contract.schemaVersion !== 3 ||
     contract.status !== 'proposed-contract' ||
     contract.ownerBoundary !== 'identity' ||
     contract.authority !== 'core_identity' ||
@@ -113,6 +123,23 @@ export function validateOidcClientRegistry(
     );
   }
 
+  const grantTypeSets = contract.allowedGrantTypeSets.map(
+    (set) => `${set.name}:${set.grantTypes.join(',')}`
+  );
+  const reviewedGrantTypeSets = OIDC_CLIENT_GRANT_TYPE_SETS.map(
+    (set) => `${set.name}:${set.grantTypes.join(',')}`
+  );
+  if (
+    contract.refreshTokenGrantPolicy !==
+      'explicit_client_allowed_grant_types_opt_in_only' ||
+    !hasExactStringValues(grantTypeSets, reviewedGrantTypeSets)
+  ) {
+    push(
+      'API_OIDC_CLIENT_REGISTRY_GRANT_INVALID',
+      'oidc_client_registry.allowed_grant_type_sets',
+      'OIDC clients must use the reviewed authorization_code-only or refresh_token opt-in grant set, and refresh tokens must remain an explicit per-client choice.'
+    );
+  }
   if (
     !hasExactStringValues(
       contract.lifecycle.states,
@@ -206,14 +233,17 @@ export function validateOidcClientRegistry(
       !client.allowedScopeRefs.includes('openid') ||
       !hasUniqueStringValues(client.allowedScopeRefs) ||
       !hasUniqueStringValues(client.allowedAudienceRefs) ||
-      !hasExactStringValues(client.allowedGrantTypes, ['authorization_code']) ||
+      !hasUniqueStringValues(client.allowedGrantTypes) ||
+      !OIDC_CLIENT_GRANT_TYPE_SETS.some((set) =>
+        hasExactStringValues(client.allowedGrantTypes, set.grantTypes)
+      ) ||
       !hasExactStringValues(client.allowedResponseTypes, ['code']) ||
       !hasExactStringValues(client.allowedPkceMethods, ['S256'])
     ) {
       push(
         'API_OIDC_CLIENT_REGISTRY_GRANT_INVALID',
         `${path}.allowed_scope_refs`,
-        'Web clients must request openid, keep scope and audience values unique, and use only authorization_code, code, and PKCE S256.'
+        'Web clients must request openid, keep scope, audience, and grant values unique, use the reviewed authorization_code-only or refresh_token opt-in grant set, response type code, and PKCE S256.'
       );
     }
 
@@ -297,6 +327,9 @@ export function validateOidcClientRegistry(
       ]) ||
       !hasExactStringValues(firstFixture.allowedAudienceRefs, [
         'zdp-web-public'
+      ]) ||
+      !hasExactStringValues(firstFixture.allowedGrantTypes, [
+        'authorization_code'
       ]) ||
       firstFixture.jwksRef !== 'client-keyset://zdp-web-public-staging' ||
       firstFixture.runtimeBoundary !==

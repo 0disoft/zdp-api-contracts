@@ -422,6 +422,7 @@ describe('api contract checker', () => {
       secretFields: ['password']
     });
     expect(contracts.oidcProductSession).toMatchObject({
+      schemaVersion: 2,
       status: 'proposed-contract',
       protocolProfile: 'openid_connect_authorization_code_flow',
       oauthSecurityBaseline: 'oauth_2_0_security_bcp_rfc9700',
@@ -431,18 +432,26 @@ describe('api contract checker', () => {
       wildcardRedirectUriForbidden: true,
       arbitraryReturnToForbidden: true,
       authorizationCodeSingleUse: true,
+      tokenEndpointGrantTypes: ['authorization_code', 'refresh_token'],
+      refreshTokenLifetimePolicy:
+        'at_most_remaining_core_sso_session_and_12h',
+      refreshTokenConsumerPolicy:
+        'server_side_bff_only_never_browser_exposed',
+      revocationTokenTypeHints: ['access_token', 'refresh_token'],
+      introspectionTokenTypeHints: ['access_token'],
       productSessionOwner: 'product_bff_binding_only',
       centralSessionOwner: 'core_identity',
       authorizationOwner: 'core_access_per_protected_action',
       authenticationIsAuthorization: false
     });
     expect(contracts.oidcClientRegistry).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       status: 'proposed-contract',
       authority: 'core_identity',
       environment: 'staging',
       registryRevision: 1,
       updatePolicy: 'compare_and_swap_registry_revision_and_audit_receipt',
+      refreshTokenGrantPolicy: 'explicit_client_allowed_grant_types_opt_in_only',
       lifecycle: {
         states: ['disabled', 'active', 'suspended', 'retired'],
         terminalStates: ['retired']
@@ -462,6 +471,7 @@ describe('api contract checker', () => {
       ]
     });
     expect(contracts.oidcProviderRuntime).toMatchObject({
+      schemaVersion: 2,
       status: 'proposed-contract',
       pilotEnvironment: 'staging',
       issuer: 'https://account.staging.8ailors.xyz',
@@ -469,7 +479,12 @@ describe('api contract checker', () => {
       authorizationCodeSingleUse: true,
       accessTokenTtlSeconds: 300,
       idTokenTtlSeconds: 300,
-      refreshTokenPolicy: 'not_issued_in_first_staging_pilot',
+      refreshTokenPolicy: 'opt_in_registry_allowed_grant_type_refresh_token',
+      refreshTokenGrantType: 'refresh_token',
+      refreshTokenTtlMaxSeconds: 43200,
+      refreshTokenRotationPolicy: 'rotate_on_every_successful_refresh',
+      revocationTokenTypeHints: ['access_token', 'refresh_token'],
+      introspectionTokenTypeHints: ['access_token'],
       clientAssertionTtlSeconds: 60,
       clientAssertionJtiSingleUse: true,
       signingAlgorithm: 'RS256',
@@ -611,6 +626,96 @@ describe('api contract checker', () => {
     );
   });
 
+  it('accepts refresh only as an explicit client grant while preserving the reviewed fixture', () => {
+    const contracts = loadCommittedContracts();
+    const client = contracts.oidcClientRegistry.entries[0];
+    if (client === undefined) throw new Error('Expected staging OIDC fixture.');
+    const optIn = {
+      ...client,
+      clientId: 'refresh-opt-in-test-client',
+      allowedGrantTypes: ['authorization_code', 'refresh_token']
+    };
+    const result = validateApiContracts({
+      ...contracts,
+      oidcClientRegistry: {
+        ...contracts.oidcClientRegistry,
+        entries: [client, optIn]
+      }
+    });
+    expect(result.ok).toBe(true);
+    expect(client.allowedGrantTypes).toEqual(['authorization_code']);
+    const fixtureDrift = validateApiContracts({
+      ...contracts,
+      oidcClientRegistry: {
+        ...contracts.oidcClientRegistry,
+        entries: [
+          { ...client, allowedGrantTypes: ['authorization_code', 'refresh_token'] }
+        ]
+      }
+    });
+    expect(fixtureDrift.diagnostics.map((item) => item.code)).toContain(
+      'API_OIDC_CLIENT_REGISTRY_FIXTURE_CONFIGURATION_INVALID'
+    );
+  });
+
+  it('rejects implicit or long-lived refresh grants', () => {
+    const contracts = loadCommittedContracts();
+    const client = contracts.oidcClientRegistry.entries[0];
+    if (client === undefined) throw new Error('Expected staging OIDC fixture.');
+    const result = validateApiContracts({
+      ...contracts,
+      oidcProviderRuntime: {
+        ...contracts.oidcProviderRuntime,
+        refreshTokenPolicy: 'issued_to_browser',
+        refreshTokenTtlMaxSeconds: 43201
+      },
+      oidcProductSession: {
+        ...contracts.oidcProductSession,
+        requiredRefreshTokenExchangeBindings: ['client_id', 'refresh_token']
+      },
+      oidcClientRegistry: {
+        ...contracts.oidcClientRegistry,
+        allowedGrantTypeSets: [
+          {
+            name: 'authorization_code_only',
+            grantTypes: ['authorization_code', 'refresh_token']
+          }
+        ],
+        entries: [{ ...client, allowedGrantTypes: ['refresh_token'] }]
+      }
+    });
+    expect(result.diagnostics.map((item) => item.code)).toEqual(
+      expect.arrayContaining([
+        'API_OIDC_PROVIDER_RUNTIME_REFRESH_POLICY_INVALID',
+        'API_OIDC_CLIENT_REGISTRY_GRANT_INVALID',
+        'API_OIDC_REFRESH_TOKEN_RESPONSE_POLICY_INVALID'
+      ])
+    );
+  });
+
+  it('keeps revocation refresh hints separate from introspection hints', () => {
+    const contracts = loadCommittedContracts();
+    const result = validateApiContracts({
+      ...contracts,
+      oidcProviderRuntime: {
+        ...contracts.oidcProviderRuntime,
+        introspectionTokenTypeHints: ['access_token', 'refresh_token'],
+        revocationRefreshHandlePolicy: 'active_only'
+      },
+      oidcProductSession: {
+        ...contracts.oidcProductSession,
+        revocationTokenTypeHints: ['access_token', 'refresh_token', 'id_token'],
+        revocationRefreshHandlePolicy: 'active_only'
+      }
+    });
+    expect(result.diagnostics.map((item) => item.code)).toEqual(
+      expect.arrayContaining([
+        'API_OIDC_PROVIDER_RUNTIME_REVOCATION_HINT_POLICY_INVALID',
+        'API_OIDC_REVOCATION_HINT_POLICY_INVALID'
+      ])
+    );
+  });
+
   it('rejects unreviewed registry lifecycle and authority drift', () => {
     const contracts = loadCommittedContracts();
     const result = validateApiContracts({
@@ -660,7 +765,7 @@ describe('api contract checker', () => {
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
       expect.arrayContaining([
         'API_OIDC_PROVIDER_RUNTIME_CODE_POLICY_INVALID',
-        'API_OIDC_PROVIDER_RUNTIME_TOKEN_POLICY_INVALID',
+        'API_OIDC_PROVIDER_RUNTIME_REFRESH_POLICY_INVALID',
         'API_OIDC_PROVIDER_RUNTIME_CLIENT_ASSERTION_INVALID',
         'API_OIDC_PROVIDER_RUNTIME_SESSION_POLICY_INVALID'
       ])

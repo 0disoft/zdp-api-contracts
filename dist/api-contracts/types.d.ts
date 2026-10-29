@@ -127,6 +127,15 @@ export interface OidcProductSessionContract {
     readonly productionIssuer: string;
     readonly requiredAuthorizationBindings: readonly string[];
     readonly requiredTokenExchangeBindings: readonly string[];
+    readonly tokenEndpointGrantTypes: readonly string[];
+    readonly requiredRefreshTokenExchangeBindings: readonly string[];
+    readonly initialTokenResponseOptionalFields: readonly string[];
+    readonly refreshTokenResponseFields: readonly string[];
+    readonly refreshTokenLifetimePolicy: string;
+    readonly refreshTokenConsumerPolicy: string;
+    readonly revocationTokenTypeHints: readonly string[];
+    readonly introspectionTokenTypeHints: readonly string[];
+    readonly revocationRefreshHandlePolicy: string;
     readonly requiredClientRegistryFields: readonly string[];
     readonly requiredAccessDecisionBindings: readonly string[];
     readonly invalidationEvents: readonly string[];
@@ -157,6 +166,8 @@ export interface OidcClientRegistryContract {
     readonly updatePolicy: string;
     readonly environmentIsolation: string;
     readonly clientIdReusePolicy: string;
+    readonly allowedGrantTypeSets: readonly OidcClientRegistryGrantTypeSet[];
+    readonly refreshTokenGrantPolicy: string;
     readonly lifecycle: OidcClientRegistryLifecycle;
     readonly immutableFields: readonly string[];
     readonly securitySensitiveFields: readonly string[];
@@ -173,6 +184,10 @@ export interface OidcClientRegistryTransition {
     readonly from: string;
     readonly to: string;
     readonly requiredEvidence: string;
+}
+export interface OidcClientRegistryGrantTypeSet {
+    readonly name: string;
+    readonly grantTypes: readonly string[];
 }
 export interface OidcClientRegistryEntry {
     readonly clientId: string;
@@ -220,6 +235,19 @@ export interface OidcProviderRuntimeContract {
     readonly accessTokenTtlSeconds: number;
     readonly idTokenTtlSeconds: number;
     readonly refreshTokenPolicy: string;
+    readonly refreshTokenGrantType: string;
+    readonly refreshTokenTtlMaxSeconds: number;
+    readonly refreshTokenClientGrantGate: string;
+    readonly refreshTokenStoragePolicy: string;
+    readonly refreshTokenRotationPolicy: string;
+    readonly refreshTokenRequiredBindings: readonly string[];
+    readonly authorizationCodeResponseFields: readonly string[];
+    readonly authorizationCodeOptionalResponseFields: readonly string[];
+    readonly refreshTokenResponseFields: readonly string[];
+    readonly refreshTokenDenialReasons: readonly string[];
+    readonly revocationTokenTypeHints: readonly string[];
+    readonly introspectionTokenTypeHints: readonly string[];
+    readonly revocationRefreshHandlePolicy: string;
     readonly clientAssertionAlgorithm: string;
     readonly clientAssertionTtlSeconds: number;
     readonly clientAssertionJtiSingleUse: boolean;

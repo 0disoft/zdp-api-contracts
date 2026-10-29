@@ -16,6 +16,8 @@ export function parseOidcClientRegistryContract(source) {
         'update_policy',
         'environment_isolation',
         'client_id_reuse_policy',
+        'allowed_grant_type_sets',
+        'refresh_token_grant_policy',
         'lifecycle',
         'immutable_fields',
         'security_sensitive_fields',
@@ -24,6 +26,7 @@ export function parseOidcClientRegistryContract(source) {
         'forbidden_values'
     ], context);
     const entries = requiredRecordListNonEmpty(contract, 'entries', context);
+    const grantTypeSets = requiredRecordListNonEmpty(contract, 'allowed_grant_type_sets', context);
     return {
         schemaVersion: requiredNumber(contract, 'schema_version', context),
         status: requiredString(contract, 'status', context),
@@ -35,6 +38,15 @@ export function parseOidcClientRegistryContract(source) {
         updatePolicy: requiredString(contract, 'update_policy', context),
         environmentIsolation: requiredString(contract, 'environment_isolation', context),
         clientIdReusePolicy: requiredString(contract, 'client_id_reuse_policy', context),
+        allowedGrantTypeSets: grantTypeSets.map((set, index) => {
+            const setContext = `${context}.allowed_grant_type_sets[${index}]`;
+            assertOnlyKeys(set, ['name', 'grant_types'], setContext);
+            return {
+                name: requiredString(set, 'name', setContext),
+                grantTypes: requiredStringList(set, 'grant_types', setContext)
+            };
+        }),
+        refreshTokenGrantPolicy: requiredString(contract, 'refresh_token_grant_policy', context),
         lifecycle: parseOidcClientRegistryLifecycle(requiredObject(contract, 'lifecycle', context), `${context}.lifecycle`),
         immutableFields: requiredStringList(contract, 'immutable_fields', context),
         securitySensitiveFields: requiredStringList(contract, 'security_sensitive_fields', context),

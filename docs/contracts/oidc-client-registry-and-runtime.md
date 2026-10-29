@@ -2,6 +2,8 @@
 
 이 문서는 제품 웹 로그인 계약의 첫 번째 구체화다. 둘 다 `proposed-contract`이며 실제 endpoint,
 DNS, key, session store 또는 배포가 준비됐다는 뜻이 아니다.
+refresh token opt-in도 local contract와 account BFF 구현으로만 존재하며 Core·Edge 배포,
+active client 승격 또는 실제 refresh 발급을 뜻하지 않는다.
 
 ## 중앙 registry 운영 계약
 
@@ -30,6 +32,9 @@ scope, audience, token endpoint 인증 방식, JWKS, session·revocation policy 
 모든 web client는 Authorization Code Flow, response type `code`, PKCE `S256`만 허용한다. callback과
 logout URI는 wildcard, credential, fragment가 없는 exact HTTPS URI여야 한다. client ID 중복, registry와
 다른 environment, revision 없는 변경, 평문 secret/key material은 검증 단계에서 거부한다.
+`allowed_grant_types`는 `authorization_code`만 쓰는 기본 set과 `authorization_code`에
+`refresh_token`을 추가하는 opt-in set 두 가지로 제한한다. refresh는 client별 명시 선택이며
+`allowed_grant_types`가 보안 민감 변경에 포함된다.
 
 ## 첫 client fixture
 
@@ -56,7 +61,10 @@ hostname을 fixture에 섞지 않는다.
 
 첫 파일럿은 `account.staging.8ailors.xyz`에만 적용한다. authorization code는 60초 동안 한 번만 사용할 수
 있고, opaque random value의 hash만 저장하며 원자적으로 consume한다. access token과 ID token은 5분,
-refresh token은 첫 파일럿에서 발급하지 않는다.
+refresh token은 registry entry의 `allowed_grant_types`에 `refresh_token`이 명시된 client에만
+opt-in으로 발급한다. 기존 `zdp-web-public-staging`은 `authorization_code`만 유지한다. refresh token은
+매 교환마다 회전하고 hash만 저장하며, `refresh_expires_in`은 중앙 SSO 세션의 남은 수명과 12시간 중
+짧은 쪽이다. access/ID token 수명은 계속 5분이다.
 
 제품 BFF는 `private_key_jwt`로 token endpoint에 인증한다. client assertion은 RS256, 60초 TTL,
 단일 사용 `jti`를 요구하고 `iss`와 `sub`는 `client_id`, `aud`는 정확한 token endpoint에 결박한다.
@@ -65,9 +73,16 @@ private key는 registry나 계약 파일에 저장하지 않는다.
 서명은 호환성이 넓은 RS256을 첫 후보로 두고 30일 회전, 이전 key 24시간 검증, JWKS 5분 cache를
 제안한다. 중앙 session은 idle 14일, absolute 30일이며 제품 session binding은 이를 넘을 수 없다.
 민감 작업은 최근 15분 이내 fresh check가 필요하고, revocation stale window는 최대 60초다.
+refresh grant가 허용되지 않은 client는 `unauthorized_client`로 거부하고, 이미 회전됐거나 만료된
+refresh token은 `invalid_grant`로 실패한다. refresh token 평문은 저장·로그·응답 예시에 넣지 않는다.
+revoke는 `access_token`과 `refresh_token` hint를 받고 consumed refresh handle도 만료 전까지
+조회해 중앙 SSO 세션을 폐기한다. introspect는 `access_token` hint만 받는다.
 
 이 숫자는 production 확정값이 아니다. staging 장애·replay·revocation·key rotation 증거를 남긴 뒤 ADR
 승격 과정에서 조정한다.
+현재 refresh profile은 `docs`와 validator의 local proposed 상태이며 staging runtime 배포 증거가 아니다.
+Core token handler가 grant별 교환을 실제로 연결하고 Edge·account BFF를 함께 배포하기 전에는 발급되지
+않는다.
 
 ## 인증과 권한의 분리
 
@@ -80,3 +95,4 @@ Access나 session truth가 unavailable이면 제품 BFF는 성공을 꾸미지 �
 - `contracts/apis/core-api/oidc-client-registry.yaml`
 - `contracts/apis/core-api/oidc-provider-runtime.yaml`
 - `contracts/apis/core-api/oidc-product-session.yaml`
+- refresh opt-in은 위 세 계약의 field로만 표현하며 별도 runtime 배포물이나 active client를 만들지 않는다.

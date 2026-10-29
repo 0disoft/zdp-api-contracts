@@ -31,6 +31,19 @@ export function parseOidcProviderRuntimeContract(
       'access_token_ttl_seconds',
       'id_token_ttl_seconds',
       'refresh_token_policy',
+      'refresh_token_grant_type',
+      'refresh_token_ttl_max_seconds',
+      'refresh_token_client_grant_gate',
+      'refresh_token_storage_policy',
+      'refresh_token_rotation_policy',
+      'refresh_token_required_bindings',
+      'authorization_code_response_fields',
+      'authorization_code_optional_response_fields',
+      'refresh_token_response_fields',
+      'refresh_token_denial_reasons',
+      'revocation_token_type_hints',
+      'introspection_token_type_hints',
+      'revocation_refresh_handle_policy',
       'client_assertion_algorithm',
       'client_assertion_ttl_seconds',
       'client_assertion_jti_single_use',
@@ -101,6 +114,71 @@ export function parseOidcProviderRuntimeContract(
     refreshTokenPolicy: requiredString(
       contract,
       'refresh_token_policy',
+      context
+    ),
+    refreshTokenGrantType: requiredString(
+      contract,
+      'refresh_token_grant_type',
+      context
+    ),
+    refreshTokenTtlMaxSeconds: requiredNumber(
+      contract,
+      'refresh_token_ttl_max_seconds',
+      context
+    ),
+    refreshTokenClientGrantGate: requiredString(
+      contract,
+      'refresh_token_client_grant_gate',
+      context
+    ),
+    refreshTokenStoragePolicy: requiredString(
+      contract,
+      'refresh_token_storage_policy',
+      context
+    ),
+    refreshTokenRotationPolicy: requiredString(
+      contract,
+      'refresh_token_rotation_policy',
+      context
+    ),
+    refreshTokenRequiredBindings: requiredStringList(
+      contract,
+      'refresh_token_required_bindings',
+      context
+    ),
+    authorizationCodeResponseFields: requiredStringList(
+      contract,
+      'authorization_code_response_fields',
+      context
+    ),
+    authorizationCodeOptionalResponseFields: requiredStringList(
+      contract,
+      'authorization_code_optional_response_fields',
+      context
+    ),
+    refreshTokenResponseFields: requiredStringList(
+      contract,
+      'refresh_token_response_fields',
+      context
+    ),
+    refreshTokenDenialReasons: requiredStringList(
+      contract,
+      'refresh_token_denial_reasons',
+      context
+    ),
+    revocationTokenTypeHints: requiredStringList(
+      contract,
+      'revocation_token_type_hints',
+      context
+    ),
+    introspectionTokenTypeHints: requiredStringList(
+      contract,
+      'introspection_token_type_hints',
+      context
+    ),
+    revocationRefreshHandlePolicy: requiredString(
+      contract,
+      'revocation_refresh_handle_policy',
       context
     ),
     clientAssertionAlgorithm: requiredString(

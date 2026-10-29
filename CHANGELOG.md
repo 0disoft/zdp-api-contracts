@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- OIDC refresh token opt-in 계약을 추가했다. 기존 client는 `authorization_code`만 유지하고, registry `allowed_grant_types`에 `refresh_token`을 명시한 client만 12시간 이내 refresh token을 받는다. request·response field와 회전·hash 저장·server-side BFF 경계를 validator로 고정했다.
+
 ## 0.52.0
 
 - 계정 관심사에 `personal_finance`, `foreign_languages`, `beauty`, `pets`를 추가했다. 응답 enum 확장에 따른 소비자 변경은 `docs/migrations/v0.51.1-to-v0.52.0.md`를 따른다.

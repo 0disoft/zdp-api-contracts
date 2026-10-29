@@ -1,6 +1,11 @@
 import type { ApiContractDiagnostic, ApiContracts } from '../types.js';
 
-import { validateRequiredOidcValues } from './shared.js';
+import { hasExactStringValues, validateRequiredOidcValues } from './shared.js';
+import {
+  OIDC_REFRESH_TOKEN_OPTIONAL_INITIAL_FIELDS,
+  OIDC_REFRESH_TOKEN_REQUEST_BINDINGS,
+  OIDC_REFRESH_TOKEN_RESPONSE_FIELDS
+} from './oidc-provider-runtime.js';
 
 export const OIDC_PRODUCT_SESSION_FILE =
   'contracts/apis/core-api/oidc-product-session.yaml';
@@ -23,6 +28,20 @@ export const OIDC_TOKEN_EXCHANGE_BINDINGS = [
   'code_verifier',
   'exact_redirect_uri',
   'issuer'
+] as const;
+
+export const OIDC_TOKEN_ENDPOINT_GRANT_TYPES = [
+  'authorization_code',
+  'refresh_token'
+] as const;
+
+export const OIDC_REVOCATION_TOKEN_TYPE_HINTS = [
+  'access_token',
+  'refresh_token'
+] as const;
+
+export const OIDC_INTROSPECTION_TOKEN_TYPE_HINTS = [
+  'access_token'
 ] as const;
 
 export const OIDC_CLIENT_REGISTRY_FIELDS = [
@@ -107,7 +126,7 @@ export function validateOidcProductSession(
   };
 
   if (
-    contract.schemaVersion !== 1 ||
+    contract.schemaVersion !== 2 ||
     contract.status !== 'proposed-contract' ||
     contract.ownerBoundary !== 'identity'
   ) {
@@ -155,6 +174,53 @@ export function validateOidcProductSession(
     'oidc_product_session.required_token_exchange_bindings',
     push
   );
+  if (
+    !hasExactStringValues(
+      contract.tokenEndpointGrantTypes,
+      OIDC_TOKEN_ENDPOINT_GRANT_TYPES
+    ) ||
+    !hasExactStringValues(
+      contract.requiredRefreshTokenExchangeBindings,
+      OIDC_REFRESH_TOKEN_REQUEST_BINDINGS
+    ) ||
+    !hasExactStringValues(
+      contract.initialTokenResponseOptionalFields,
+      OIDC_REFRESH_TOKEN_OPTIONAL_INITIAL_FIELDS
+    ) ||
+    !hasExactStringValues(
+      contract.refreshTokenResponseFields,
+      OIDC_REFRESH_TOKEN_RESPONSE_FIELDS
+    ) ||
+    contract.refreshTokenLifetimePolicy !==
+      'at_most_remaining_core_sso_session_and_12h' ||
+    contract.refreshTokenConsumerPolicy !==
+      'server_side_bff_only_never_browser_exposed'
+  ) {
+    push(
+      'API_OIDC_REFRESH_TOKEN_RESPONSE_POLICY_INVALID',
+      'oidc_product_session.required_refresh_token_exchange_bindings',
+      'Refresh token exchange must use the five-field client assertion request, keep the token server-side, rotate it on every use, and expose refresh_expires_in only within the remaining Core SSO session at 12 hours or less.'
+    );
+  }
+  if (
+    !hasExactStringValues(
+      contract.revocationTokenTypeHints,
+      OIDC_REVOCATION_TOKEN_TYPE_HINTS
+    ) ||
+    !hasExactStringValues(
+      contract.introspectionTokenTypeHints,
+      OIDC_INTROSPECTION_TOKEN_TYPE_HINTS
+    ) ||
+    contract.revocationRefreshHandlePolicy !==
+      'lookup_active_or_rotated_hash_until_expiry_and_revoke_underlying_core_sso_session'
+  ) {
+    push(
+      'API_OIDC_REVOCATION_HINT_POLICY_INVALID',
+      'oidc_product_session.revocation_token_type_hints',
+      'Only revocation may accept a refresh_token hint; introspection remains access-token only, and consumed refresh handles revoke the underlying SSO session until expiry.'
+    );
+  }
+
   validateRequiredOidcValues(
     contract.requiredClientRegistryFields,
     OIDC_CLIENT_REGISTRY_FIELDS,

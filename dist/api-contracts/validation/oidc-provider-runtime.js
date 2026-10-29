@@ -1,4 +1,4 @@
-import { validateRequiredOidcValues } from './shared.js';
+import { hasExactStringValues, validateRequiredOidcValues } from './shared.js';
 export const OIDC_PROVIDER_RUNTIME_FILE = 'contracts/apis/core-api/oidc-provider-runtime.yaml';
 export const OIDC_AUTHORIZATION_CODE_BINDINGS = [
     'client_id',
@@ -20,8 +20,49 @@ export const OIDC_RUNTIME_DENIAL_REASONS = [
     'client_disabled',
     'invalid_request',
     'invalid_grant',
+    'unauthorized_client',
     'access_denied',
     'policy_unavailable'
+];
+export const OIDC_REFRESH_TOKEN_REQUEST_BINDINGS = [
+    'client_id',
+    'client_assertion_type',
+    'client_assertion',
+    'refresh_token',
+    'grant_type'
+];
+export const OIDC_AUTHORIZATION_CODE_RESPONSE_FIELDS = [
+    'access_token',
+    'token_type',
+    'expires_in',
+    'id_token',
+    'scope'
+];
+export const OIDC_REFRESH_TOKEN_OPTIONAL_INITIAL_FIELDS = [
+    'refresh_token',
+    'refresh_expires_in'
+];
+export const OIDC_REFRESH_TOKEN_RESPONSE_FIELDS = [
+    'access_token',
+    'token_type',
+    'expires_in',
+    'id_token',
+    'scope',
+    'refresh_token',
+    'refresh_expires_in'
+];
+export const OIDC_REFRESH_TOKEN_DENIAL_REASONS = [
+    'invalid_request',
+    'invalid_client',
+    'unauthorized_client',
+    'invalid_grant'
+];
+export const OIDC_REVOCATION_TOKEN_TYPE_HINTS = [
+    'access_token',
+    'refresh_token'
+];
+export const OIDC_INTROSPECTION_TOKEN_TYPE_HINTS = [
+    'access_token'
 ];
 export const OIDC_PROVIDER_RUNTIME_FORBIDDEN_VALUES = [
     'password',
@@ -42,7 +83,7 @@ export function validateOidcProviderRuntime(contracts, diagnostics) {
     const push = (code, path, message) => {
         diagnostics.push({ code, file: OIDC_PROVIDER_RUNTIME_FILE, path, message });
     };
-    if (contract.schemaVersion !== 1 ||
+    if (contract.schemaVersion !== 2 ||
         contract.status !== 'proposed-contract' ||
         contract.ownerBoundary !== 'identity' ||
         contract.pilotEnvironment !== 'staging' ||
@@ -65,9 +106,31 @@ export function validateOidcProviderRuntime(contracts, diagnostics) {
     }
     validateRequiredOidcValues(contract.authorizationCodeRequiredBindings, OIDC_AUTHORIZATION_CODE_BINDINGS, 'API_OIDC_PROVIDER_RUNTIME_CODE_BINDING_MISSING', 'oidc_provider_runtime.authorization_code_required_bindings', push);
     if (contract.accessTokenTtlSeconds !== 300 ||
-        contract.idTokenTtlSeconds !== 300 ||
-        contract.refreshTokenPolicy !== 'not_issued_in_first_staging_pilot') {
-        push('API_OIDC_PROVIDER_RUNTIME_TOKEN_POLICY_INVALID', 'oidc_provider_runtime.access_token_ttl_seconds', 'The first staging pilot must use five-minute access and ID tokens and must not issue refresh tokens.');
+        contract.idTokenTtlSeconds !== 300) {
+        push('API_OIDC_PROVIDER_RUNTIME_TOKEN_POLICY_INVALID', 'oidc_provider_runtime.access_token_ttl_seconds', 'The staging pilot must use five-minute access and ID tokens.');
+    }
+    if (contract.refreshTokenPolicy !==
+        'opt_in_registry_allowed_grant_type_refresh_token' ||
+        contract.refreshTokenGrantType !== 'refresh_token' ||
+        contract.refreshTokenTtlMaxSeconds !== 43200 ||
+        contract.refreshTokenClientGrantGate !==
+            'registry_allowed_grant_types_contains_refresh_token' ||
+        contract.refreshTokenStoragePolicy !==
+            'opaque_random_hash_only_atomic_rotation' ||
+        contract.refreshTokenRotationPolicy !==
+            'rotate_on_every_successful_refresh' ||
+        !hasExactStringValues(contract.refreshTokenRequiredBindings, OIDC_REFRESH_TOKEN_REQUEST_BINDINGS) ||
+        !hasExactStringValues(contract.authorizationCodeResponseFields, OIDC_AUTHORIZATION_CODE_RESPONSE_FIELDS) ||
+        !hasExactStringValues(contract.authorizationCodeOptionalResponseFields, OIDC_REFRESH_TOKEN_OPTIONAL_INITIAL_FIELDS) ||
+        !hasExactStringValues(contract.refreshTokenResponseFields, OIDC_REFRESH_TOKEN_RESPONSE_FIELDS) ||
+        !hasExactStringValues(contract.refreshTokenDenialReasons, OIDC_REFRESH_TOKEN_DENIAL_REASONS)) {
+        push('API_OIDC_PROVIDER_RUNTIME_REFRESH_POLICY_INVALID', 'oidc_provider_runtime.refresh_token_policy', 'Refresh tokens must be opt-in per registered client, rotate on every exchange, store hashes only, use the five-field request, and expire within the remaining Core SSO session at 12 hours or less.');
+    }
+    if (!hasExactStringValues(contract.revocationTokenTypeHints, OIDC_REVOCATION_TOKEN_TYPE_HINTS) ||
+        !hasExactStringValues(contract.introspectionTokenTypeHints, OIDC_INTROSPECTION_TOKEN_TYPE_HINTS) ||
+        contract.revocationRefreshHandlePolicy !==
+            'lookup_active_or_rotated_hash_until_expiry_and_revoke_underlying_core_sso_session') {
+        push('API_OIDC_PROVIDER_RUNTIME_REVOCATION_HINT_POLICY_INVALID', 'oidc_provider_runtime.revocation_token_type_hints', 'Revocation may accept access_token and refresh_token handles, including consumed refresh handles until expiry, while introspection stays access-token only.');
     }
     if (contract.clientAssertionAlgorithm !== 'RS256' ||
         contract.clientAssertionTtlSeconds !== 60 ||

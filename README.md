@@ -108,6 +108,8 @@ success redirect는 결제 증거가 아니다. `payment_pending`, `credit_issua
 Core Access의 작업별 권한 판단을 분리한다. 이 계약은 OAuth 2.1을 최종 RFC라고 주장하지 않으며,
 live authorization/token endpoint, token TTL 숫자, client provisioning API 또는 production 활성화를
 확정하지 않는다.
+refresh token은 registry `allowed_grant_types` opt-in client에만 허용하는 local proposed field로
+표현하며 Core·Edge 배포나 active client 승격을 주장하지 않는다.
 
 첫 staging client와 provider runtime 후보는 각각 `oidc-client-registry.yaml`과
 `oidc-provider-runtime.yaml`에 있다. `zdp-web-public-staging`은 정적 사이트가 callback을 처리할 수

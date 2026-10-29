@@ -1,5 +1,5 @@
 oidc_product_session:
-  schema_version: 1
+  schema_version: 2
   status: proposed-contract
   owner_boundary: identity
   protocol_profile: openid_connect_authorization_code_flow
@@ -25,6 +25,34 @@ oidc_product_session:
     - code_verifier
     - exact_redirect_uri
     - issuer
+  token_endpoint_grant_types:
+    - authorization_code
+    - refresh_token
+  required_refresh_token_exchange_bindings:
+    - client_id
+    - client_assertion_type
+    - client_assertion
+    - refresh_token
+    - grant_type
+  initial_token_response_optional_fields:
+    - refresh_token
+    - refresh_expires_in
+  refresh_token_response_fields:
+    - access_token
+    - token_type
+    - expires_in
+    - id_token
+    - scope
+    - refresh_token
+    - refresh_expires_in
+  refresh_token_lifetime_policy: at_most_remaining_core_sso_session_and_12h
+  refresh_token_consumer_policy: server_side_bff_only_never_browser_exposed
+  revocation_token_type_hints:
+    - access_token
+    - refresh_token
+  introspection_token_type_hints:
+    - access_token
+  revocation_refresh_handle_policy: lookup_active_or_rotated_hash_until_expiry_and_revoke_underlying_core_sso_session
   required_client_registry_fields:
     - client_id
     - product_ref

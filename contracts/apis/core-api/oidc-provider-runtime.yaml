@@ -1,5 +1,5 @@
 oidc_provider_runtime:
-  schema_version: 1
+  schema_version: 2
   status: proposed-contract
   owner_boundary: identity
   pilot_environment: staging
@@ -27,7 +27,46 @@ oidc_provider_runtime:
     - expires_at
   access_token_ttl_seconds: 300
   id_token_ttl_seconds: 300
-  refresh_token_policy: not_issued_in_first_staging_pilot
+  refresh_token_policy: opt_in_registry_allowed_grant_type_refresh_token
+  refresh_token_grant_type: refresh_token
+  refresh_token_ttl_max_seconds: 43200
+  refresh_token_client_grant_gate: registry_allowed_grant_types_contains_refresh_token
+  refresh_token_storage_policy: opaque_random_hash_only_atomic_rotation
+  refresh_token_rotation_policy: rotate_on_every_successful_refresh
+  refresh_token_required_bindings:
+    - client_id
+    - client_assertion_type
+    - client_assertion
+    - refresh_token
+    - grant_type
+  authorization_code_response_fields:
+    - access_token
+    - token_type
+    - expires_in
+    - id_token
+    - scope
+  authorization_code_optional_response_fields:
+    - refresh_token
+    - refresh_expires_in
+  refresh_token_response_fields:
+    - access_token
+    - token_type
+    - expires_in
+    - id_token
+    - scope
+    - refresh_token
+    - refresh_expires_in
+  refresh_token_denial_reasons:
+    - invalid_request
+    - invalid_client
+    - unauthorized_client
+    - invalid_grant
+  revocation_token_type_hints:
+    - access_token
+    - refresh_token
+  introspection_token_type_hints:
+    - access_token
+  revocation_refresh_handle_policy: lookup_active_or_rotated_hash_until_expiry_and_revoke_underlying_core_sso_session
   client_assertion_algorithm: RS256
   client_assertion_ttl_seconds: 60
   client_assertion_jti_single_use: true
@@ -50,6 +89,7 @@ oidc_provider_runtime:
     - client_disabled
     - invalid_request
     - invalid_grant
+    - unauthorized_client
     - access_denied
     - policy_unavailable
   forbidden_values:
